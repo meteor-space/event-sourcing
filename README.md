@@ -1,4 +1,4 @@
-# CQRS and Event Sourcing Infrastructure for Meteor [![Build Status](https://travis-ci.org/CodeAdventure/space-cqrs.svg?branch=master)](https://travis-ci.org/CodeAdventure/space-cqrs)
+# CQRS and Event Sourcing for Meteor [![Build Status](https://travis-ci.org/CodeAdventure/space-cqrs.svg?branch=master)](https://travis-ci.org/CodeAdventure/space-cqrs)
 
 This package provides a simple infrastructure for building your Meteor app
 with the CQRS (Command Query Responsibility Separation) and Event Sourcing
