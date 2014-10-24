@@ -5,6 +5,8 @@ class Space.cqrs.EventStore
 
   @toString: -> 'Space.cqrs.EventStore'
 
+  @EVENT_CLASS_LOOKUP_ERROR = 'Failed to lookup event class:'
+
   Dependencies:
     eventsCollection: 'Space.cqrs.EventsCollection'
     eventBus: 'Space.cqrs.EventBus'
@@ -76,5 +78,7 @@ class Space.cqrs.EventStore
 
     for segment in path
       namespace = namespace[segment]
+
+    if not namespace? then throw new Error EventStore.EVENT_CLASS_LOOKUP_ERROR + "<#{identifier}>"
 
     return namespace

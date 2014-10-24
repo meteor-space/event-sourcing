@@ -104,3 +104,24 @@ describe "#{EventStore}", ->
         new @testNamespace.QuantityChangedEvent type: 'QuantityChangedEvent', sourceId: aggregateId, version: 2
         new @testNamespace.TotalChangedEvent type: 'TotalChangedEvent', sourceId: aggregateId, version: 2
       ]
+
+    it 'throws an error if a given event class could not be found on the namespace', ->
+
+      aggregateId = '123'
+
+      savedBatches = [
+        {
+          aggregateId: aggregateId
+          version: 1,
+          events: [
+            { type: 'UnknownEvent', sourceId: aggregateId, data: {}, version: 1 }
+          ]
+        }
+      ]
+
+      # simulate successful fetch all batches
+      @eventStore.eventsCollection.find.returns savedBatches
+
+      callWithWrongSavedEvents = => @eventStore.getEvents aggregateId
+
+      expect(callWithWrongSavedEvents).to.throw EventStore.EVENT_CLASS_LOOKUP_ERROR + '<UnknownEvent>'
