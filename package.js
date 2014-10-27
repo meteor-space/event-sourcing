@@ -21,6 +21,7 @@ Package.onUse(function(api) {
     // DOMAIN
     'source/domain/domain_event.coffee',
     'source/domain/aggregate_root.coffee',
+    'source/domain/saga.coffee',
 
     // INFRASTRUCTURE
     'source/infrastructure/aggregate_repository.coffee',
@@ -54,6 +55,7 @@ Package.onTest(function(api) {
     // DOMAIN
     'tests/domain/aggregate_root.unit.coffee',
     'tests/domain/domain_event.unit.coffee',
+    'tests/domain/saga.unit.coffee',
 
     // INFRASTRUCTURE
     'tests/infrastructure/events_collection.unit.coffee',
