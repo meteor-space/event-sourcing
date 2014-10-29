@@ -16,6 +16,4 @@ class Space.cqrs.SagaRepository
       events: saga.getEvents()
       commands: saga.getCommands()
 
-    console.log "saga:", saga.getId(), saga.getVersion()
-
     @commitStore.add changes, saga.getId(), saga.getVersion()
