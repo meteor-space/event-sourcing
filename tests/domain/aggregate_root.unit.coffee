@@ -1,6 +1,6 @@
 
 AggregateRoot = Space.cqrs.AggregateRoot
-DomainEvent = Space.cqrs.DomainEvent
+Event = Space.cqrs.Event
 
 # ========================= CONSTRUCTION ============================== #
 
@@ -10,7 +10,7 @@ describe "#{AggregateRoot}", ->
     @aggregateId = '123'
     @aggregate = new AggregateRoot @aggregateId
 
-    @event = new DomainEvent {
+    @event = new Event {
       type: 'test'
       sourceId: @aggregateId
       data: {}
@@ -55,10 +55,10 @@ describe "#{AggregateRoot}", ->
 
     it 'throws if no handler is defined for the event', ->
 
-      event = new DomainEvent type: 'DomainEvent', sourceId: '123'
+      event = new Event type: 'Event', sourceId: '123'
       aggregate = new AggregateRoot '123'
 
-      expectedError = AggregateRoot.CANNOT_HANDLE_EVENT_ERROR + 'DomainEvent'
+      expectedError = AggregateRoot.CANNOT_HANDLE_EVENT_ERROR + 'Event'
 
       expect(-> aggregate.applyEvent event).to.throw expectedError
 
@@ -95,12 +95,12 @@ describe "#{AggregateRoot}", ->
 
     it 'also accepts events that have no version', ->
 
-      @aggregate.replayEvent new DomainEvent type: @event.type, sourceId: @aggregateId
+      @aggregate.replayEvent new Event type: @event.type, sourceId: @aggregateId
       expect(@aggregate.getVersion()).to.equal 0
 
     it 'only replays events that have the right source id', ->
 
-      event = new DomainEvent type: @event.type, sourceId: 'otherId'
+      event = new Event type: @event.type, sourceId: 'otherId'
       expect(=> @aggregate.replayEvent event).to.throw AggregateRoot.INVALID_EVENT_SOURCE_ID_ERROR
 
 
@@ -108,8 +108,8 @@ describe "#{AggregateRoot}", ->
 
     # SHARED SETUP
     aggregateId = '123'
-    firstEvent = new DomainEvent type: 'first-event', sourceId: aggregateId
-    secondEvent = new DomainEvent type: 'second-event', sourceId: aggregateId
+    firstEvent = new Event type: 'first-event', sourceId: aggregateId
+    secondEvent = new Event type: 'second-event', sourceId: aggregateId
     eventData = {}
 
     it 'maps event types to handler functions', ->
@@ -168,9 +168,9 @@ describe "#{AggregateRoot}", ->
       replaySpy = sinon.stub aggregate, 'replayEvent'
 
       history = [
-        new DomainEvent type: 'created', sourceId: id, data: {}, version: 1
-        new DomainEvent type: 'somethingChanged', sourceId: id, data: {}, version: 2
-        new DomainEvent type: 'changedAgain', sourceId: id, data: {}, version: 3
+        new Event type: 'created', sourceId: id, data: {}, version: 1
+        new Event type: 'somethingChanged', sourceId: id, data: {}, version: 2
+        new Event type: 'changedAgain', sourceId: id, data: {}, version: 3
       ]
 
       aggregate.loadHistory history

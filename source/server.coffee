@@ -6,7 +6,8 @@ class Space.cqrs extends Space.Module
   configure: ->
     @injector.map(Space.cqrs.CommandBus).asSingleton()
     @injector.map(Space.cqrs.AggregateRepository).asSingleton()
-
-    @injector.map(Space.cqrs.EventsCollection).asSingleton()
+    @injector.map(Space.cqrs.SagaRepository).asSingleton()
+    @injector.map(Space.cqrs.CommitCollection).asSingleton()
     @injector.map(Space.cqrs.EventBus).asSingleton()
-    @injector.map(Space.cqrs.EventStore).asSingleton()
+    @injector.map(Space.cqrs.CommitStore).asSingleton()
+    @injector.map(Space.cqrs.CommitPublisher).asSingleton()

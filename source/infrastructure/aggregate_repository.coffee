@@ -4,14 +4,14 @@ class Space.cqrs.AggregateRepository
   @toString: -> 'Space.cqrs.AggregateRepository'
 
   Dependencies:
-    eventStore: 'Space.cqrs.EventStore'
-
-  create: (aggregate) ->
-    @eventStore.add aggregate.getEvents(), aggregate.getId(), 0
+    commitStore: 'Space.cqrs.CommitStore'
 
   find: (AggregateType, aggregateId) ->
-    events = @eventStore.getEvents aggregateId
+
+    events = @commitStore.getEvents aggregateId
     return new AggregateType aggregateId, events
 
-  save: (aggregate, expectedVersion) ->
-    @eventStore.add aggregate.getEvents(), aggregate.getId(), expectedVersion
+  save: (aggregate) ->
+
+    changes = events: aggregate.getEvents()
+    @commitStore.add changes, aggregate.getId(), aggregate.getVersion()

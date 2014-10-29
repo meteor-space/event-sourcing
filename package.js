@@ -1,7 +1,7 @@
 Package.describe({
   summary: 'CQRS and Event Sourcing Infrastructure for Meteor.',
   name: 'space:cqrs',
-  version: '1.0.1',
+  version: '2.0.0',
   git: 'https://github.com/CodeAdventure/space-cqrs.git',
 });
 
@@ -19,15 +19,18 @@ Package.onUse(function(api) {
     'source/server.coffee',
 
     // DOMAIN
-    'source/domain/domain_event.coffee',
+    'source/domain/event.coffee',
+    'source/domain/command.coffee',
     'source/domain/aggregate_root.coffee',
     'source/domain/saga.coffee',
 
     // INFRASTRUCTURE
     'source/infrastructure/aggregate_repository.coffee',
-    'source/infrastructure/events_collection.coffee',
+    'source/infrastructure/saga_repository.coffee',
     'source/infrastructure/event_bus.coffee',
-    'source/infrastructure/event_store.coffee',
+    'source/infrastructure/commit_collection.coffee',
+    'source/infrastructure/commit_store.coffee',
+    'source/infrastructure/commit_publisher.coffee',
 
   ], 'server');
 
@@ -48,18 +51,20 @@ Package.onTest(function(api) {
     'coffeescript',
     'space:cqrs',
     'spacejamio:munit@2.0.2',
+    'space:testing@1.1.0'
   ]);
 
   api.addFiles([
 
     // DOMAIN
     'tests/domain/aggregate_root.unit.coffee',
-    'tests/domain/domain_event.unit.coffee',
+    'tests/domain/event.unit.coffee',
     'tests/domain/saga.unit.coffee',
 
     // INFRASTRUCTURE
-    'tests/infrastructure/events_collection.unit.coffee',
-    'tests/infrastructure/event_store.unit.coffee',
+    'tests/infrastructure/commit_collection.unit.coffee',
+    'tests/infrastructure/commit_store.unit.coffee',
+    'tests/infrastructure/commit_publisher.unit.coffee',
 
     // MODULE
     'tests/server_module.unit.coffee',

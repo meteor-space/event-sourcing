@@ -1,9 +1,9 @@
 
-EventsCollection = Space.cqrs.EventsCollection
+CommitCollection = Space.cqrs.CommitCollection
 
-describe "#{EventsCollection}", ->
+describe "#{CommitCollection}", ->
 
-  # System under test (EventsCollection)
+  # System under test (CommitCollection)
   sut = null
 
   beforeEach ->
@@ -17,11 +17,11 @@ describe "#{EventsCollection}", ->
     # simulate meteor Mongo api
     @mongo = Collection: sinon.stub().returns @mongoCollection
 
-    sut = new EventsCollection()
+    sut = new CommitCollection()
     sut.mongo = @mongo
 
   it 'defines Mongo as its dependency', ->
-    expect(EventsCollection::Dependencies.mongo).to.equal 'Mongo'
+    expect(CommitCollection::Dependencies.mongo).to.equal 'Mongo'
 
 
   describe '#onDependenciesReady', ->
@@ -35,7 +35,7 @@ describe "#{EventsCollection}", ->
 
       sut.onDependenciesReady()
       expect(@mongoCollection._ensureIndex).to.have.been.calledWithMatch(
-        { "aggregateId": 1, "version": 1 }, unique: true
+        { "sourceId": 1, "version": 1 }, unique: true
       )
 
 

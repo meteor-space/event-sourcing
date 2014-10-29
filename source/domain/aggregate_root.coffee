@@ -1,5 +1,5 @@
 
-DomainEvent = Space.cqrs.DomainEvent
+Event = Space.cqrs.Event
 
 class Space.cqrs.AggregateRoot
 
@@ -13,7 +13,7 @@ class Space.cqrs.AggregateRoot
   # ============= PUBLIC ============ #
 
   @UID_REQUIRED_ERROR = "#{AggregateRoot}: AggregateRoot needs an UID on creation."
-  @DOMAIN_EVENT_REQUIRED_ERROR = "#{AggregateRoot}: Event must inherit from Space.cqrs.DomainEvent"
+  @DOMAIN_EVENT_REQUIRED_ERROR = "#{AggregateRoot}: Event must inherit from Space.cqrs.Event"
   @CANNOT_HANDLE_EVENT_ERROR = "#{AggregateRoot}: Cannot handle event of type: "
   @INVALID_EVENT_SOURCE_ID_ERROR = "#{AggregateRoot}: The given event has an invalid source id."
 
@@ -36,7 +36,7 @@ class Space.cqrs.AggregateRoot
     events = Array.prototype.slice.call arguments
 
     if events.length % 2 != 0
-      throw new Error "mapDomainEvents must take an even number of arguments."
+      throw new Error "mapEvents must take an even number of arguments."
 
     for type, index in events by 2
       @_eventHandler[type.toString()] = events[index+1]
@@ -57,7 +57,7 @@ class Space.cqrs.AggregateRoot
 
   _handleEvent: (event) ->
 
-    unless event instanceof DomainEvent then throw new Error AggregateRoot.DOMAIN_EVENT_REQUIRED_ERROR
+    unless event instanceof Event then throw new Error AggregateRoot.DOMAIN_EVENT_REQUIRED_ERROR
     unless event.sourceId is @_id then throw new Error AggregateRoot.INVALID_EVENT_SOURCE_ID_ERROR
 
     handler = @_eventHandler[event.type]
