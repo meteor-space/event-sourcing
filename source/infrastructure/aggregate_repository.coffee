@@ -11,7 +11,7 @@ class Space.cqrs.AggregateRepository
     events = @commitStore.getEvents aggregateId
     return new AggregateType aggregateId, events
 
-  save: (aggregate) ->
+  save: (aggregate, expectedVersion) ->
 
     changes = events: aggregate.getEvents()
-    @commitStore.add changes, aggregate.getId(), aggregate.getVersion()
+    @commitStore.add changes, aggregate.getId(), expectedVersion

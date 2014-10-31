@@ -10,10 +10,10 @@ class Space.cqrs.SagaRepository
     events = @commitStore.getEvents sagaId
     return new SagaType sagaId, events
 
-  save: (saga) ->
+  save: (saga, expectedVersion) ->
 
     changes =
       events: saga.getEvents()
       commands: saga.getCommands()
 
-    @commitStore.add changes, saga.getId(), saga.getVersion()
+    @commitStore.add changes, saga.getId(), expectedVersion

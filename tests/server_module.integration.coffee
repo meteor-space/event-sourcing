@@ -48,12 +48,12 @@ class @CustomerApp extends Space.Application
   _registerCustomer: (data) =>
 
     customerRegistration = new CustomerRegistration data.registrationId, data
-    @sagaRepository.save customerRegistration
+    @sagaRepository.save customerRegistration, customerRegistration.getVersion()
 
   _createCustomer: (data) =>
 
     customer = new Customer data.customerId, data
-    @aggregateRepository.save customer
+    @aggregateRepository.save customer, customer.getVersion()
 
   _handleCustomerCreated: (event) =>
 
@@ -62,7 +62,7 @@ class @CustomerApp extends Space.Application
     customerRegistration = @sagaRepository.find CustomerRegistration, registration._id
     customerRegistration.handleCustomerCreated event
 
-    @sagaRepository.save customerRegistration
+    @sagaRepository.save customerRegistration, customerRegistration.getVersion()
 
   _sendWelcomeEmail: (data) =>
 
@@ -82,7 +82,7 @@ class @CustomerApp extends Space.Application
     customerRegistration = @sagaRepository.find CustomerRegistration, registration._id
     customerRegistration.handleWelcomeEmailSent()
 
-    @sagaRepository.save customerRegistration
+    @sagaRepository.save customerRegistration, customerRegistration.getVersion()
 
   _handleRegistrationCompleted: (event) =>
 

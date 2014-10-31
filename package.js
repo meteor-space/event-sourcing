@@ -1,7 +1,7 @@
 Package.describe({
   summary: 'CQRS and Event Sourcing Infrastructure for Meteor.',
   name: 'space:cqrs',
-  version: '2.0.3',
+  version: '2.0.4',
   git: 'https://github.com/CodeAdventure/space-cqrs.git',
 });
 
