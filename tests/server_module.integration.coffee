@@ -248,40 +248,37 @@ describe.server 'Space.cqrs (integration)', ->
       customerName: customer.name
     }
 
-    testAsyncExpectations = ->
+    expect(registrationInitiatedSpy).to.have.been.calledWithMatch new CustomerApp.RegistrationInitiated {
+      sourceId: registration.id
+      version: 1
+      data:
+        customerId: customer.id
+        customerName: customer.name
+    }
 
-      expect(registrationInitiatedSpy).to.have.been.calledWithMatch new CustomerApp.RegistrationInitiated {
-        sourceId: registration.id
-        version: 1
-        data:
-          customerId: customer.id
-          customerName: customer.name
-      }
+    expect(customerCreatedSpy).to.have.been.calledWithMatch new CustomerApp.CustomerCreated {
+      sourceId: customer.id
+      version: 1
+      data:
+        name: customer.name
+    }
 
-      expect(customerCreatedSpy).to.have.been.calledWithMatch new CustomerApp.CustomerCreated {
-        sourceId: customer.id
-        version: 1
-        data:
-          name: customer.name
-      }
+    expect(welcomeEmailTriggeredSpy).to.have.been.calledWithMatch new CustomerApp.WelcomeEmailTriggered {
+      sourceId: registration.id
+      version: 2
+      data:
+        customerId: customer.id
+    }
 
-      expect(welcomeEmailTriggeredSpy).to.have.been.calledWithMatch new CustomerApp.WelcomeEmailTriggered {
-        sourceId: registration.id
-        version: 2
-        data:
-          customerId: customer.id
-      }
+    expect(welcomeEmailSentSpy).to.have.been.calledWithMatch new CustomerApp.WelcomeEmailSent {
+      sourceId: '999'
+      version: 1
+      data:
+        email: "Hello #{customer.name}"
+    }
 
-      expect(welcomeEmailSentSpy).to.have.been.calledWithMatch new CustomerApp.WelcomeEmailSent {
-        sourceId: '999'
-        version: 1
-        data:
-          email: "Hello #{customer.name}"
-      }
+    expect(registrationCompletedSpy).to.have.been.calledWithMatch new CustomerApp.RegistrationCompleted {
+      sourceId: registration.id
+      version: 3
+    }
 
-      expect(registrationCompletedSpy).to.have.been.calledWithMatch new CustomerApp.RegistrationCompleted {
-        sourceId: registration.id
-        version: 3
-      }
-
-    Meteor.setTimeout waitFor(testAsyncExpectations), 50
