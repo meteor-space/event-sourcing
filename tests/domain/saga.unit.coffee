@@ -20,7 +20,7 @@ describe "#{Saga}", ->
 
     it 'allows to add commands', ->
       command = new TestCommand()
-      @saga.addCommand command
+      @saga.trigger command
 
       expect(@saga.getCommands()).to.eql [command]
 

@@ -8,27 +8,21 @@ class @CustomerApp extends Space.Application
   Dependencies:
     commandBus: 'Space.cqrs.CommandBus'
     eventBus: 'Space.cqrs.EventBus'
-    aggregateRepository: 'Space.cqrs.AggregateRepository'
-    sagaRepository: 'Space.cqrs.SagaRepository'
     commits: 'Space.cqrs.CommitCollection'
     Mongo: 'Mongo'
 
-  _greeting: 'Hello'
-  _sagaCollection: null
-
   configure: ->
-    @commandBus.registerHandler CustomerApp.RegisterCustomer, @_registerCustomer
-    @commandBus.registerHandler CustomerApp.CreateCustomer, @_createCustomer
-    @commandBus.registerHandler CustomerApp.SendWelcomeEmail, @_sendWelcomeEmail
+    @injector.map('CustomerRegistrations').toStaticValue new @Mongo.Collection(null)
+    @injector.map(CustomerRegistrationRouter).asSingleton()
+    @injector.map(CustomerRouter).asSingleton()
+    @injector.map(EmailRouter).asSingleton()
+    @injector.map(CustomerRegistrationViewModel).asSingleton()
 
-    @eventBus.subscribe CustomerApp.RegistrationInitiated, @_createRegistration
-    @eventBus.subscribe CustomerApp.CustomerCreated, @_handleCustomerCreated
-    @eventBus.subscribe CustomerApp.WelcomeEmailSent, @_handleWelcomeEmailSent
-    @eventBus.subscribe CustomerApp.RegistrationCompleted, @_handleRegistrationCompleted
-
-    @_sagaCollection = new @Mongo.Collection null
-
-  setGreeting: (greeting) -> @_greeting = greeting
+  run: ->
+    @injector.create CustomerRegistrationRouter
+    @injector.create CustomerRouter
+    @injector.create EmailRouter
+    @injector.create CustomerRegistrationViewModel
 
   sendCommand: -> @commandBus.send.apply @commandBus, arguments
 
@@ -36,96 +30,36 @@ class @CustomerApp extends Space.Application
 
   resetDatabase: -> @commits._collection.remove {}
 
-  _createRegistration: (event) =>
-
-    @_sagaCollection.insert {
-      _id: event.sourceId
-      customerId: event.data.customerId
-      customerName: event.data.customerName
-      isCompleted: false
-    }
-
-  _registerCustomer: (data) =>
-
-    customerRegistration = new CustomerRegistration data.registrationId, data
-    @sagaRepository.save customerRegistration, customerRegistration.getVersion()
-
-  _createCustomer: (data) =>
-
-    customer = new Customer data.customerId, data
-    @aggregateRepository.save customer, customer.getVersion()
-
-  _handleCustomerCreated: (event) =>
-
-    registration = @_sagaCollection.findOne customerId: event.sourceId
-
-    customerRegistration = @sagaRepository.find CustomerRegistration, registration._id
-    customerRegistration.handleCustomerCreated event
-
-    @sagaRepository.save customerRegistration, customerRegistration.getVersion()
-
-  _sendWelcomeEmail: (data) =>
-
-    # simulate sub-system sending emails
-    @eventBus.publish new CustomerApp.WelcomeEmailSent {
-      sourceId: '999'
-      version: 1
-      data:
-        customerId: data.customerId
-        email: "#{@_greeting} #{data.customerName}"
-    }
-
-  _handleWelcomeEmailSent: (event) =>
-
-    registration = @_sagaCollection.findOne customerId: event.data.customerId
-
-    customerRegistration = @sagaRepository.find CustomerRegistration, registration._id
-    customerRegistration.handleWelcomeEmailSent()
-
-    @sagaRepository.save customerRegistration, customerRegistration.getVersion()
-
-  _handleRegistrationCompleted: (event) =>
-
-    @_sagaCollection.update { _id: event.sourceId }, $set: isCompleted: true
-
 
 # -------------- COMMANDS ---------------
 
 class CustomerApp.RegisterCustomer extends Space.cqrs.Command
-
   @type 'CustomerApp.RegisterCustomer'
   constructor: (data) -> { @registrationId, @customerId, @version, @customerName } = data
 
 class CustomerApp.CreateCustomer extends Space.cqrs.Command
-
   @type 'CustomerApp.CreateCustomer'
   constructor: (data) -> { @customerId, @version, @name } = data
 
 class CustomerApp.SendWelcomeEmail extends Space.cqrs.Command
-
   @type 'CustomerApp.SendWelcomeEmail'
   constructor: (data) -> { @customerId, @version, @customerName } = data
 
 # --------------- EVENTS ---------------
 
 class CustomerApp.RegistrationInitiated extends Space.cqrs.Event
-
   @type 'CustomerApp.RegistrationInitiated'
 
 class CustomerApp.CustomerCreated extends Space.cqrs.Event
-
   @type 'CustomerApp.CustomerCreated'
 
 class CustomerApp.WelcomeEmailTriggered extends Space.cqrs.Event
-
   @type 'CustomerApp.WelcomeEmailTriggered'
 
 class CustomerApp.WelcomeEmailSent extends Space.cqrs.Event
-
   @type 'CustomerApp.WelcomeEmailSent'
 
 class CustomerApp.RegistrationCompleted extends Space.cqrs.Event
-
   @type 'CustomerApp.RegistrationCompleted'
 
 # -------------- ENTITIES ---------------
@@ -134,108 +68,163 @@ class Customer extends Space.cqrs.AggregateRoot
 
   _name: null
 
-  constructor: (id, data) ->
+  initialize: (id, data) ->
 
-    super(id)
+    @record new CustomerApp.CustomerCreated {
+      sourceId: id
+      data:
+        name: data.name
+    }
 
-    @mapEvents CustomerApp.CustomerCreated, @_applyCustomerCreated
-
-    if @isHistory data then @loadHistory data
-    else
-      # new customer
-      @applyEvent new CustomerApp.CustomerCreated {
-        sourceId: id
-        data:
-          name: data.name
-      }
-
-  _applyCustomerCreated: (event) -> @_name = event.data.name
+  @handle CustomerApp.CustomerCreated, (event) -> @_name = event.data.name
 
 # -------------- SAGAS ---------------
 
 class CustomerRegistration extends Space.cqrs.Saga
+
+  _customerId: null
+  _customerName: null
 
   @STATES:
     creatingCustomer: 0
     sendingWelcomeEmail: 1
     completed: 2
 
-  _customerId: null
-  _customerName: null
+  initialize: (id, data) ->
 
-  constructor: (id, data) ->
+    @trigger new CustomerApp.CreateCustomer {
+      customerId: data.customerId
+      name: data.customerName
+    }
 
-    super(id)
-
-    @mapEvents(
-      CustomerApp.RegistrationInitiated, @_initiate
-      CustomerApp.WelcomeEmailTriggered, @_handleWelcomeEmailTriggered
-      CustomerApp.RegistrationCompleted, @_complete
-    )
-
-    if @isHistory data then @loadHistory data
-    else
-
-      @addCommand new CustomerApp.CreateCustomer {
+    @record new CustomerApp.RegistrationInitiated {
+      sourceId: id
+      data:
         customerId: data.customerId
-        name: data.customerName
-      }
+        customerName: data.customerName
+    }
 
-      @applyEvent new CustomerApp.RegistrationInitiated {
-        sourceId: id
-        data:
-          customerId: data.customerId
-          customerName: data.customerName
-      }
+  onCustomerCreated: (event) ->
 
-  handleCustomerCreated: (event) ->
-
-    @addCommand new CustomerApp.SendWelcomeEmail {
+    @trigger new CustomerApp.SendWelcomeEmail {
       customerId: @_customerId
       customerName: @_customerName
     }
 
-    @applyEvent new CustomerApp.WelcomeEmailTriggered {
+    @record new CustomerApp.WelcomeEmailTriggered {
       sourceId: @getId()
       data:
         customerId: @_customerId
     }
 
-  handleWelcomeEmailSent: (event) ->
-    @applyEvent new CustomerApp.RegistrationCompleted sourceId: @getId()
+  onWelcomeEmailSent: (event) ->
+    @record new CustomerApp.RegistrationCompleted sourceId: @getId()
 
-  _initiate: (event) ->
+  @handle CustomerApp.RegistrationInitiated, (event) ->
     @_customerId = event.data.customerId
     @_customerName = event.data.customerName
     @transitionTo CustomerRegistration.STATES.creatingCustomer
 
-  _handleWelcomeEmailTriggered: ->
+  @handle CustomerApp.WelcomeEmailTriggered, ->
     @transitionTo CustomerRegistration.STATES.sendingWelcomeEmail
 
-  _complete: -> @transitionTo CustomerRegistration.STATES.completed
+  @handle CustomerApp.RegistrationCompleted, ->
+    @transitionTo CustomerRegistration.STATES.completed
+
+
+# -------------- ROUTERS --------------- #
+
+class CustomerRegistrationRouter extends Space.cqrs.MessageHandler
+
+  @toString: -> 'CustomerRegistrationRouter'
+
+  Dependencies:
+    repository: 'Space.cqrs.SagaRepository'
+    registrations: 'CustomerRegistrations'
+
+  @handle CustomerApp.RegisterCustomer, (data) ->
+
+    customerRegistration = new CustomerRegistration data.registrationId, data
+    @repository.save customerRegistration, customerRegistration.getVersion()
+
+  @handle CustomerApp.CustomerCreated, (event) ->
+
+    registration = @registrations.findOne customerId: event.sourceId
+    customerRegistration = @repository.find CustomerRegistration, registration._id
+    customerRegistration.onCustomerCreated event
+    @repository.save customerRegistration, customerRegistration.getVersion()
+
+  @handle CustomerApp.WelcomeEmailSent, (event) ->
+
+    registration = @registrations.findOne customerId: event.data.customerId
+    customerRegistration = @repository.find CustomerRegistration, registration._id
+    customerRegistration.onWelcomeEmailSent()
+    @repository.save customerRegistration, customerRegistration.getVersion()
+
+
+class CustomerRouter extends Space.cqrs.MessageHandler
+
+  @toString: -> 'CustomerRouter'
+
+  Dependencies:
+    repository: 'Space.cqrs.AggregateRepository'
+
+  @handle CustomerApp.CreateCustomer, (data) ->
+
+    customer = new Customer data.customerId, data
+    @repository.save customer, customer.getVersion()
+
+class EmailRouter extends Space.cqrs.MessageHandler
+
+  @toString: -> 'EmailRouter'
+
+  Dependencies:
+    eventBus: 'Space.cqrs.EventBus'
+
+  @handle CustomerApp.SendWelcomeEmail, (data) ->
+
+    # simulate sub-system sending emails
+    @eventBus.publish new CustomerApp.WelcomeEmailSent {
+      sourceId: '999'
+      version: 1
+      data:
+        customerId: data.customerId
+        email: "Hello #{data.customerName}"
+    }
+
+# -------------- VIEW MODELS --------------- #
+
+class CustomerRegistrationViewModel extends Space.cqrs.MessageHandler
+
+  @toString: -> 'CustomerRegistrationViewModel'
+
+  Dependencies:
+    registrations: 'CustomerRegistrations'
+
+  @handle CustomerApp.RegistrationInitiated, (event) ->
+
+    @registrations.insert {
+      _id: event.sourceId
+      customerId: event.data.customerId
+      customerName: event.data.customerName
+      isCompleted: false
+    }
+
+  @handle CustomerApp.RegistrationCompleted, (event) ->
+
+    @registrations.update { _id: event.sourceId }, $set: isCompleted: true
+
 
 # ============== INTEGRATION TESTING =============== #
 
 describe.server 'Space.cqrs (integration)', ->
 
-  # commands
-  RegisterCustomer = CustomerApp.RegisterCustomer
-
-  # events
-  RegistrationInitiated = CustomerApp.RegistrationInitiated
-  CustomerCreated = CustomerApp.CustomerCreated
-  WelcomeEmailTriggered = CustomerApp.WelcomeEmailTriggered
-  WelcomeEmailSent = CustomerApp.WelcomeEmailSent
-  RegistrationCompleted = CustomerApp.RegistrationCompleted
-
   # fixtures
   customer = id: '123', name: 'Dominik'
   registration = id: '242'
-  greeting = 'Welcome'
 
   beforeEach ->
     @app = new CustomerApp()
-    @app.setGreeting greeting
     @app.resetDatabase()
     @app.run()
 
@@ -247,13 +236,13 @@ describe.server 'Space.cqrs (integration)', ->
     welcomeEmailSentSpy = sinon.spy()
     registrationCompletedSpy = sinon.spy()
 
-    @app.subscribeTo RegistrationInitiated, registrationInitiatedSpy
-    @app.subscribeTo CustomerCreated, customerCreatedSpy
-    @app.subscribeTo WelcomeEmailTriggered, welcomeEmailTriggeredSpy
-    @app.subscribeTo WelcomeEmailSent, welcomeEmailSentSpy
-    @app.subscribeTo RegistrationCompleted, registrationCompletedSpy
+    @app.subscribeTo CustomerApp.RegistrationInitiated, registrationInitiatedSpy
+    @app.subscribeTo CustomerApp.CustomerCreated, customerCreatedSpy
+    @app.subscribeTo CustomerApp.WelcomeEmailTriggered, welcomeEmailTriggeredSpy
+    @app.subscribeTo CustomerApp.WelcomeEmailSent, welcomeEmailSentSpy
+    @app.subscribeTo CustomerApp.RegistrationCompleted, registrationCompletedSpy
 
-    @app.sendCommand RegisterCustomer, new RegisterCustomer {
+    @app.sendCommand CustomerApp.RegisterCustomer, new CustomerApp.RegisterCustomer {
       registrationId: registration.id
       customerId: customer.id
       customerName: customer.name
@@ -261,7 +250,7 @@ describe.server 'Space.cqrs (integration)', ->
 
     testAsyncExpectations = ->
 
-      expect(registrationInitiatedSpy).to.have.been.calledWithMatch new RegistrationInitiated {
+      expect(registrationInitiatedSpy).to.have.been.calledWithMatch new CustomerApp.RegistrationInitiated {
         sourceId: registration.id
         version: 1
         data:
@@ -269,28 +258,28 @@ describe.server 'Space.cqrs (integration)', ->
           customerName: customer.name
       }
 
-      expect(customerCreatedSpy).to.have.been.calledWithMatch new CustomerCreated {
+      expect(customerCreatedSpy).to.have.been.calledWithMatch new CustomerApp.CustomerCreated {
         sourceId: customer.id
         version: 1
         data:
           name: customer.name
       }
 
-      expect(welcomeEmailTriggeredSpy).to.have.been.calledWithMatch new WelcomeEmailTriggered {
+      expect(welcomeEmailTriggeredSpy).to.have.been.calledWithMatch new CustomerApp.WelcomeEmailTriggered {
         sourceId: registration.id
         version: 2
         data:
           customerId: customer.id
       }
 
-      expect(welcomeEmailSentSpy).to.have.been.calledWithMatch new WelcomeEmailSent {
+      expect(welcomeEmailSentSpy).to.have.been.calledWithMatch new CustomerApp.WelcomeEmailSent {
         sourceId: '999'
         version: 1
         data:
-          email: "#{greeting} #{customer.name}"
+          email: "Hello #{customer.name}"
       }
 
-      expect(registrationCompletedSpy).to.have.been.calledWithMatch new RegistrationCompleted {
+      expect(registrationCompletedSpy).to.have.been.calledWithMatch new CustomerApp.RegistrationCompleted {
         sourceId: registration.id
         version: 3
       }

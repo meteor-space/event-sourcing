@@ -1,16 +1,16 @@
 
 class Space.cqrs.Saga extends Space.cqrs.AggregateRoot
 
-  @toString: -> 'Space.cqrs.Saga'
-
   _state: null
   _commands: null
 
-  constructor: (id) ->
-    super(id)
-    @_commands = []
+  @toString: -> 'Space.cqrs.Saga'
 
-  addCommand: (command) -> @_commands.push command
+  constructor: (id, data) ->
+    @_commands = []
+    super(id, data)
+
+  trigger: (command) -> @_commands.push command
 
   getCommands: -> @_commands
 

@@ -3,27 +3,37 @@ Event = Space.cqrs.Event
 
 class Space.cqrs.AggregateRoot
 
-  @toString: -> 'Space.cqrs.AggregateRoot'
-
   _id: null
   _version: 0
   _events: null
-  _eventHandler: null
 
-  # ============= PUBLIC ============ #
+  @toString: -> 'Space.cqrs.AggregateRoot'
 
-  @UID_REQUIRED_ERROR = "#{AggregateRoot}: AggregateRoot needs an UID on creation."
-  @DOMAIN_EVENT_REQUIRED_ERROR = "#{AggregateRoot}: Event must inherit from Space.cqrs.Event"
-  @CANNOT_HANDLE_EVENT_ERROR = "#{AggregateRoot}: Cannot handle event of type: "
-  @INVALID_EVENT_SOURCE_ID_ERROR = "#{AggregateRoot}: The given event has an invalid source id."
+  @ERRORS:
+    uuidRequired: "#{AggregateRoot}: AggregateRoot needs an UID on creation."
+    domainEventRequired: "#{AggregateRoot}: Event must inherit from Space.cqrs.Event"
+    cannotHandleEvent: "#{AggregateRoot}: Cannot handle event of type: "
+    invalidEventSourceId: "#{AggregateRoot}: The given event has an invalid source id."
 
-  constructor: (id) ->
+  @handle: (eventType, handler) ->
 
-    unless id? then throw new Error AggregateRoot.UID_REQUIRED_ERROR
+    # create event handlers cache if it doesnt exist yet
+    unless @_eventHandlers? then @_eventHandlers = {}
+
+    @_eventHandlers[eventType.toString()] = handler
+
+  constructor: (id, data) ->
+
+    unless id? then throw new Error AggregateRoot.ERRORS.uuidRequired
 
     @_id = id
     @_events = []
-    @_eventHandler = {}
+
+    if @isHistory(data) then @replayHistory(data) else @initialize(id, data)
+
+    return this
+
+  initialize: ->
 
   getId: -> @_id
 
@@ -31,37 +41,37 @@ class Space.cqrs.AggregateRoot
 
   getEvents: -> @_events
 
-  mapEvents: ->
+  record: (event) ->
+    @_validateEvent event
+    @_events.push event
 
-    events = Array.prototype.slice.call arguments
-
-    if events.length % 2 != 0
-      throw new Error "mapEvents must take an even number of arguments."
-
-    for type, index in events by 2
-      @_eventHandler[type.toString()] = events[index+1]
-
-  applyEvent: (event) ->
-    @_handleEvent event
-    @_appendEvent event
-
-  replayEvent: (event) -> @_handleEvent event
+  replay: (event) -> @_handleEvent event, this
 
   isHistory: (data) -> toString.call(data) == '[object Array]'
 
-  loadHistory: (history) -> @replayEvent(event) for event in history
+  replayHistory: (history) -> @replay(event) for event in history
 
   # ============= PRIVATE ============ #
 
-  _appendEvent: (event) -> @_events.push event
+  _getEventHandler: (event) ->
+    if @constructor._eventHandlers? then @constructor._eventHandlers[event.type]
+
+  _validateEvent: (event) ->
+
+    unless event instanceof Event
+      throw new Error AggregateRoot.ERRORS.domainEventRequired
+
+    unless event.sourceId is @getId()
+      throw new Error AggregateRoot.ERRORS.invalidEventSourceId
+
+    unless @_getEventHandler(event)?
+      throw new Error AggregateRoot.ERRORS.cannotHandleEvent + event.type
 
   _handleEvent: (event) ->
 
-    unless event instanceof Event then throw new Error AggregateRoot.DOMAIN_EVENT_REQUIRED_ERROR
-    unless event.sourceId is @_id then throw new Error AggregateRoot.INVALID_EVENT_SOURCE_ID_ERROR
+    @_validateEvent event
 
-    handler = @_eventHandler[event.type]
-    unless handler? then throw new Error AggregateRoot.CANNOT_HANDLE_EVENT_ERROR + event.type
+    handler = @_getEventHandler event
     handler.call this, event
 
     if event.version? then @_version = event.version

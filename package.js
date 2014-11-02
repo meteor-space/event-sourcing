@@ -32,6 +32,7 @@ Package.onUse(function(api) {
     'source/infrastructure/commit_collection.coffee',
     'source/infrastructure/commit_store.coffee',
     'source/infrastructure/commit_publisher.coffee',
+    'source/infrastructure/message_handler.coffee',
 
   ], 'server');
 
