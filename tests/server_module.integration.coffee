@@ -9,9 +9,14 @@ class @CustomerApp extends Space.Application
     commandBus: 'Space.cqrs.CommandBus'
     eventBus: 'Space.cqrs.EventBus'
     commits: 'Space.cqrs.CommitCollection'
+    configuration: 'Space.cqrs.Configuration'
     Mongo: 'Mongo'
 
   configure: ->
+
+    @configuration.createMeteorMethods = false
+    @configuration.useInMemoryCollections = true
+
     @injector.map('CustomerRegistrations').toStaticValue new @Mongo.Collection(null)
     @injector.map(CustomerRegistrationRouter).asSingleton()
     @injector.map(CustomerRouter).asSingleton()
