@@ -15,7 +15,8 @@ class Space.cqrs.CommitCollection
       @_collection = new @mongo.Collection null
     else
       @_collection = new @mongo.Collection 'space_cqrs_commits'
-      @_collection._ensureIndex { "sourceId": 1, "version": 1 }, unique: true
+
+    @_collection._ensureIndex { "sourceId": 1, "version": 1 }, unique: true
 
   findOne: -> @_collection.findOne.apply @_collection, arguments
 
