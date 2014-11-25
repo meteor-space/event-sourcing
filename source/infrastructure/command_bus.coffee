@@ -5,15 +5,18 @@ class Space.cqrs.CommandBus
 
   Dependencies:
     meteor: 'Meteor'
+    configuration: 'Space.cqrs.Configuration'
 
   _meteorMethod: 'space-cqrs-handle-command'
   _handlers: null
 
   onDependenciesReady: ->
 
-    if @meteor.isServer
+    if !@meteor.isServer then return
 
-      @_handlers = {}
+    @_handlers = {}
+
+    if @configuration.createMeteorMethods
 
       commandBusMethods = {}
       commandBusMethods[@_meteorMethod] = @_handleCommand

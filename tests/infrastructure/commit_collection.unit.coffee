@@ -19,6 +19,7 @@ describe "#{CommitCollection}", ->
 
     sut = new CommitCollection()
     sut.mongo = @mongo
+    sut.configuration = useInMemoryCollections: false
 
   it 'defines Mongo as its dependency', ->
     expect(CommitCollection::Dependencies.mongo).to.equal 'Mongo'

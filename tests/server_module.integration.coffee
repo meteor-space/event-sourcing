@@ -228,7 +228,7 @@ describe.server 'Space.cqrs (integration)', ->
     @app.resetDatabase()
     @app.run()
 
-  it 'handles commands and publishes events correctly', (waitFor) ->
+  it 'handles commands and publishes events correctly', ->
 
     registrationInitiatedSpy = sinon.spy()
     customerCreatedSpy = sinon.spy()

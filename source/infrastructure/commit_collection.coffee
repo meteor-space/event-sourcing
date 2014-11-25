@@ -5,13 +5,17 @@ class Space.cqrs.CommitCollection
 
   Dependencies:
     mongo: 'Mongo'
+    configuration: 'Space.cqrs.Configuration'
 
   _collection: null
 
   onDependenciesReady: ->
 
-    @_collection = new @mongo.Collection 'space_cqrs_commits'
-    @_collection._ensureIndex { "sourceId": 1, "version": 1 }, unique: true
+    if @configuration.useInMemoryCollections
+      @_collection = new @mongo.Collection null
+    else
+      @_collection = new @mongo.Collection 'space_cqrs_commits'
+      @_collection._ensureIndex { "sourceId": 1, "version": 1 }, unique: true
 
   findOne: -> @_collection.findOne.apply @_collection, arguments
 
