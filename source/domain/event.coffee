@@ -8,7 +8,7 @@ class Space.cqrs.Event
     @toString = -> value
 
   @ERRORS:
-    typeRequiredError: "#{Event}: event type is required."
+    typeRequiredError: "#{Event}: you must specify an event type."
     paramsRequiredError: "#{Event}: params are required."
     sourceIdRequired: "#{Event}: sourceId is required."
 
@@ -19,11 +19,11 @@ class Space.cqrs.Event
 
   constructor: (params) ->
 
-    if !@type? and !params.type? then throw new Error Event.ERRORS.typeRequiredError
+    unless params.type? or @type? then throw new Error Event.ERRORS.typeRequiredError
     if not params? then throw new Error Event.ERRORS.paramsRequiredError
     if not params.sourceId? then throw new Error Event.ERRORS.sourceIdRequired
 
-    @type ?= params.type
+    @type = params.type or @type # assign prototype value to instance
     @sourceId = params.sourceId
     @data = if params.data? then params.data else {}
     @version = if params.version? then params.version else null
