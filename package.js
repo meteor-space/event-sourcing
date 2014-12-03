@@ -1,7 +1,7 @@
 Package.describe({
   summary: 'CQRS and Event Sourcing Infrastructure for Meteor.',
   name: 'space:cqrs',
-  version: '2.1.5',
+  version: '2.1.6',
   git: 'https://github.com/CodeAdventure/space-cqrs.git',
 });
 
@@ -19,7 +19,6 @@ Package.onUse(function(api) {
   api.addFiles([
 
     'source/server.coffee',
-    'source/configuration.coffee',
 
     // DOMAIN
     'source/domain/event.coffee',
@@ -46,6 +45,7 @@ Package.onUse(function(api) {
   // ========= shared =========
 
   api.addFiles([
+    'source/configuration.coffee',
     // DOMAIN
     'source/domain/command.coffee',
     // INFRASTRUCTURE
