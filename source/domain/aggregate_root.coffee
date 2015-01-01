@@ -42,7 +42,7 @@ class Space.cqrs.AggregateRoot
   getEvents: -> @_events
 
   record: (event) ->
-    @_validateEvent event
+    @_handleEvent event
     @_events.push event
 
   replay: (event) -> @_handleEvent event, this

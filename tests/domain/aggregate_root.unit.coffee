@@ -50,8 +50,15 @@ describe "#{AggregateRoot}", ->
 
   describe "#record", ->
 
-    it 'takes a domain event as required parameter', ->
-      expect(=> @aggregate.record(@event)).not.to.throw Error
+    it 'handles the given event', ->
+
+      @aggregate.record @event
+      expect(@handler).to.have.been.calledWithExactly @event
+
+    it 'appends the event to the queue', ->
+
+      @aggregate.record @event
+      expect(@aggregate.getEvents()).to.eql [@event]
 
     it 'only takes domain events', ->
 
@@ -67,7 +74,7 @@ describe "#{AggregateRoot}", ->
 
       expect(-> aggregate.record event).to.throw expectedError
 
-    it 'no events get appended when something fails', ->
+    it 'does not append the event to the queue if something fails', ->
 
       expect(=> @aggregate.record()).to.throw Error
       expect(=> @aggregate.record 'unknownEvent', {}).to.throw Error
