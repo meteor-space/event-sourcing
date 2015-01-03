@@ -5,6 +5,7 @@ class Space.cqrs.MessageHandler
     eventBus: 'Space.cqrs.EventBus'
     commandBus: 'Space.cqrs.CommandBus'
     util: 'underscore'
+    meteor: 'Meteor'
 
   @toString: -> 'Space.cqrs.MessageHandler'
 
@@ -14,10 +15,12 @@ class Space.cqrs.MessageHandler
   onDependenciesReady: ->
 
     for type, eventHandler of @constructor._eventHandlers
-      @eventBus.subscribe type, @util.bind(eventHandler, this)
+      eventHandler = @util.bind(eventHandler, this)
+      @eventBus.subscribe type, @meteor.bindEnvironment(eventHandler)
 
     for type, commandHandler of @constructor._commandHandlers
-      @commandBus.registerHandler type, @util.bind(commandHandler, this)
+      commandHandler = @util.bind(commandHandler, this)
+      @commandBus.registerHandler type, @meteor.bindEnvironment(commandHandler)
 
   @handle: (messageType, handler) ->
 
