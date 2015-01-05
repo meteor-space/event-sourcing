@@ -59,8 +59,8 @@ Package.onTest(function(api) {
   api.use([
     'coffeescript',
     'space:cqrs',
-    'spacejamio:munit@2.0.2',
-    'space:testing@1.1.0'
+    'practicalmeteor:munit@2.0.2',
+    'space:testing@1.1.1'
   ]);
 
   api.addFiles([
