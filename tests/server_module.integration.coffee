@@ -1,14 +1,12 @@
 
 # ============== INTEGRATION SETUP =============== #
 
-class @CustomerApp extends Space.Application
+class CustomerApp extends Space.Application
 
   RequiredModules: ['Space.cqrs']
 
   Dependencies:
-    commandBus: 'Space.cqrs.CommandBus'
     eventBus: 'Space.cqrs.EventBus'
-    commits: 'Space.cqrs.CommitCollection'
     configuration: 'Space.cqrs.Configuration'
     Mongo: 'Mongo'
 
@@ -16,6 +14,9 @@ class @CustomerApp extends Space.Application
 
     @configuration.createMeteorMethods = false
     @configuration.useInMemoryCollections = true
+
+    @commandBus = @injector.get 'Space.cqrs.CommandBus'
+    @commits = @injector.get 'Space.cqrs.CommitCollection'
 
     @injector.map('CustomerRegistrations').toStaticValue new @Mongo.Collection(null)
     @injector.map(CustomerRegistrationRouter).asSingleton()
@@ -67,7 +68,7 @@ class CustomerApp.WelcomeEmailSent extends Space.cqrs.Event
 class CustomerApp.RegistrationCompleted extends Space.cqrs.Event
   @type 'CustomerApp.RegistrationCompleted'
 
-# -------------- ENTITIES ---------------
+# -------------- AGGREGATES ---------------
 
 class Customer extends Space.cqrs.AggregateRoot
 
@@ -286,4 +287,3 @@ describe.server 'Space.cqrs (integration)', ->
       sourceId: registration.id
       version: 3
     }
-
