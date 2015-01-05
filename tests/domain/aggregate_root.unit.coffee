@@ -6,12 +6,14 @@ Event = Space.cqrs.Event
 
 describe "#{AggregateRoot}", ->
 
+  class TestEvent extends Event
+    @type 'TestEvent'
+
   beforeEach ->
 
     @aggregateId = '123'
 
-    @event = event = new Event {
-      type: 'test'
+    @event = event = new TestEvent {
       sourceId: @aggregateId
       data: {}
       version: 2
@@ -21,7 +23,7 @@ describe "#{AggregateRoot}", ->
 
     class TestAggregate extends AggregateRoot
 
-      @handle event.type, handler
+      @handle event.typeName(), handler
 
     @aggregate = new TestAggregate @aggregateId
 
@@ -67,10 +69,10 @@ describe "#{AggregateRoot}", ->
 
     it 'throws if no handler is defined for the event', ->
 
-      event = new Event type: 'Event', sourceId: '123'
+      event = new TestEvent sourceId: '123'
       aggregate = new AggregateRoot '123'
 
-      expectedError = AggregateRoot.ERRORS.cannotHandleEvent + 'Event'
+      expectedError = AggregateRoot.ERRORS.cannotHandleEvent + event.typeName()
 
       expect(-> aggregate.record event).to.throw expectedError
 
@@ -107,12 +109,12 @@ describe "#{AggregateRoot}", ->
 
     it 'also accepts events that have no version', ->
 
-      @aggregate.replay new Event type: @event.type, sourceId: @aggregateId
+      @aggregate.replay new TestEvent sourceId: @aggregateId
       expect(@aggregate.getVersion()).to.equal 0
 
     it 'only replays events that have the right source id', ->
 
-      event = new Event type: @event.type, sourceId: 'otherId'
+      event = new TestEvent sourceId: 'otherId'
       expect(=> @aggregate.replay event).to.throw AggregateRoot.INVALID_EVENT_SOURCE_ID_ERROR
 
   describe '#isHistory', ->
@@ -123,6 +125,15 @@ describe "#{AggregateRoot}", ->
 
   describe '#replayHistory', ->
 
+    class Created extends Event
+      @type 'Created'
+
+    class SomethingChanged extends Event
+      @type 'SomethingChanged'
+
+    class ChangedAgain extends Event
+      @type 'ChangedAgain'
+
     it 'replays given historic events on the aggregate', ->
 
       id = '123'
@@ -131,9 +142,9 @@ describe "#{AggregateRoot}", ->
       replaySpy = sinon.stub aggregate, 'replay'
 
       history = [
-        new Event type: 'created', sourceId: id, data: {}, version: 1
-        new Event type: 'somethingChanged', sourceId: id, data: {}, version: 2
-        new Event type: 'changedAgain', sourceId: id, data: {}, version: 3
+        new Created sourceId: id, data: {}, version: 1
+        new SomethingChanged sourceId: id, data: {}, version: 2
+        new ChangedAgain sourceId: id, data: {}, version: 3
       ]
 
       aggregate.replayHistory history

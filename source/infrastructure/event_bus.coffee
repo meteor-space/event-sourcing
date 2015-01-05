@@ -7,9 +7,9 @@ class Space.cqrs.EventBus
 
   publish: (event) ->
 
-    if @_handlers[event.type]?
-      handler(event) for handler in @_handlers[event.type]
+    if @_handlers[event.typeName()]?
+      handler(event) for handler in @_handlers[event.typeName()]
 
-  subscribe: (eventType, handler) -> (@_handlers[eventType] ?= []).push handler
+  subscribe: (typeName, handler) -> (@_handlers[typeName] ?= []).push handler
 
   @toString: -> 'Space.cqrs.EventBus'

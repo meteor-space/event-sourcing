@@ -1,6 +1,4 @@
 
-globalNamespace = this
-
 class Space.cqrs.CommitStore
 
   @toString: -> 'Space.cqrs.CommitStore'
@@ -11,8 +9,6 @@ class Space.cqrs.CommitStore
   Dependencies:
     commits: 'Space.cqrs.CommitCollection'
     publisher: 'Space.cqrs.CommitPublisher'
-
-  constructor: -> @globalNamespace = globalNamespace
 
   add: (changes, sourceId, expectedVersion) ->
 
@@ -67,9 +63,7 @@ class Space.cqrs.CommitStore
 
       for event in commit.changes.events
         event.version = commit.version
-        eventClass = @_lookupClass event.type
-
-        events.push new eventClass(event)
+        events.push event
 
     return events
 
@@ -77,15 +71,3 @@ class Space.cqrs.CommitStore
 
     pendingCommits = @commits.find { isPublished: false }, sort: ['version', 'asc']
     pendingCommits.forEach (commit) => @publisher.publishCommit commit
-
-  _lookupClass: (identifier) ->
-    namespace = @globalNamespace
-    path = identifier.split '.'
-
-    for segment in path
-      namespace = namespace[segment]
-
-    if not namespace?
-      throw new Error CommitStore.ERRORS.EVENT_CLASS_LOOKUP_FAILED + "<#{identifier}>"
-
-    return namespace

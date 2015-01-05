@@ -226,8 +226,8 @@ class CustomerRegistrationViewModel extends Space.cqrs.MessageHandler
 describe.server 'Space.cqrs (integration)', ->
 
   # fixtures
-  customer = id: '123', name: 'Dominik'
-  registration = id: '242'
+  customer = id: 'customer_123', name: 'Dominik'
+  registration = id: 'registration_123'
 
   beforeEach ->
     @app = new CustomerApp()
@@ -248,7 +248,7 @@ describe.server 'Space.cqrs (integration)', ->
     @app.subscribeTo CustomerApp.WelcomeEmailSent, welcomeEmailSentSpy
     @app.subscribeTo CustomerApp.RegistrationCompleted, registrationCompletedSpy
 
-    @app.sendCommand CustomerApp.RegisterCustomer, new CustomerApp.RegisterCustomer {
+    @app.sendCommand new CustomerApp.RegisterCustomer {
       registrationId: registration.id
       customerId: customer.id
       customerName: customer.name

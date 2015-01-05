@@ -1,68 +1,53 @@
 
 CommitStore = Space.cqrs.CommitStore
 Event = Space.cqrs.Event
-globalNamespace = this
+Command = Space.cqrs.Command
 
 describe "#{CommitStore}", ->
 
   beforeEach ->
-
-    @testNamespace = {}
-
-    @commits =
-      insert: sinon.spy()
-      find: sinon.stub()
-      findOne: sinon.stub()
-      update: sinon.spy()
-
-    @commitPublisher = publishCommit: sinon.spy()
-
     @commitStore = new CommitStore()
-    @commitStore.commits = @commits
-    @commitStore.publisher = @commitPublisher
-    @commitStore.globalNamespace = @testNamespace
+    @commitStore.commits = new Mongo.Collection(null)
+    @commitStore.publisher = publishCommit: sinon.spy()
 
   it 'defines its dependencies correctly', ->
 
-    expect(CommitStore::Dependencies).to.eql {
+    expect(CommitStore).to.dependOn {
       commits: 'Space.cqrs.CommitCollection'
       publisher: 'Space.cqrs.CommitPublisher'
     }
 
-  it 'uses the global namespace by default', ->
-    store = new CommitStore()
-    expect(store.globalNamespace).to.equal globalNamespace
-
   describe '#add', ->
 
-    it 'inserts given events as versioned commit into the collection', ->
+    class TestEvent extends Event
+      @type 'Space.cqrs.CommitStore.TestEvent'
+
+    class TestCommand extends Command
+      @type 'Space.cqrs.CommitStore.TestCommand'
+
+    it 'inserts given changes as versioned commit', ->
 
       sourceId = '123'
-      testEvent = new Event type: 'testEvent', sourceId: sourceId
-      changes = events: [testEvent]
-      expectedVersion = 1
+      testEvent = new TestEvent sourceId: sourceId
+      testCommand = new TestCommand sourceId: sourceId
+
+      changes = events: [testEvent], commands: [testCommand]
+      expectedVersion = 0
       newVersion = expectedVersion + 1
       lastCommit = version: expectedVersion
 
-      # simulate successful fetch of last batch
-      @commitStore.commits.findOne
-        .withArgs(
-          { sourceId: sourceId }, # selector
-          { sort: [['version', 'desc']], fields: { version: 1 } } # options
-        )
-        .returns lastCommit
-
       @commitStore.add changes, sourceId, expectedVersion
+      addedCommits = @commitStore.commits.find().fetch()
 
       expectedCommit =
         sourceId: sourceId
         version: newVersion
         changes: changes
         isPublished: false
+        _id: addedCommits[0]._id
 
-      expect(@commitStore.commits.insert).to.have.been.calledWithMatch expectedCommit
-
-      expect(@commitPublisher.publishCommit).to.have.been.calledWithMatch expectedCommit
+      expect(addedCommits).to.deep.equal [expectedCommit]
+      expect(@commitStore.publisher.publishCommit).to.have.been.calledWithMatch expectedCommit
 
   describe '#getEvents', ->
 
@@ -70,37 +55,32 @@ describe "#{CommitStore}", ->
 
       sourceId = '123'
 
-      class @testNamespace.CreatedEvent extends Event
-      class @testNamespace.QuantityChangedEvent extends Event
-      class @testNamespace.TotalChangedEvent extends Event
+      class CreatedEvent extends Event
+        @type 'tests.CommitStore.CreatedEvent'
 
-      savedCommits = [
-        {
-          sourceId: sourceId
-          version: 1,
-          changes:
-            events: [
-              { type: 'CreatedEvent', sourceId: sourceId, data: {}, version: 1 }
-            ]
-        },
-        {
-          sourceId: sourceId
-          version: 2,
-          changes:
-            events: [
-              { type: 'QuantityChangedEvent', sourceId: sourceId, data: {}, version: 2 }
-              { type: 'TotalChangedEvent', sourceId: sourceId, data: {}, version: 2 }
-            ]
+      class QuantityChangedEvent extends Event
+
+        @type 'tests.CommitStore.QuantityChangedEvent'
+
+        toJSONValue: -> {
+          sourceId: @sourceId
+          version: @version
+          data:
+            quantity: @data.quantity
         }
+
+      class TotalChangedEvent extends Event
+        @type 'tests.CommitStore.TotalChangedEvent'
+
+      firstChanges = events: [new CreatedEvent sourceId: sourceId]
+
+      secondChanges = events: [
+        new QuantityChangedEvent sourceId: sourceId, data: { quantity: 1 }
+        new TotalChangedEvent sourceId: sourceId, data: { total: 10 }
       ]
 
-      # simulate successful fetch all batches
-      @commitStore.commits.find
-        .withArgs(
-          { sourceId: sourceId }, # selector
-          { sort: [['version', 'asc']] } # options
-        )
-        .returns savedCommits
+      @commitStore.add firstChanges, sourceId, 0
+      @commitStore.add secondChanges, sourceId, 1
 
       events = @commitStore.getEvents sourceId
 
@@ -108,29 +88,7 @@ describe "#{CommitStore}", ->
         expect(event).to.be.instanceof Event
 
       expect(events).to.eql [
-        new @testNamespace.CreatedEvent type: 'CreatedEvent', sourceId: sourceId, version: 1
-        new @testNamespace.QuantityChangedEvent type: 'QuantityChangedEvent', sourceId: sourceId, version: 2
-        new @testNamespace.TotalChangedEvent type: 'TotalChangedEvent', sourceId: sourceId, version: 2
+        new CreatedEvent sourceId: sourceId, version: 1
+        new QuantityChangedEvent sourceId: sourceId, data: { quantity: 1 }, version: 2
+        new TotalChangedEvent sourceId: sourceId, data: { total: 10 }, version: 2
       ]
-
-    it 'throws an error if a given event class could not be found on the namespace', ->
-
-      sourceId = '123'
-
-      savedCommits = [
-        {
-          sourceId: sourceId
-          version: 1,
-          changes:
-            events: [
-              { type: 'UnknownEvent', sourceId: sourceId, data: {}, version: 1 }
-            ]
-        }
-      ]
-
-      # simulate successful fetch all batches
-      @commitStore.commits.find.returns savedCommits
-
-      callWithWrongSavedEvents = => @commitStore.getEvents sourceId
-
-      expect(callWithWrongSavedEvents).to.throw CommitStore.EVENT_CLASS_LOOKUP_ERROR + '<UnknownEvent>'

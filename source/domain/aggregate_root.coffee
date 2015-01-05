@@ -54,7 +54,7 @@ class Space.cqrs.AggregateRoot
   # ============= PRIVATE ============ #
 
   _getEventHandler: (event) ->
-    if @constructor._eventHandlers? then @constructor._eventHandlers[event.type]
+    if @constructor._eventHandlers? then @constructor._eventHandlers[event.typeName()]
 
   _validateEvent: (event) ->
 
@@ -65,7 +65,7 @@ class Space.cqrs.AggregateRoot
       throw new Error AggregateRoot.ERRORS.invalidEventSourceId
 
     unless @_getEventHandler(event)?
-      throw new Error AggregateRoot.ERRORS.cannotHandleEvent + event.type
+      throw new Error AggregateRoot.ERRORS.cannotHandleEvent + event.typeName()
 
   _handleEvent: (event) ->
 

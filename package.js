@@ -11,6 +11,7 @@ Package.onUse(function(api) {
 
   api.use([
     'coffeescript',
+    'ejson',
     'space:base@1.1.0'
   ]);
 
@@ -20,11 +21,6 @@ Package.onUse(function(api) {
 
     'source/server.coffee',
 
-    // DOMAIN
-    'source/domain/event.coffee',
-    'source/domain/aggregate_root.coffee',
-    'source/domain/saga.coffee',
-
     // INFRASTRUCTURE
     'source/infrastructure/aggregate_repository.coffee',
     'source/infrastructure/saga_repository.coffee',
@@ -33,6 +29,12 @@ Package.onUse(function(api) {
     'source/infrastructure/commit_store.coffee',
     'source/infrastructure/commit_publisher.coffee',
     'source/infrastructure/message_handler.coffee',
+    'source/infrastructure/serializable.coffee',
+
+    // DOMAIN
+    'source/domain/event.coffee',
+    'source/domain/aggregate_root.coffee',
+    'source/domain/saga.coffee',
 
   ], 'server');
 
@@ -78,7 +80,7 @@ Package.onTest(function(api) {
     // MODULE
     'tests/server_module.unit.coffee',
     'tests/server_module.integration.coffee',
-
+    
   ], 'server');
 
 });

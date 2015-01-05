@@ -3,6 +3,8 @@ globalNamespace = this
 
 class Space.cqrs.CommandBus
 
+  @toString: -> 'Space.cqrs.CommandBus'
+
   Dependencies:
     meteor: 'Meteor'
     configuration: 'Space.cqrs.Configuration'
@@ -23,39 +25,25 @@ class Space.cqrs.CommandBus
 
       @meteor.methods commandBusMethods
 
-  send: (CommandClass, data, callback) ->
+  send: (command, callback) ->
 
     if @meteor.isClient
-      command = new CommandClass data
-      @meteor.call @_meteorMethod, CommandClass.toString(), command, callback
+      @meteor.call @_meteorMethod, command, callback
     else
-      @_handleCommand CommandClass.toString(), data
+      @_handleCommand command
 
-  registerHandler: (CommandClass, handler) ->
+  registerHandler: (typeName, handler) ->
 
-    if @_handlers[CommandClass]?
-      throw new Error "There is already an handler for #{CommandClass} commands."
+    if @_handlers[typeName]?
+      throw new Error "There is already an handler for #{typeName} commands."
 
-    @_handlers[CommandClass] = handler
+    @_handlers[typeName] = handler
 
-  _handleCommand: (identifier, data) =>
+  _handleCommand: (command, data) =>
 
-    handler = @_handlers[identifier]
+    handler = @_handlers[command.typeName()]
 
-    if handler?
-      commandClass = @_lookupClass(identifier)
-      command = new commandClass(data)
-      handler(command)
-    else
-      throw new @meteor.Error "Missing command handler for <#{identifier}>."
+    if not handler?
+      throw new @meteor.Error "Missing command handler for <#{command.typeName()}>."
 
-  _lookupClass: (identifier) ->
-    namespace = globalNamespace
-    path = identifier.split '.'
-
-    for segment in path
-      namespace = namespace[segment]
-
-    return namespace
-
-  @toString: -> 'Space.cqrs.CommandBus'
+    handler(command)
