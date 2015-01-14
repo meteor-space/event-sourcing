@@ -6,16 +6,12 @@ Event = Space.cqrs.Event
 
 describe "#{AggregateRoot}", ->
 
-  class TestEvent extends Event
-    @type 'TestEvent'
-
   beforeEach ->
 
     @aggregateId = '123'
 
-    @event = event = new TestEvent {
+    @event = event = new Event {
       sourceId: @aggregateId
-      data: {}
       version: 2
     }
 
@@ -69,7 +65,7 @@ describe "#{AggregateRoot}", ->
 
     it 'throws if no handler is defined for the event', ->
 
-      event = new TestEvent sourceId: '123'
+      event = new Event sourceId: '123'
       aggregate = new AggregateRoot '123'
 
       expectedError = AggregateRoot.ERRORS.cannotHandleEvent + event.typeName()
@@ -109,12 +105,12 @@ describe "#{AggregateRoot}", ->
 
     it 'also accepts events that have no version', ->
 
-      @aggregate.replay new TestEvent sourceId: @aggregateId
+      @aggregate.replay new Event sourceId: @aggregateId
       expect(@aggregate.getVersion()).to.equal 0
 
     it 'only replays events that have the right source id', ->
 
-      event = new TestEvent sourceId: 'otherId'
+      event = new Event sourceId: 'otherId'
       expect(=> @aggregate.replay event).to.throw AggregateRoot.INVALID_EVENT_SOURCE_ID_ERROR
 
   describe '#isHistory', ->

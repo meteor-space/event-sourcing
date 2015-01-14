@@ -3,9 +3,6 @@ class Space.cqrs.CommitStore
 
   @toString: -> 'Space.cqrs.CommitStore'
 
-  @ERRORS:
-    EVENT_CLASS_LOOKUP_FAILED = 'Failed to lookup event class:'
-
   Dependencies:
     commits: 'Space.cqrs.CommitCollection'
     publisher: 'Space.cqrs.CommitPublisher'
@@ -34,14 +31,21 @@ class Space.cqrs.CommitStore
 
       newVersion = currentVersion + 1
 
+      # serialize events and commands
+      serializedChanges = events: [], commands: []
+      serializedChanges.events.push(EJSON.stringify(event)) for event in changes.events
+      serializedChanges.commands.push(EJSON.stringify(command)) for command in changes.commands
+
       # insert commit with next version
       commit =
         sourceId: sourceId
         version: newVersion
-        changes: changes
+        changes: serializedChanges # insert EJSON serialized changes
         isPublished: false
 
       commit._id = @commits.insert commit
+      commit.changes = changes # dont publish serialized changes
+
       @publisher.publishCommit commit
 
     else
@@ -62,12 +66,9 @@ class Space.cqrs.CommitStore
     commits.forEach (commit) =>
 
       for event in commit.changes.events
+        event = EJSON.parse(event)
         event.version = commit.version
         events.push event
 
     return events
-
-  publishPendingCommits: ->
-
-    pendingCommits = @commits.find { isPublished: false }, sort: ['version', 'asc']
-    pendingCommits.forEach (commit) => @publisher.publishCommit commit
+    

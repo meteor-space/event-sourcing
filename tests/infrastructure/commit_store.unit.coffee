@@ -23,9 +23,9 @@ describe "#{CommitStore}", ->
       @type 'Space.cqrs.CommitStore.TestEvent'
 
     class TestCommand extends Command
-      @type 'Space.cqrs.CommitStore.TestCommand'
+      @type 'Space.cqrs.CommitStore.TestCommand', -> sourceId: String
 
-    it 'inserts given changes as versioned commit', ->
+    it 'inserts changes as serialized and versioned commit', ->
 
       sourceId = '123'
       testEvent = new TestEvent sourceId: sourceId
@@ -37,17 +37,23 @@ describe "#{CommitStore}", ->
       lastCommit = version: expectedVersion
 
       @commitStore.add changes, sourceId, expectedVersion
-      addedCommits = @commitStore.commits.find().fetch()
+      insertedCommits = @commitStore.commits.find().fetch()
 
-      expectedCommit =
+      serializedCommit =
         sourceId: sourceId
         version: newVersion
-        changes: changes
+        changes:
+          events: [EJSON.stringify(testEvent)]
+          commands: [EJSON.stringify(testCommand)]
         isPublished: false
-        _id: addedCommits[0]._id
+        _id: insertedCommits[0]._id
 
-      expect(addedCommits).to.deep.equal [expectedCommit]
-      expect(@commitStore.publisher.publishCommit).to.have.been.calledWithMatch expectedCommit
+      expect(insertedCommits).to.deep.equal [serializedCommit]
+
+      deserializedCommit = serializedCommit
+      deserializedCommit.changes = changes
+
+      expect(@commitStore.publisher.publishCommit).to.have.been.calledWithMatch deserializedCommit
 
   describe '#getEvents', ->
 
@@ -59,15 +65,7 @@ describe "#{CommitStore}", ->
         @type 'tests.CommitStore.CreatedEvent'
 
       class QuantityChangedEvent extends Event
-
         @type 'tests.CommitStore.QuantityChangedEvent'
-
-        toJSONValue: -> {
-          sourceId: @sourceId
-          version: @version
-          data:
-            quantity: @data.quantity
-        }
 
       class TotalChangedEvent extends Event
         @type 'tests.CommitStore.TotalChangedEvent'
