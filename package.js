@@ -50,6 +50,7 @@ Package.onUse(function(api) {
     'source/configuration.coffee',
     // DOMAIN
     'source/domain/command.coffee',
+    'source/domain/value_object.coffee',
     // INFRASTRUCTURE
     'source/infrastructure/command_bus.coffee'
   ]);
