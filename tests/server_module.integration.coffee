@@ -70,7 +70,7 @@ class CustomerApp.RegistrationCompleted extends Space.cqrs.Event
 
 # -------------- AGGREGATES ---------------
 
-class Customer extends Space.cqrs.AggregateRoot
+class Customer extends Space.cqrs.Aggregate
 
   _name: null
 

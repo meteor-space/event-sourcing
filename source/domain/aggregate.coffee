@@ -1,19 +1,19 @@
 
 Event = Space.cqrs.Event
 
-class Space.cqrs.AggregateRoot
+class Space.cqrs.Aggregate
 
   _id: null
   _version: 0
   _events: null
 
-  @toString: -> 'Space.cqrs.AggregateRoot'
+  @toString: -> 'Space.cqrs.Aggregate'
 
   @ERRORS:
-    uuidRequired: "#{AggregateRoot}: AggregateRoot needs an UID on creation."
-    domainEventRequired: "#{AggregateRoot}: Event must inherit from Space.cqrs.Event"
-    cannotHandleEvent: "#{AggregateRoot}: Cannot handle event of type: "
-    invalidEventSourceId: "#{AggregateRoot}: The given event has an invalid source id."
+    uuidRequired: "#{Aggregate}: Aggregate needs an UID on creation."
+    domainEventRequired: "#{Aggregate}: Event must inherit from Space.cqrs.Event"
+    cannotHandleEvent: "#{Aggregate}: Cannot handle event of type: "
+    invalidEventSourceId: "#{Aggregate}: The given event has an invalid source id."
 
   @handle: (eventType, handler) ->
 
@@ -24,7 +24,7 @@ class Space.cqrs.AggregateRoot
 
   constructor: (id, data) ->
 
-    unless id? then throw new Error AggregateRoot.ERRORS.uuidRequired
+    unless id? then throw new Error Aggregate.ERRORS.uuidRequired
 
     @_id = id
     @_events = []
@@ -59,13 +59,13 @@ class Space.cqrs.AggregateRoot
   _validateEvent: (event) ->
 
     unless event instanceof Event
-      throw new Error AggregateRoot.ERRORS.domainEventRequired
+      throw new Error Aggregate.ERRORS.domainEventRequired
 
     unless event.sourceId is @getId()
-      throw new Error AggregateRoot.ERRORS.invalidEventSourceId
+      throw new Error Aggregate.ERRORS.invalidEventSourceId
 
     unless @_getEventHandler(event)?
-      throw new Error AggregateRoot.ERRORS.cannotHandleEvent + event.typeName()
+      throw new Error Aggregate.ERRORS.cannotHandleEvent + event.typeName()
 
   _handleEvent: (event) ->
 

@@ -1,10 +1,10 @@
 
-AggregateRoot = Space.cqrs.AggregateRoot
+Aggregate = Space.cqrs.Aggregate
 Event = Space.cqrs.Event
 
 # ========================= CONSTRUCTION ============================== #
 
-describe "#{AggregateRoot}", ->
+describe "#{Aggregate}", ->
 
   beforeEach ->
 
@@ -17,7 +17,7 @@ describe "#{AggregateRoot}", ->
 
     @handler = handler = sinon.spy()
 
-    class TestAggregate extends AggregateRoot
+    class TestAggregate extends Aggregate
 
       @handle event.typeName(), handler
 
@@ -27,21 +27,21 @@ describe "#{AggregateRoot}", ->
   describe 'construction', ->
 
     it 'requires an id on creation', ->
-      expect(-> new AggregateRoot()).to.throw AggregateRoot.UID_REQUIRED_ERROR
+      expect(-> new Aggregate()).to.throw Aggregate.UID_REQUIRED_ERROR
 
     it 'makes the id publicly available', ->
       id = '123'
-      aggregate = new AggregateRoot id
+      aggregate = new Aggregate id
 
       expect(aggregate.getId()).to.equal id
 
     it 'initializes uncommitted changes to empty array', ->
-      aggregate = new AggregateRoot '123'
+      aggregate = new Aggregate '123'
 
       expect(aggregate.getEvents()).to.eql []
 
     it 'sets the initial version to 0', ->
-      aggregate = new AggregateRoot '123'
+      aggregate = new Aggregate '123'
 
       expect(aggregate.getVersion()).to.eql 0
 
@@ -61,14 +61,14 @@ describe "#{AggregateRoot}", ->
     it 'only takes domain events', ->
 
       event = type: 'Test', aggregateId: 'bla'
-      expect(=> @aggregate.record(event)).to.throw AggregateRoot.ERRORS.domainEventRequired
+      expect(=> @aggregate.record(event)).to.throw Aggregate.ERRORS.domainEventRequired
 
     it 'throws if no handler is defined for the event', ->
 
       event = new Event sourceId: '123'
-      aggregate = new AggregateRoot '123'
+      aggregate = new Aggregate '123'
 
-      expectedError = AggregateRoot.ERRORS.cannotHandleEvent + event.typeName()
+      expectedError = Aggregate.ERRORS.cannotHandleEvent + event.typeName()
 
       expect(-> aggregate.record event).to.throw expectedError
 
@@ -95,8 +95,8 @@ describe "#{AggregateRoot}", ->
 
       aggregate = @aggregate
 
-      expect(-> aggregate.replay()).to.throw AggregateRoot.DOMAIN_EVENT_REQUIRED_ERROR
-      expect(-> aggregate.replay({})).to.throw AggregateRoot.DOMAIN_EVENT_REQUIRED_ERROR
+      expect(-> aggregate.replay()).to.throw Aggregate.DOMAIN_EVENT_REQUIRED_ERROR
+      expect(-> aggregate.replay({})).to.throw Aggregate.DOMAIN_EVENT_REQUIRED_ERROR
 
     it 'it assigns the event version to the aggregate', ->
 
@@ -111,12 +111,12 @@ describe "#{AggregateRoot}", ->
     it 'only replays events that have the right source id', ->
 
       event = new Event sourceId: 'otherId'
-      expect(=> @aggregate.replay event).to.throw AggregateRoot.INVALID_EVENT_SOURCE_ID_ERROR
+      expect(=> @aggregate.replay event).to.throw Aggregate.INVALID_EVENT_SOURCE_ID_ERROR
 
   describe '#isHistory', ->
 
     it 'checks if the given param is of type array', ->
-      aggregate = new AggregateRoot '123'
+      aggregate = new Aggregate '123'
       expect(aggregate.isHistory []).to.be.true
 
   describe '#replayHistory', ->
@@ -133,7 +133,7 @@ describe "#{AggregateRoot}", ->
     it 'replays given historic events on the aggregate', ->
 
       id = '123'
-      aggregate = new AggregateRoot id
+      aggregate = new Aggregate id
 
       replaySpy = sinon.stub aggregate, 'replay'
 

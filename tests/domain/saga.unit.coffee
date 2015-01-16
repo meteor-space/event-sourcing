@@ -11,7 +11,7 @@ describe "#{Saga}", ->
 
   it 'extends aggregate root', ->
 
-    expect(Saga.__super__.constructor).to.equal Space.cqrs.AggregateRoot
+    expect(Saga.__super__.constructor).to.equal Space.cqrs.Aggregate
 
   describe 'working with commands', ->
 

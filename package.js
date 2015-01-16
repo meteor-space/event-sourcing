@@ -33,7 +33,7 @@ Package.onUse(function(api) {
 
     // DOMAIN
     'source/domain/event.coffee',
-    'source/domain/aggregate_root.coffee',
+    'source/domain/aggregate.coffee',
     'source/domain/saga.coffee',
 
   ], 'server');
@@ -69,7 +69,7 @@ Package.onTest(function(api) {
   api.addFiles([
 
     // DOMAIN
-    'tests/domain/aggregate_root.unit.coffee',
+    'tests/domain/aggregate.unit.coffee',
     'tests/domain/event.unit.coffee',
     'tests/domain/saga.unit.coffee',
 

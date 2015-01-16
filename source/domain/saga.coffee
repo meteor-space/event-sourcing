@@ -1,5 +1,5 @@
 
-class Space.cqrs.Saga extends Space.cqrs.AggregateRoot
+class Space.cqrs.Saga extends Space.cqrs.Aggregate
 
   _state: null
   _commands: null
