@@ -1,10 +1,10 @@
 
-class Space.cqrs.Saga extends Space.cqrs.Aggregate
+class Space.cqrs.ProcessManager extends Space.cqrs.Aggregate
 
   _state: null
   _commands: null
 
-  @toString: -> 'Space.cqrs.Saga'
+  @toString: -> 'Space.cqrs.ProcessManager'
 
   constructor: (id, data) ->
     @_commands = []

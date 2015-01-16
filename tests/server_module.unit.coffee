@@ -9,8 +9,8 @@ describe.server 'Space.cqrs', ->
   it 'maps the aggregate repository as singleton', ->
     expect(@module).toMap(Space.cqrs.AggregateRepository).asSingleton()
 
-  it 'maps the saga repository as singleton', ->
-    expect(@module).toMap(Space.cqrs.SagaRepository).asSingleton()
+  it 'maps the processManager repository as singleton', ->
+    expect(@module).toMap(Space.cqrs.ProcessManagerRepository).asSingleton()
 
   it 'maps the commit collection as singleton', ->
     expect(@module).toMap(Space.cqrs.CommitCollection).asSingleton()

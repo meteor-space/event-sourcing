@@ -23,7 +23,7 @@ Package.onUse(function(api) {
 
     // INFRASTRUCTURE
     'source/infrastructure/aggregate_repository.coffee',
-    'source/infrastructure/saga_repository.coffee',
+    'source/infrastructure/process_manager_repository.coffee',
     'source/infrastructure/event_bus.coffee',
     'source/infrastructure/commit_collection.coffee',
     'source/infrastructure/commit_store.coffee',
@@ -34,7 +34,7 @@ Package.onUse(function(api) {
     // DOMAIN
     'source/domain/event.coffee',
     'source/domain/aggregate.coffee',
-    'source/domain/saga.coffee',
+    'source/domain/process_manager.coffee',
 
   ], 'server');
 
@@ -71,7 +71,7 @@ Package.onTest(function(api) {
     // DOMAIN
     'tests/domain/aggregate.unit.coffee',
     'tests/domain/event.unit.coffee',
-    'tests/domain/saga.unit.coffee',
+    'tests/domain/process_manager.unit.coffee',
 
     // INFRASTRUCTURE
     'tests/infrastructure/commit_collection.unit.coffee',

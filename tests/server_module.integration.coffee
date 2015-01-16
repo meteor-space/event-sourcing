@@ -86,7 +86,7 @@ class Customer extends Space.cqrs.Aggregate
 
 # -------------- SAGAS ---------------
 
-class CustomerRegistration extends Space.cqrs.Saga
+class CustomerRegistration extends Space.cqrs.ProcessManager
 
   _customerId: null
   _customerName: null
@@ -145,7 +145,7 @@ class CustomerRegistrationRouter extends Space.cqrs.MessageHandler
   @toString: -> 'CustomerRegistrationRouter'
 
   Dependencies:
-    repository: 'Space.cqrs.SagaRepository'
+    repository: 'Space.cqrs.ProcessManagerRepository'
     registrations: 'CustomerRegistrations'
 
   @handle CustomerApp.RegisterCustomer, (data) ->
