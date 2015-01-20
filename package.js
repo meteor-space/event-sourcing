@@ -1,7 +1,7 @@
 Package.describe({
   summary: 'CQRS and Event Sourcing Infrastructure for Meteor.',
   name: 'space:cqrs',
-  version: '2.2.0',
+  version: '2.2.1',
   git: 'https://github.com/CodeAdventure/space-cqrs.git',
 });
 
@@ -12,15 +12,27 @@ Package.onUse(function(api) {
   api.use([
     'coffeescript',
     'ejson',
-    'space:base@1.1.0'
+    'space:base@1.2.6'
+  ]);
+
+  api.addFiles(['source/client.coffee'], 'client');
+  api.addFiles(['source/server.coffee'], 'server');
+
+  // ========= SHARED =========
+
+  api.addFiles([
+    'source/configuration.coffee',
+    'source/infrastructure/serializable.coffee',
+    // DOMAIN
+    'source/domain/command.coffee',
+    'source/domain/value_object.coffee',
+    // INFRASTRUCTURE
+    'source/infrastructure/command_bus.coffee'
   ]);
 
   // ========= server =========
 
   api.addFiles([
-
-    'source/server.coffee',
-
     // INFRASTRUCTURE
     'source/infrastructure/aggregate_repository.coffee',
     'source/infrastructure/process_manager_repository.coffee',
@@ -29,31 +41,12 @@ Package.onUse(function(api) {
     'source/infrastructure/commit_store.coffee',
     'source/infrastructure/commit_publisher.coffee',
     'source/infrastructure/message_handler.coffee',
-    'source/infrastructure/serializable.coffee',
-
     // DOMAIN
     'source/domain/event.coffee',
     'source/domain/aggregate.coffee',
     'source/domain/process_manager.coffee',
 
   ], 'server');
-
-  // ========= client =========
-
-  api.addFiles([
-    'source/client.coffee',
-  ], 'client');
-
-  // ========= shared =========
-
-  api.addFiles([
-    'source/configuration.coffee',
-    // DOMAIN
-    'source/domain/command.coffee',
-    'source/domain/value_object.coffee',
-    // INFRASTRUCTURE
-    'source/infrastructure/command_bus.coffee'
-  ]);
 
 });
 
@@ -67,21 +60,17 @@ Package.onTest(function(api) {
   ]);
 
   api.addFiles([
-
     // DOMAIN
     'tests/domain/aggregate.unit.coffee',
     'tests/domain/event.unit.coffee',
     'tests/domain/process_manager.unit.coffee',
-
     // INFRASTRUCTURE
     'tests/infrastructure/commit_collection.unit.coffee',
     'tests/infrastructure/commit_store.unit.coffee',
     'tests/infrastructure/commit_publisher.unit.coffee',
-
     // MODULE
     'tests/server_module.unit.coffee',
     'tests/server_module.integration.coffee',
-
   ], 'server');
 
 });
