@@ -11,9 +11,7 @@ class Space.cqrs.ProcessManagerRepository
     return new ProcessManagerType processManagerId, events
 
   save: (processManager, expectedVersion) ->
-
     changes =
       events: processManager.getEvents()
       commands: processManager.getCommands()
-
     @commitStore.add changes, processManager.getId(), expectedVersion

@@ -10,7 +10,7 @@ class Space.cqrs.Aggregate
   @toString: -> 'Space.cqrs.Aggregate'
 
   @ERRORS:
-    uuidRequired: "#{Aggregate}: Aggregate needs an UID on creation."
+    guidRequired: "#{Aggregate}: Aggregate needs an GUID on creation."
     domainEventRequired: "#{Aggregate}: Event must inherit from Space.cqrs.Event"
     cannotHandleEvent: "#{Aggregate}: Cannot handle event of type: "
     invalidEventSourceId: "#{Aggregate}: The given event has an invalid source id."
@@ -24,7 +24,7 @@ class Space.cqrs.Aggregate
 
   constructor: (id, data) ->
 
-    unless id? then throw new Error Aggregate.ERRORS.uuidRequired
+    unless id? then throw new Error Aggregate.ERRORS.guidRequired
 
     @_id = id
     @_events = []
@@ -61,7 +61,7 @@ class Space.cqrs.Aggregate
     unless event instanceof Event
       throw new Error Aggregate.ERRORS.domainEventRequired
 
-    unless event.sourceId is @getId()
+    unless event.sourceId.equals @getId()
       throw new Error Aggregate.ERRORS.invalidEventSourceId
 
     unless @_getEventHandler(event)?

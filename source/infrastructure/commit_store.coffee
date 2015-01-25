@@ -11,12 +11,11 @@ class Space.cqrs.CommitStore
 
     # only continue if there actually ARE changes to be added
     if !changes? or !changes.events or changes.events.length is 0 then return
-
     if !changes.commands? then changes.commands = []
 
     # fetch last inserted batch to get the current version
     lastCommit = @commits.findOne(
-      { sourceId: sourceId }, # selector
+      { sourceId: sourceId.toString() }, # selector
       { sort: [['version', 'desc']], fields: { version: 1 } } # options
     )
 
@@ -38,7 +37,7 @@ class Space.cqrs.CommitStore
 
       # insert commit with next version
       commit =
-        sourceId: sourceId
+        sourceId: sourceId.toString()
         version: newVersion
         changes: serializedChanges # insert EJSON serialized changes
         isPublished: false
@@ -59,7 +58,7 @@ class Space.cqrs.CommitStore
     events = []
 
     commits = @commits.find(
-      { sourceId: sourceId }, # selector
+      { sourceId: sourceId.toString() }, # selector
       { sort: [['version', 'asc']] } # options
     )
 
@@ -71,4 +70,3 @@ class Space.cqrs.CommitStore
         events.push event
 
     return events
-    
