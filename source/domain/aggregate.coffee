@@ -61,7 +61,7 @@ class Space.cqrs.Aggregate
     unless event instanceof Event
       throw new Error Aggregate.ERRORS.domainEventRequired
 
-    unless event.sourceId.equals @getId()
+    unless event.sourceId.toString() == @getId().toString()
       throw new Error Aggregate.ERRORS.invalidEventSourceId
 
     unless @_getEventHandler(event)?
