@@ -27,6 +27,7 @@ Add unit / integration tests for any new or changed functionality.
 `meteor test-packages ./`
 
 ## Release History
+* 2.3.1 - Don't apply the version when process managers handle events
 * 2.3.0 - handle ids more gracefully + small api improvements
 * 2014.10.21 :: Version 0.1.0 First package release
 

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+### 2.3.1
+Bugfixes:
+  * Don't apply the version when process managers handle events
+
 ### 2.3.0
 Features:
   * Let the infrastructure handle value object ids correctly
