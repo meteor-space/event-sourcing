@@ -108,11 +108,6 @@ describe "#{Aggregate}", ->
       @aggregate.replay new Event sourceId: @aggregateId
       expect(@aggregate.getVersion()).to.equal 0
 
-    it 'only replays events that have the right source id', ->
-
-      event = new Event sourceId: 'otherId'
-      expect(=> @aggregate.replay event).to.throw Aggregate.INVALID_EVENT_SOURCE_ID_ERROR
-
   describe '#isHistory', ->
 
     it 'checks if the given param is of type array', ->

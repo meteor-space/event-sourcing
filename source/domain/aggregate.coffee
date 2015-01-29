@@ -45,7 +45,7 @@ class Space.cqrs.Aggregate
     @_handleEvent event
     @_events.push event
 
-  replay: (event) -> @_handleEvent event, this
+  replay: (event) -> @_handleEvent event
 
   isHistory: (data) -> toString.call(data) == '[object Array]'
 
@@ -60,9 +60,6 @@ class Space.cqrs.Aggregate
 
     unless event instanceof Event
       throw new Error Aggregate.ERRORS.domainEventRequired
-
-    unless event.sourceId.toString() == @getId().toString()
-      throw new Error Aggregate.ERRORS.invalidEventSourceId
 
     unless @_getEventHandler(event)?
       throw new Error Aggregate.ERRORS.cannotHandleEvent + event.typeName()
