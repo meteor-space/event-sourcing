@@ -17,5 +17,3 @@ class Space.cqrs.ProcessManager extends Space.cqrs.Aggregate
   hasState: (state) -> if state? then @_state == state else @_state?
 
   transitionTo: (@_state) ->
-
-Space.cqrs.ProcessManager::handle = Space.cqrs.Aggregate::replay

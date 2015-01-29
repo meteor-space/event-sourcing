@@ -1,20 +1,44 @@
 
 ProcessManager = Space.cqrs.ProcessManager
+Event = Space.cqrs.Event
 
 describe "#{ProcessManager}", ->
 
   class TestCommand
 
   beforeEach ->
-    @processManager = new ProcessManager '123'
+    @event = event = new Event sourceId: '123', version: 1
+    @handler = handler = sinon.spy()
+
+    class TestProcess extends ProcessManager
+      @handle event.typeName(), handler
+
+    @processManager = new TestProcess '123'
 
   it 'extends aggregate root', ->
     expect(ProcessManager).to.extend Space.cqrs.Aggregate
 
-  describe 'handling events', ->
+  describe "#handle", ->
 
-    it 'is an alias to replaying events', ->
-      expect(@processManager.handle).to.equal @processManager.replay
+    it 'invokes the mapped event handler', ->
+
+      @processManager.handle @event
+      expect(@handler).to.have.been.calledWithExactly @event
+
+    it 'does not add the event as uncommitted change', ->
+
+      @processManager.handle @event
+      expect(@processManager.getEvents()).to.eql []
+
+    it 'it does not assign the event version to the process', ->
+
+      @processManager.handle @event
+      expect(@processManager.getVersion()).not.to.equal @event.version
+
+    it 'also accepts events that have no version', ->
+
+      @processManager.handle new Event sourceId: '123'
+      expect(@processManager.getVersion()).to.equal 0
 
   describe 'working with commands', ->
 

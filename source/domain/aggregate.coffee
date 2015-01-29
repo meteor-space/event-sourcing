@@ -16,21 +16,16 @@ class Space.cqrs.Aggregate
     invalidEventSourceId: "#{Aggregate}: The given event has an invalid source id."
 
   @handle: (eventType, handler) ->
-
     # create event handlers cache if it doesnt exist yet
     unless @_eventHandlers? then @_eventHandlers = {}
-
     @_eventHandlers[eventType.toString()] = handler
 
   constructor: (id, data) ->
 
     unless id? then throw new Error Aggregate.ERRORS.guidRequired
-
     @_id = id
     @_events = []
-
     if @isHistory(data) then @replayHistory(data) else @initialize(id, data)
-
     return this
 
   initialize: ->
@@ -42,14 +37,22 @@ class Space.cqrs.Aggregate
   getEvents: -> @_events
 
   record: (event) ->
-    @_handleEvent event
+    @handle event
     @_events.push event
+    @_updateToEventVersion event
 
-  replay: (event) -> @_handleEvent event
+  replay: (event) ->
+    @handle event
+    @_updateToEventVersion event
 
   isHistory: (data) -> toString.call(data) == '[object Array]'
 
   replayHistory: (history) -> @replay(event) for event in history
+
+  handle: (event) ->
+    @_validateEvent event
+    handler = @_getEventHandler event
+    handler.call this, event
 
   # ============= PRIVATE ============ #
 
@@ -64,11 +67,5 @@ class Space.cqrs.Aggregate
     unless @_getEventHandler(event)?
       throw new Error Aggregate.ERRORS.cannotHandleEvent + event.typeName()
 
-  _handleEvent: (event) ->
-
-    @_validateEvent event
-
-    handler = @_getEventHandler event
-    handler.call this, event
-
+  _updateToEventVersion: (event) ->
     if event.version? then @_version = event.version

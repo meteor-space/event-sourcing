@@ -2,27 +2,17 @@
 Aggregate = Space.cqrs.Aggregate
 Event = Space.cqrs.Event
 
-# ========================= CONSTRUCTION ============================== #
-
 describe "#{Aggregate}", ->
 
   beforeEach ->
-
     @aggregateId = '123'
-
-    @event = event = new Event {
-      sourceId: @aggregateId
-      version: 2
-    }
-
+    @event = event = new Event sourceId: @aggregateId, version: 2
     @handler = handler = sinon.spy()
 
     class TestAggregate extends Aggregate
-
       @handle event.typeName(), handler
 
     @aggregate = new TestAggregate @aggregateId
-
 
   describe 'construction', ->
 
@@ -32,19 +22,15 @@ describe "#{Aggregate}", ->
     it 'makes the id publicly available', ->
       id = '123'
       aggregate = new Aggregate id
-
       expect(aggregate.getId()).to.equal id
 
     it 'initializes uncommitted changes to empty array', ->
       aggregate = new Aggregate '123'
-
       expect(aggregate.getEvents()).to.eql []
 
     it 'sets the initial version to 0', ->
       aggregate = new Aggregate '123'
-
       expect(aggregate.getVersion()).to.eql 0
-
 
   describe "#record", ->
 
@@ -67,9 +53,7 @@ describe "#{Aggregate}", ->
 
       event = new Event sourceId: '123'
       aggregate = new Aggregate '123'
-
       expectedError = Aggregate.ERRORS.cannotHandleEvent + event.typeName()
-
       expect(-> aggregate.record event).to.throw expectedError
 
     it 'does not append the event to the queue if something fails', ->
@@ -94,7 +78,6 @@ describe "#{Aggregate}", ->
     it 'throws error when the event is not a domain event', ->
 
       aggregate = @aggregate
-
       expect(-> aggregate.replay()).to.throw Aggregate.DOMAIN_EVENT_REQUIRED_ERROR
       expect(-> aggregate.replay({})).to.throw Aggregate.DOMAIN_EVENT_REQUIRED_ERROR
 
