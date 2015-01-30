@@ -1,8 +1,10 @@
 
-Aggregate = Space.cqrs.Aggregate
-Event = Space.cqrs.Event
+{ # imports
+  Aggregate
+  Event
+} = Space.cqrs
 
-describe "#{Aggregate}", ->
+describe "Space.cqrs.Aggregate", ->
 
   beforeEach ->
     @aggregateId = '123'
@@ -13,6 +15,8 @@ describe "#{Aggregate}", ->
       @handle event.typeName(), handler
 
     @aggregate = new TestAggregate @aggregateId
+
+  # =========== CONSTRUCTION ============ #
 
   describe 'construction', ->
 
@@ -31,6 +35,8 @@ describe "#{Aggregate}", ->
     it 'sets the initial version to 0', ->
       aggregate = new Aggregate '123'
       expect(aggregate.getVersion()).to.eql 0
+
+  # =========== RECORDING EVENTS =========== #
 
   describe "#record", ->
 
@@ -62,6 +68,7 @@ describe "#{Aggregate}", ->
       expect(=> @aggregate.record 'unknownEvent', {}).to.throw Error
       expect(@aggregate.getEvents()).to.eql []
 
+  # ========== REPLAYING HISTORIC EVENTS ========== #
 
   describe "#replay", ->
 
@@ -90,6 +97,41 @@ describe "#{Aggregate}", ->
 
       @aggregate.replay new Event sourceId: @aggregateId
       expect(@aggregate.getVersion()).to.equal 0
+
+    it 'only replays events that have the right source id', ->
+
+      event = new Event sourceId: 'otherId'
+      expect(=> @aggregate.replay event).to.throw Aggregate.INVALID_EVENT_SOURCE_ID_ERROR
+
+  # ========== HANDLING EXTERNAL EVENTS ========== #
+
+  describe "#handle", ->
+
+    it 'invokes the mapped event handler', ->
+
+      @aggregate.handle @event
+      expect(@handler).to.have.been.calledWithExactly @event
+
+    it 'does not add the event as uncommitted change', ->
+
+      @aggregate.handle @event
+      expect(@aggregate.getEvents()).to.eql []
+
+    it 'it does not assign the event version to the process', ->
+
+      @aggregate.handle @event
+      expect(@aggregate.getVersion()).not.to.equal @event.version
+
+    it 'also accepts events that have no version', ->
+
+      @aggregate.handle new Event sourceId: '123'
+      expect(@aggregate.getVersion()).to.equal 0
+
+    it 'accepts events with different source id', ->
+      @event.sourceId = 'different'
+      expect(=> @aggregate.handle @event).not.to.throw Error
+
+  # ========== WORKING WITH EVENT HISTORY ========== #
 
   describe '#isHistory', ->
 

@@ -18,28 +18,6 @@ describe "#{ProcessManager}", ->
   it 'extends aggregate root', ->
     expect(ProcessManager).to.extend Space.cqrs.Aggregate
 
-  describe "#handle", ->
-
-    it 'invokes the mapped event handler', ->
-
-      @processManager.handle @event
-      expect(@handler).to.have.been.calledWithExactly @event
-
-    it 'does not add the event as uncommitted change', ->
-
-      @processManager.handle @event
-      expect(@processManager.getEvents()).to.eql []
-
-    it 'it does not assign the event version to the process', ->
-
-      @processManager.handle @event
-      expect(@processManager.getVersion()).not.to.equal @event.version
-
-    it 'also accepts events that have no version', ->
-
-      @processManager.handle new Event sourceId: '123'
-      expect(@processManager.getVersion()).to.equal 0
-
   describe 'working with commands', ->
 
     it 'a processManager generates no commands by default', ->

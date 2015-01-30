@@ -37,11 +37,13 @@ class Space.cqrs.Aggregate
   getEvents: -> @_events
 
   record: (event) ->
-    @handle event
+    @_validateEvent event
     @_events.push event
+    @handle event
     @_updateToEventVersion event
 
   replay: (event) ->
+    @_validateEvent event
     @handle event
     @_updateToEventVersion event
 
@@ -50,22 +52,25 @@ class Space.cqrs.Aggregate
   replayHistory: (history) -> @replay(event) for event in history
 
   handle: (event) ->
-    @_validateEvent event
     handler = @_getEventHandler event
     handler.call this, event
 
   # ============= PRIVATE ============ #
 
   _getEventHandler: (event) ->
-    if @constructor._eventHandlers? then @constructor._eventHandlers[event.typeName()]
+    handlers = @constructor._eventHandlers
+    if !handlers? or !handlers[event.typeName()]
+      throw new Error Aggregate.ERRORS.cannotHandleEvent + event.typeName()
+    else
+      return handlers[event.typeName()]
 
   _validateEvent: (event) ->
 
     unless event instanceof Event
       throw new Error Aggregate.ERRORS.domainEventRequired
 
-    unless @_getEventHandler(event)?
-      throw new Error Aggregate.ERRORS.cannotHandleEvent + event.typeName()
+    unless event.sourceId.toString() == @getId().toString()
+      throw new Error Aggregate.ERRORS.invalidEventSourceId
 
   _updateToEventVersion: (event) ->
     if event.version? then @_version = event.version
