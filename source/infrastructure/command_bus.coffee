@@ -24,10 +24,12 @@ class Space.cqrs.CommandBus
     else
       @_handleCommand command
 
-  registerHandler: (typeName, handler) ->
-    if @_handlers[typeName]?
+  registerHandler: (typeName, handler, overrideExisting) ->
+    if @_handlers[typeName]? and !overrideExisting
       throw new Error "There is already an handler for #{typeName} commands."
     @_handlers[typeName] = handler
+
+  overrideHandler: (typeName, handler) -> @registerHandler typeName, handler, true
 
   _handleCommand: (command, data) =>
     handler = @_handlers[command.typeName()]
