@@ -46,7 +46,7 @@ class Space.cqrs.Serializable
 
     # Fields defined, parse them through EJSON to support nested types
     serialized = {}
-    serialized[key] = EJSON.stringify(@[key]) for key of fields
+    serialized[key] = EJSON.stringify(@[key]) for key of fields when @[key]?
 
     return serialized
 
