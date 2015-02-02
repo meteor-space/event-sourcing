@@ -19,6 +19,9 @@ class Space.cqrs.CommandBus
       @meteor.methods commandBusMethods
 
   send: (command, callback) ->
+    unless command instanceof Space.cqrs.Command
+      throw new Error "Can only send command instances, got this: #{command}"
+
     if @meteor.isClient
       @meteor.call @_meteorMethod, command, callback
     else
