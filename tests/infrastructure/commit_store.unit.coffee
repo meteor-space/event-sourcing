@@ -40,15 +40,16 @@ describe "#{CommitStore}", ->
       insertedCommits = @commitStore.commits.find().fetch()
 
       serializedCommit =
+        _id: insertedCommits[0]._id
         sourceId: sourceId
         version: newVersion
         changes:
           events: [EJSON.stringify(testEvent)]
           commands: [EJSON.stringify(testCommand)]
         isPublished: false
-        _id: insertedCommits[0]._id
+        insertedAt: sinon.match.date
 
-      expect(insertedCommits).to.deep.equal [serializedCommit]
+      expect(insertedCommits).toMatch [serializedCommit]
 
       deserializedCommit = serializedCommit
       deserializedCommit.changes = changes

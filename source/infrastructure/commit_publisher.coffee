@@ -17,4 +17,6 @@ class Space.cqrs.CommitPublisher
     for command in commit.changes.commands
       @commandBus.send command
 
-    @commits.update commit._id, $set: isPublished: true
+    @commits.update commit._id, $set:
+      isPublished: true
+      publishedAt: new Date()

@@ -41,6 +41,7 @@ class Space.cqrs.CommitStore
         version: newVersion
         changes: serializedChanges # insert EJSON serialized changes
         isPublished: false
+        insertedAt: new Date()
 
       commit._id = @commits.insert commit
       commit.changes = changes # dont publish serialized changes
