@@ -27,9 +27,7 @@ Add unit / integration tests for any new or changed functionality.
 `meteor test-packages ./`
 
 ## Release History
-* 2.3.1 - Don't apply the version when process managers handle events
-* 2.3.0 - handle ids more gracefully + small api improvements
-* 2014.10.21 :: Version 0.1.0 First package release
+You can find the release history in the [changelog](https://github.com/CodeAdventure/space-cqrs/blob/master/CHANGELOG.md)
 
 ## License
 Copyright (c) 2014 Code Adventure
