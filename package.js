@@ -12,7 +12,7 @@ Package.onUse(function(api) {
   api.use([
     'coffeescript',
     'ejson',
-    'space:base@1.2.6'
+    'space:base@1.2.7'
   ]);
 
   api.addFiles(['source/client.coffee'], 'client');
