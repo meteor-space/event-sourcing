@@ -1,8 +1,6 @@
 
-{ # imports
-  Aggregate
-  Event
-} = Space.cqrs
+{Aggregate} = Space.cqrs
+{Event} = Space.messaging
 
 describe "Space.cqrs.Aggregate", ->
 
@@ -158,9 +156,9 @@ describe "Space.cqrs.Aggregate", ->
       replaySpy = sinon.stub aggregate, 'replay'
 
       history = [
-        new Created sourceId: id, data: {}, version: 1
-        new SomethingChanged sourceId: id, data: {}, version: 2
-        new ChangedAgain sourceId: id, data: {}, version: 3
+        new Created sourceId: id, version: 1
+        new SomethingChanged sourceId: id, version: 2
+        new ChangedAgain sourceId: id, version: 3
       ]
 
       aggregate.replayHistory history

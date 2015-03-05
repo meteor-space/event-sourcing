@@ -1,7 +1,7 @@
 
 CommitCollection = Space.cqrs.CommitCollection
 
-describe "#{CommitCollection}", ->
+describe "Space.cqrs.CommitCollection", ->
 
   # System under test (CommitCollection)
   sut = null

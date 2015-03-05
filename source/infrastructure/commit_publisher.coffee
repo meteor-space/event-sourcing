@@ -1,12 +1,10 @@
 
 class Space.cqrs.CommitPublisher
 
-  @toString: -> 'Space.cqrs.CommitPublisher'
-
   Dependencies:
     commits: 'Space.cqrs.CommitCollection'
-    eventBus: 'Space.cqrs.EventBus'
-    commandBus: 'Space.cqrs.CommandBus'
+    eventBus: 'Space.messaging.EventBus'
+    commandBus: 'Space.messaging.CommandBus'
 
   publishCommit: (commit) =>
 

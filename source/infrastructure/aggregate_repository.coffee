@@ -1,8 +1,6 @@
 
 class Space.cqrs.AggregateRepository
 
-  @toString: -> 'Space.cqrs.AggregateRepository'
-
   Dependencies:
     commitStore: 'Space.cqrs.CommitStore'
 

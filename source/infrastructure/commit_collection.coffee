@@ -1,8 +1,6 @@
 
 class Space.cqrs.CommitCollection
 
-  @toString: -> 'Space.cqrs.CommitCollection'
-
   Dependencies:
     mongo: 'Mongo'
     configuration: 'Space.cqrs.Configuration'
@@ -10,7 +8,6 @@ class Space.cqrs.CommitCollection
   _collection: null
 
   onDependenciesReady: ->
-
     if @configuration.useInMemoryCollections
       @_collection = new @mongo.Collection null
     else
@@ -24,3 +21,5 @@ class Space.cqrs.CommitCollection
   insert: -> @_collection.insert.apply @_collection, arguments
 
   update: -> @_collection.update.apply @_collection, arguments
+
+  remove: -> @_collection.remove.apply @_collection, arguments

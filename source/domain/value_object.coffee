@@ -1,4 +1,4 @@
 
-class Space.cqrs.ValueObject extends Space.cqrs.Serializable
+class Space.cqrs.ValueObject extends Space.messaging.Serializable
 
   @toString: -> 'Space.cqrs.ValueObject'

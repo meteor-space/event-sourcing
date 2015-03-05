@@ -1,8 +1,6 @@
 
 class Space.cqrs.ProcessManagerRepository
 
-  @toString: -> 'Space.cqrs.ProcessManagerRepository'
-
   Dependencies:
     commitStore: 'Space.cqrs.CommitStore'
 

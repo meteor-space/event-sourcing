@@ -1,6 +1,6 @@
 
 ProcessManager = Space.cqrs.ProcessManager
-Event = Space.cqrs.Event
+Event = Space.messaging.Event
 
 describe "#{ProcessManager}", ->
 

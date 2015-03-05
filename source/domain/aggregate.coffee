@@ -1,5 +1,5 @@
 
-Event = Space.cqrs.Event
+Event = Space.messaging.Event
 
 class Space.cqrs.Aggregate
 

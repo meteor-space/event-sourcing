@@ -3,7 +3,7 @@ CommitPublisher = Space.cqrs.CommitPublisher
 Event = Space.cqrs.Event
 Command = Space.cqrs.Command
 
-describe "#{CommitPublisher}", ->
+describe "Space.cqrs.CommitPublisher", ->
 
   beforeEach ->
 
@@ -18,8 +18,8 @@ describe "#{CommitPublisher}", ->
 
     expect(CommitPublisher).to.dependOn {
       commits: 'Space.cqrs.CommitCollection'
-      eventBus: 'Space.cqrs.EventBus'
-      commandBus: 'Space.cqrs.CommandBus'
+      eventBus: 'Space.messaging.EventBus'
+      commandBus: 'Space.messaging.CommandBus'
     }
 
   describe '#publishCommit', ->

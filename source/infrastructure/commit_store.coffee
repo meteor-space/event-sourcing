@@ -1,8 +1,6 @@
 
 class Space.cqrs.CommitStore
 
-  @toString: -> 'Space.cqrs.CommitStore'
-
   Dependencies:
     commits: 'Space.cqrs.CommitCollection'
     publisher: 'Space.cqrs.CommitPublisher'

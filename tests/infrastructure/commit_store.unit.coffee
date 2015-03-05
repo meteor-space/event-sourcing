@@ -1,9 +1,9 @@
 
 CommitStore = Space.cqrs.CommitStore
-Event = Space.cqrs.Event
-Command = Space.cqrs.Command
+Event = Space.messaging.Event
+Command = Space.messaging.Command
 
-describe "#{CommitStore}", ->
+describe "Space.cqrs.CommitStore", ->
 
   beforeEach ->
     @commitStore = new CommitStore()
@@ -54,7 +54,8 @@ describe "#{CommitStore}", ->
       deserializedCommit = serializedCommit
       deserializedCommit.changes = changes
 
-      expect(@commitStore.publisher.publishCommit).to.have.been.calledWithMatch deserializedCommit
+      expect(@commitStore.publisher.publishCommit)
+        .to.have.been.calledWithMatch deserializedCommit
 
   describe '#getEvents', ->
 
@@ -63,19 +64,27 @@ describe "#{CommitStore}", ->
       sourceId = '123'
 
       class CreatedEvent extends Event
-        @type 'tests.CommitStore.CreatedEvent'
+        @type 'tests.CommitStore.CreatedEvent', ->
+          sourceId: String
+          version: Match.Optional(Match.Integer)
 
       class QuantityChangedEvent extends Event
-        @type 'tests.CommitStore.QuantityChangedEvent'
+        @type 'tests.CommitStore.QuantityChangedEvent', ->
+          sourceId: String
+          version: Match.Optional(Match.Integer)
+          quantity: Match.Integer
 
       class TotalChangedEvent extends Event
-        @type 'tests.CommitStore.TotalChangedEvent'
+        @type 'tests.CommitStore.TotalChangedEvent', ->
+          sourceId: String
+          version: Match.Optional(Match.Integer)
+          total: Number
 
       firstChanges = events: [new CreatedEvent sourceId: sourceId]
 
       secondChanges = events: [
-        new QuantityChangedEvent sourceId: sourceId, data: { quantity: 1 }
-        new TotalChangedEvent sourceId: sourceId, data: { total: 10 }
+        new QuantityChangedEvent sourceId: sourceId, quantity: 1
+        new TotalChangedEvent sourceId: sourceId, total: 10
       ]
 
       @commitStore.add firstChanges, sourceId, 0
@@ -88,6 +97,6 @@ describe "#{CommitStore}", ->
 
       expect(events).to.eql [
         new CreatedEvent sourceId: sourceId, version: 1
-        new QuantityChangedEvent sourceId: sourceId, data: { quantity: 1 }, version: 2
-        new TotalChangedEvent sourceId: sourceId, data: { total: 10 }, version: 2
+        new QuantityChangedEvent sourceId: sourceId, quantity: 1, version: 2
+        new TotalChangedEvent sourceId: sourceId, total: 10, version: 2
       ]
