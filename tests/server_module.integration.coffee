@@ -52,26 +52,30 @@ class CustomerApp.SendWelcomeEmail extends Space.messaging.Command
 # --------------- EVENTS ---------------
 
 class CustomerApp.RegistrationInitiated extends Space.messaging.Event
-  @type 'CustomerApp.RegistrationInitiated', ->
+  @type 'CustomerApp.RegistrationInitiated'
+  @fields:
     sourceId: String
     version: Match.Optional(Match.Integer)
     customerId: String
     customerName: String
 
 class CustomerApp.CustomerCreated extends Space.messaging.Event
-  @type 'CustomerApp.CustomerCreated', ->
+  @type 'CustomerApp.CustomerCreated'
+  @fields:
     sourceId: String
     version: Match.Optional(Match.Integer)
     customerName: String
 
 class CustomerApp.WelcomeEmailTriggered extends Space.messaging.Event
-  @type 'CustomerApp.WelcomeEmailTriggered', ->
+  @type 'CustomerApp.WelcomeEmailTriggered'
+  @fields:
     sourceId: String
     version: Match.Optional(Match.Integer)
     customerId: String
 
 class CustomerApp.WelcomeEmailSent extends Space.messaging.Event
-  @type 'CustomerApp.WelcomeEmailSent', ->
+  @type 'CustomerApp.WelcomeEmailSent'
+  @fields:
     sourceId: String
     version: Match.Optional(Match.Integer)
     customerId: String
@@ -236,7 +240,6 @@ describe.server 'Space.cqrs (integration)', ->
     @app.run()
 
   it 'handles commands and publishes events correctly', ->
-    console.log @app.commits.find().count()
     registrationInitiatedSpy = sinon.spy()
     customerCreatedSpy = sinon.spy()
     welcomeEmailTriggeredSpy = sinon.spy()

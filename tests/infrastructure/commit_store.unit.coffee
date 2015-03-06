@@ -23,7 +23,8 @@ describe "Space.cqrs.CommitStore", ->
       @type 'Space.cqrs.CommitStore.TestEvent'
 
     class TestCommand extends Command
-      @type 'Space.cqrs.CommitStore.TestCommand', -> sourceId: String
+      @type 'Space.cqrs.CommitStore.TestCommand'
+      @fields: sourceId: String
 
     it 'inserts changes as serialized and versioned commit', ->
 

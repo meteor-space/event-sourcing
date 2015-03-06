@@ -12,8 +12,8 @@ Package.onUse(function(api) {
   api.use([
     'coffeescript',
     'ejson',
-    'space:base@1.2.8',
-    'space:messaging@0.1.0'
+    'space:base@1.3.0',
+    'space:messaging@0.2.0'
   ]);
 
   api.addFiles(['source/server.coffee'], 'server');
@@ -45,6 +45,8 @@ Package.onTest(function(api) {
 
   api.use([
     'coffeescript',
+    'check',
+    'ejson',
     'space:cqrs',
     'practicalmeteor:munit@2.0.2',
     'space:testing@1.3.0'
