@@ -20,9 +20,8 @@ Package.onUse(function(api) {
 
   // ========= SHARED =========
 
-  api.addFiles([
-    'source/domain/value_object.coffee',
-  ]);
+  api.addFiles(['source/client.coffee']);
+  api.addFiles(['source/domain/value_object.coffee']);
 
   // ========= server =========
 
