@@ -1,6 +1,14 @@
 Changelog
 =========
 
+### 3.0.0
+
+Breaking Changes:
+-----------------
+Moves the command and event architecture to its own package `space:messaging`.
+The way the fields are defined has changed, please have a look at the integration
+tests to see how it works now.
+
 ### 2.3.2
 Features:
   * Make command handlers overridable for easier testing
