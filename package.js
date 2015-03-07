@@ -13,7 +13,7 @@ Package.onUse(function(api) {
     'coffeescript',
     'ejson',
     'space:base@1.3.0',
-    'space:messaging@0.2.0'
+    'space:messaging@0.3.0'
   ]);
 
   api.addFiles(['source/server.coffee'], 'server');
