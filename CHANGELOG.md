@@ -1,6 +1,9 @@
 Changelog
 =========
 
+### 3.0.1
+Update to latest space:messaging release
+
 ### 3.0.0
 
 Breaking Changes:
