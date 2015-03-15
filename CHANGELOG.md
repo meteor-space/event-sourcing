@@ -1,6 +1,13 @@
 Changelog
 =========
 
+### 4.0.1
+Changes:
+  * Move object freezing capability from constructor into `ValueObject::freeze`
+  method. For some value objects it doesn't work well to freeze directly after
+  setting the fields. For example if something needs to be calculated based on
+  the field values, this wouldn't be possible anymore.
+
 ### 4.0.0
 Breaking Changes:
 -----------------
