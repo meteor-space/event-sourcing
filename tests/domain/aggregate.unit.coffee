@@ -167,3 +167,23 @@ describe "Space.cqrs.Aggregate", ->
       expect(replaySpy).to.have.been.calledWithExactly history[0]
       expect(replaySpy).to.have.been.calledWithExactly history[1]
       expect(replaySpy).to.have.been.calledWithExactly history[2]
+
+  describe 'working with state', ->
+
+    class StateChangingEvent extends Space.messaging.Event
+      @toString: -> 'StateChangingEvent'
+      typeName: -> 'StateChangingEvent'
+
+    class StateAggregate extends Space.cqrs.Aggregate
+      @handle StateChangingEvent, (event) -> @_state = event.state
+
+    it 'has no state by default', ->
+      expect(@aggregate.hasState()).to.be.false
+
+    it 'can transition to a state', ->
+      expectedState = 'test'
+      event = new StateChangingEvent()
+      event.state = expectedState
+      aggregate = new StateAggregate '123'
+      aggregate.handle event
+      expect(aggregate.hasState(expectedState)).to.be.true

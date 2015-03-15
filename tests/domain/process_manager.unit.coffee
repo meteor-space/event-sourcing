@@ -27,17 +27,3 @@ describe "#{ProcessManager}", ->
       command = new TestCommand()
       @processManager.trigger command
       expect(@processManager.getCommands()).to.eql [command]
-
-  describe 'working with state', ->
-
-    it 'has no state by default', ->
-      expect(@processManager.hasState()).to.be.false
-
-    it 'can transition to a state', ->
-      state = 0
-      @processManager.transitionTo state
-      expect(@processManager.hasState(state)).to.be.true
-
-    it 'can be asked if it has any state at all', ->
-      @processManager.transitionTo 0
-      expect(@processManager.hasState()).to.be.true

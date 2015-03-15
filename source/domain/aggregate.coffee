@@ -6,6 +6,7 @@ class Space.cqrs.Aggregate
   _id: null
   _version: 0
   _events: null
+  _state: null
 
   @toString: -> 'Space.cqrs.Aggregate'
 
@@ -54,6 +55,8 @@ class Space.cqrs.Aggregate
   handle: (event) ->
     handler = @_getEventHandler event
     handler.call this, event
+
+  hasState: (state) -> if state? then @_state == state else @_state?
 
   # ============= PRIVATE ============ #
 

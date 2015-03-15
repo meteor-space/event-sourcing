@@ -137,14 +137,13 @@ class CustomerRegistration extends Space.cqrs.ProcessManager
   @handle CustomerApp.RegistrationInitiated, (event) ->
     @_customerId = event.customerId
     @_customerName = event.customerName
-    @transitionTo CustomerRegistration.STATES.creatingCustomer
+    @_state = CustomerRegistration.STATES.creatingCustomer
 
   @handle CustomerApp.WelcomeEmailTriggered, ->
-    @transitionTo CustomerRegistration.STATES.sendingWelcomeEmail
+    @_state = CustomerRegistration.STATES.sendingWelcomeEmail
 
   @handle CustomerApp.RegistrationCompleted, ->
-    @transitionTo CustomerRegistration.STATES.completed
-
+    @_state = CustomerRegistration.STATES.completed
 
 # -------------- ROUTERS --------------- #
 
