@@ -10,17 +10,21 @@ describe 'Space.cqrs.ValueObject', ->
   it 'is serializable', ->
     expect(ValueObject).to.extend Space.messaging.Serializable
 
-  it 'freezes after creation', ->
+  describe '#freeze', ->
 
-    quantity = new Quantity value: 2
-    quantity.value = 4
-    expect(quantity.value).to.equal 2
+    it 'makes the object immutable', ->
 
-  it 'doesnt freeze if the API is not supported', ->
+      quantity = new Quantity value: 2
+      quantity.freeze()
+      quantity.value = 4
+      expect(quantity.value).to.equal 2
 
-    freezeBackup = Object.freeze
-    Object.freeze = null
-    quantity = new Quantity value: 2
-    quantity.value = 4
-    expect(quantity.value).to.equal 4
-    Object.freeze = freezeBackup
+    it 'doesnt freeze if the API is not supported', ->
+
+      freezeBackup = Object.freeze
+      Object.freeze = null
+      quantity = new Quantity value: 2
+      quantity.freeze()
+      quantity.value = 4
+      expect(quantity.value).to.equal 4
+      Object.freeze = freezeBackup
