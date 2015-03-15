@@ -1,6 +1,19 @@
 Changelog
 =========
 
+### 4.0.0
+Breaking Changes:
+-----------------
+  * Unified `AggregateRepository` and `ProcessManagerRepository` to a single
+  class `Space.cqrs.Repository`
+  * Renamed `Space.cqrs.CommitsColletion` to `Space.cqrs.Commits`, moved it
+  into the server module and simplified its creation code.
+
+Features:
+---------
+  * Moved the state functionality of process managers into aggregates.
+  * Value Objects use `Object.freeze` for basic immutability on creation.
+
 ### 3.0.1
 Update to latest space:messaging release
 
