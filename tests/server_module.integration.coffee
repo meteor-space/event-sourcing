@@ -153,7 +153,7 @@ class CustomerRegistrationRouter extends Space.messaging.Controller
   @toString: -> 'CustomerRegistrationRouter'
 
   Dependencies:
-    repository: 'Space.cqrs.ProcessManagerRepository'
+    repository: 'Space.cqrs.Repository'
     registrations: 'CustomerRegistrations'
 
   @handle CustomerApp.RegisterCustomer, on: (event) ->
@@ -181,7 +181,7 @@ class CustomerRouter extends Space.messaging.Controller
   @toString: -> 'CustomerRouter'
 
   Dependencies:
-    repository: 'Space.cqrs.AggregateRepository'
+    repository: 'Space.cqrs.Repository'
 
   @handle CustomerApp.CreateCustomer, on: (command) ->
 

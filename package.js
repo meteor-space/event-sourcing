@@ -28,8 +28,7 @@ Package.onUse(function(api) {
   api.addFiles([
     'source/configuration.coffee',
     // INFRASTRUCTURE
-    'source/infrastructure/aggregate_repository.coffee',
-    'source/infrastructure/process_manager_repository.coffee',
+    'source/infrastructure/repository.coffee',
     'source/infrastructure/commit_collection.coffee',
     'source/infrastructure/commit_store.coffee',
     'source/infrastructure/commit_publisher.coffee',
@@ -60,6 +59,7 @@ Package.onTest(function(api) {
     'tests/infrastructure/commit_collection.unit.coffee',
     'tests/infrastructure/commit_store.unit.coffee',
     'tests/infrastructure/commit_publisher.unit.coffee',
+    'tests/infrastructure/repository.unit.coffee',
     // MODULE
     'tests/server_module.integration.coffee',
   ], 'server');

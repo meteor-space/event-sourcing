@@ -8,8 +8,7 @@ class Space.cqrs extends Space.Module
   configure: ->
     super
     @injector.map('Space.cqrs.Configuration').asStaticValue()
-    @injector.map('Space.cqrs.AggregateRepository').asSingleton()
-    @injector.map('Space.cqrs.ProcessManagerRepository').asSingleton()
+    @injector.map('Space.cqrs.Repository').asSingleton()
     @injector.map('Space.cqrs.CommitCollection').asSingleton()
     @injector.map('Space.cqrs.CommitStore').asSingleton()
     @injector.map('Space.cqrs.CommitPublisher').asSingleton()
