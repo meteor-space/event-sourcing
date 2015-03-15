@@ -2,7 +2,7 @@
 class Space.cqrs.CommitStore
 
   Dependencies:
-    commits: 'Space.cqrs.CommitCollection'
+    commits: 'Space.cqrs.Commits'
     publisher: 'Space.cqrs.CommitPublisher'
 
   add: (changes, sourceId, expectedVersion) ->

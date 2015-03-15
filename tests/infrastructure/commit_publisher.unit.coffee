@@ -16,11 +16,10 @@ describe "Space.cqrs.CommitPublisher", ->
 
   it 'declares its dependencies correctly', ->
 
-    expect(CommitPublisher).to.dependOn {
-      commits: 'Space.cqrs.CommitCollection'
+    expect(CommitPublisher).to.dependOn
+      commits: 'Space.cqrs.Commits'
       eventBus: 'Space.messaging.EventBus'
       commandBus: 'Space.messaging.CommandBus'
-    }
 
   describe '#publishCommit', ->
 

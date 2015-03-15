@@ -13,8 +13,6 @@ class CustomerApp extends Space.Application
   configure: ->
     super
     @configuration.useInMemoryCollections = true
-    @commits = @injector.get 'Space.cqrs.CommitCollection'
-    @commits.remove {}
     @injector.map('CustomerRegistrations').to new @Mongo.Collection(null)
     @injector.map(CustomerRegistrationRouter).asSingleton()
     @injector.map(CustomerRouter).asSingleton()
@@ -23,6 +21,8 @@ class CustomerApp extends Space.Application
 
   run: ->
     super
+    @commits = @injector.get 'Space.cqrs.Commits'
+    @resetDatabase()
     @injector.create CustomerRegistrationRouter
     @injector.create CustomerRouter
     @injector.create EmailRouter
@@ -32,7 +32,7 @@ class CustomerApp extends Space.Application
 
   subscribeTo: -> @eventBus.subscribeTo.apply @eventBus, arguments
 
-  resetDatabase: -> @commits._collection.remove {}
+  resetDatabase: -> @commits.remove {}
 
 # -------------- COMMANDS ---------------
 
@@ -235,7 +235,6 @@ describe.server 'Space.cqrs (integration)', ->
 
   beforeEach ->
     @app = new CustomerApp()
-    @app.resetDatabase()
     @app.run()
 
   it 'handles commands and publishes events correctly', ->

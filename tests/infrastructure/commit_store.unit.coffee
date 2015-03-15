@@ -12,10 +12,9 @@ describe "Space.cqrs.CommitStore", ->
 
   it 'defines its dependencies correctly', ->
 
-    expect(CommitStore).to.dependOn {
-      commits: 'Space.cqrs.CommitCollection'
+    expect(CommitStore).to.dependOn
+      commits: 'Space.cqrs.Commits'
       publisher: 'Space.cqrs.CommitPublisher'
-    }
 
   describe '#add', ->
 

@@ -2,7 +2,7 @@
 class Space.cqrs.CommitPublisher
 
   Dependencies:
-    commits: 'Space.cqrs.CommitCollection'
+    commits: 'Space.cqrs.Commits'
     eventBus: 'Space.messaging.EventBus'
     commandBus: 'Space.messaging.CommandBus'
 

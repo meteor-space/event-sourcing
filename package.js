@@ -29,7 +29,6 @@ Package.onUse(function(api) {
     'source/configuration.coffee',
     // INFRASTRUCTURE
     'source/infrastructure/repository.coffee',
-    'source/infrastructure/commit_collection.coffee',
     'source/infrastructure/commit_store.coffee',
     'source/infrastructure/commit_publisher.coffee',
     // DOMAIN
@@ -56,7 +55,6 @@ Package.onTest(function(api) {
     'tests/domain/aggregate.unit.coffee',
     'tests/domain/process_manager.unit.coffee',
     // INFRASTRUCTURE
-    'tests/infrastructure/commit_collection.unit.coffee',
     'tests/infrastructure/commit_store.unit.coffee',
     'tests/infrastructure/commit_publisher.unit.coffee',
     'tests/infrastructure/repository.unit.coffee',
