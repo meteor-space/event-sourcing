@@ -8,10 +8,12 @@ class Space.cqrs.Repository extends Space.Object
     events = @commitStore.getEvents id
     if events.length > 0 then return new Type(id, events) else return null
 
-  save: (instance, expectedVersion) ->
+  save: (aggregate, expectedVersion) ->
 
     changes =
-      events: instance.getEvents?() ? []
-      commands: instance.getCommands?() ? []
+      events: aggregate.getEvents?() ? []
+      commands: aggregate.getCommands?() ? []
 
-    @commitStore.add changes, instance.getId(), expectedVersion
+    expectedVersion ?= aggregate.getVersion()
+
+    @commitStore.add changes, aggregate.getId(), expectedVersion
