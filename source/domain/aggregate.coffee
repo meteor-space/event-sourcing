@@ -26,7 +26,7 @@ class Space.cqrs.Aggregate
     unless id? then throw new Error Aggregate.ERRORS.guidRequired
     @_id = id
     @_events = []
-    if @isHistory(data) then @replayHistory(data) else @initialize(id, data)
+    if @isHistory(data) then @replayHistory(data) else @initialize.apply(this, arguments)
     return this
 
   initialize: ->
