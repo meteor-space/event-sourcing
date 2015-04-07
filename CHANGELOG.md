@@ -1,6 +1,13 @@
 Changelog
 =========
 
+### 4.0.2
+Changes:
+  * Make construction of aggregates more flexible: You can now pass any number
+  of arguments and they will be passed onto the `initialize` method.
+  * Save the current version of an aggregate by default. This way you can call
+  `@repository.save aggregate` most of the time without having to speciy a version
+
 ### 4.0.1
 Changes:
   * Move object freezing capability from constructor into `ValueObject::freeze`
