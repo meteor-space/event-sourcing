@@ -155,9 +155,9 @@ class CustomerRegistrationRouter extends Space.messaging.Controller
     repository: 'Space.cqrs.Repository'
     registrations: 'CustomerRegistrations'
 
-  @handle CustomerApp.RegisterCustomer, on: (event) ->
+  @handle CustomerApp.RegisterCustomer, on: (command) ->
 
-    registration = new CustomerRegistration event.registrationId, event
+    registration = new CustomerRegistration command.registrationId, command
     @repository.save registration, registration.getVersion()
 
   @handle CustomerApp.CustomerCreated, on: (event) ->
