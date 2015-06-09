@@ -1,6 +1,10 @@
 Changelog
 =========
 
+### 5.0.0
+Updates to `space:base@2.1.0` and `space:messaging@1.2.1`, please look at
+the breaking changes in these packages to see what changed.
+
 ### 4.0.2
 Changes:
   * Make construction of aggregates more flexible: You can now pass any number
