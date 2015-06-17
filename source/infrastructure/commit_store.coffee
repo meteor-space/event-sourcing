@@ -64,7 +64,10 @@ class Space.cqrs.CommitStore
     commits.forEach (commit) =>
 
       for event in commit.changes.events
-        event = EJSON.parse(event)
+        try
+          event = EJSON.parse(event)
+        catch error
+          throw new Error "while parsing commit\nevent:#{event}\nerror:#{error}"
         event.version = commit.version
         events.push event
 
