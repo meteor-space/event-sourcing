@@ -3,6 +3,34 @@ CommitStore = Space.cqrs.CommitStore
 Event = Space.messaging.Event
 Command = Space.messaging.Command
 
+# =========== TEST DATA ========== #
+
+class TestEvent extends Event
+  @type 'Space.cqrs.CommitStore.TestEvent'
+
+class TestCommand extends Command
+  @type 'Space.cqrs.CommitStore.TestCommand'
+  @fields: sourceId: String
+
+class CreatedEvent extends Event
+  @type 'tests.CommitStore.CreatedEvent', ->
+    sourceId: String
+    version: Match.Optional(Match.Integer)
+
+class QuantityChangedEvent extends Event
+  @type 'tests.CommitStore.QuantityChangedEvent', ->
+    sourceId: String
+    version: Match.Optional(Match.Integer)
+    quantity: Match.Integer
+
+class TotalChangedEvent extends Event
+  @type 'tests.CommitStore.TotalChangedEvent', ->
+    sourceId: String
+    version: Match.Optional(Match.Integer)
+    total: Number
+
+# =========== SPECS ============= #
+
 describe "Space.cqrs.CommitStore", ->
 
   beforeEach ->
@@ -17,13 +45,6 @@ describe "Space.cqrs.CommitStore", ->
       publisher: 'Space.cqrs.CommitPublisher'
 
   describe '#add', ->
-
-    class TestEvent extends Event
-      @type 'Space.cqrs.CommitStore.TestEvent'
-
-    class TestCommand extends Command
-      @type 'Space.cqrs.CommitStore.TestCommand'
-      @fields: sourceId: String
 
     it 'inserts changes as serialized and versioned commit', ->
 
@@ -62,24 +83,6 @@ describe "Space.cqrs.CommitStore", ->
     it 'returns all events versioned by batch for given aggregate', ->
 
       sourceId = '123'
-
-      class CreatedEvent extends Event
-        @type 'tests.CommitStore.CreatedEvent', ->
-          sourceId: String
-          version: Match.Optional(Match.Integer)
-
-      class QuantityChangedEvent extends Event
-        @type 'tests.CommitStore.QuantityChangedEvent', ->
-          sourceId: String
-          version: Match.Optional(Match.Integer)
-          quantity: Match.Integer
-
-      class TotalChangedEvent extends Event
-        @type 'tests.CommitStore.TotalChangedEvent', ->
-          sourceId: String
-          version: Match.Optional(Match.Integer)
-          total: Number
-
       firstChanges = events: [new CreatedEvent sourceId: sourceId]
 
       secondChanges = events: [
