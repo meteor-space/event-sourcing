@@ -103,3 +103,18 @@ describe "Space.cqrs.CommitStore", ->
         new QuantityChangedEvent sourceId: sourceId, quantity: 1, version: 2
         new TotalChangedEvent sourceId: sourceId, total: 10, version: 2
       ]
+
+    it 'skips events if a version offset is given', ->
+
+      sourceId = '123'
+      versionOffset = 2
+      @commitStore.add {events: [new CreatedEvent sourceId: sourceId]}, sourceId, 0
+      @commitStore.add {events: [new QuantityChangedEvent sourceId: sourceId, quantity: 1]}, sourceId, 1
+      @commitStore.add {events: [new TotalChangedEvent sourceId: sourceId, total: 10]}, sourceId, 2
+
+      events = @commitStore.getEvents sourceId, versionOffset
+
+      expect(events).to.eql [
+        new QuantityChangedEvent sourceId: sourceId, quantity: 1, version: 2
+        new TotalChangedEvent sourceId: sourceId, total: 10, version: 3
+      ]

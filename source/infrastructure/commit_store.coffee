@@ -52,13 +52,19 @@ class Space.cqrs.CommitStore
       throw new Error "Expected entity <#{sourceId}> to be at version
                       #{expectedVersion} but was on #{currentVersion}"
 
-  getEvents: (sourceId) ->
+  getEvents: (sourceId, versionOffset) ->
 
+    versionOffset ?= 1
     events = []
 
     commits = @commits.find(
-      { sourceId: sourceId.toString() }, # selector
-      { sort: [['version', 'asc']] } # options
+      { # selector
+        sourceId: sourceId.toString()
+        version: $gte: versionOffset
+      },
+      { # options
+        sort: [['version', 'asc']]
+      }
     )
 
     commits.forEach (commit) =>
