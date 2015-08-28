@@ -28,6 +28,7 @@ Package.onUse(function(api) {
     'source/configuration.coffee',
     // INFRASTRUCTURE
     'source/infrastructure/repository.coffee',
+    'source/infrastructure/snapshotter.coffee',
     'source/infrastructure/commit_store.coffee',
     'source/infrastructure/commit_publisher.coffee',
     // DOMAIN
@@ -57,6 +58,7 @@ Package.onTest(function(api) {
     'tests/infrastructure/commit_store.unit.coffee',
     'tests/infrastructure/commit_publisher.unit.coffee',
     'tests/infrastructure/repository.unit.coffee',
+    'tests/infrastructure/snapshotter.unit.coffee',
     // MODULE
     'tests/server_module.integration.coffee',
   ], 'server');
