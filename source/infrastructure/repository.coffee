@@ -10,7 +10,7 @@ class Space.cqrs.Repository extends Space.Object
   find: (Type, id) ->
     if @_snapshotter?
       # Get the latest snapshot of the aggregate and replay remaining events
-      aggregate = @_snapshotter.getLatestVersionOf Type, id
+      aggregate = @_snapshotter.getSnapshotOf Type, id
       remainingEvents = @commitStore.getEvents id, aggregate.getVersion() + 1
       aggregate.replayHistory remainingEvents
       return aggregate
@@ -23,7 +23,7 @@ class Space.cqrs.Repository extends Space.Object
 
     # Let the snapshotter do it's work if configured
     @_snapshotter?.makeSnapshotOf aggregate
-    
+
     # Save the changes into the commit store
     changes =
       events: aggregate.getEvents?() ? []

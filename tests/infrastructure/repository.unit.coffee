@@ -8,7 +8,7 @@ describe 'Space.cqrs.Repository', ->
       getEvents: sinon.stub()
       add: sinon.stub()
     @snapshotter =
-      getLatestVersionOf: sinon.stub()
+      getSnapshotOf: sinon.stub()
       makeSnapshotOf: sinon.stub()
     @repository = new Repository()
     @repository.commitStore = @commitStore
@@ -96,7 +96,7 @@ describe 'Space.cqrs.Repository', ->
 
         @repository.useSnapshotter @snapshotter
 
-        @snapshotter.getLatestVersionOf
+        @snapshotter.getSnapshotOf
                     .withArgs(Aggregate, id)
                     .returns(aggregateInstance)
 
