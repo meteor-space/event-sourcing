@@ -5,71 +5,61 @@ describe 'Space.cqrs.Snapshotter', ->
 
   class TestAggregate extends Space.cqrs.Aggregate
     @toString: -> 'TestAggregate'
-    _test: null
-    getSnapshot: -> test: @_test
-    applySnapshot: (snapshot) -> @_test = snapshot.test
+    @FIELDS: test: null
 
   beforeEach ->
     @collection = new Mongo.Collection(null)
+    @versionFrequency = 2
     @snapshotter = new Snapshotter {
       collection: @collection
-      versionFrequency: 2
+      versionFrequency: @versionFrequency
     }
     @aggregateId = '123'
     @aggregate = new TestAggregate @aggregateId
-    @aggregate.applySnapshot test: 'test'
-    @aggregate._version = 1
+    @aggregate.test = 'test'
 
   describe 'making snapshots', ->
 
     it 'saves the current state of the aggregate', ->
-      @snapshotter.makeSnapshotOf TestAggregate, @aggregate
+      @aggregate._version = @versionFrequency
+      @snapshotter.makeSnapshotOf @aggregate
       expect(@collection.findOne()).toMatch {
         _id: @aggregateId
-        type: TestAggregate.toString()
-        version: 1
         snapshot: @aggregate.getSnapshot()
       }
 
     it 'skips snapshot if not enough versions have passed', ->
       # Simulate a previous snapshot at version 1
+      firstSnapshot = @aggregate.getSnapshot()
       @collection.insert {
         _id: @aggregateId
-        type: TestAggregate.toString()
-        version: 1
-        snapshot: @aggregate.getSnapshot()
+        snapshot: firstSnapshot
       }
 
       # Increase aggregate version + 1 (not enough for the frequency)
-      @aggregate._version = 2
-      @snapshotter.makeSnapshotOf TestAggregate, @aggregate
+      @aggregate._version = 1
+      @snapshotter.makeSnapshotOf @aggregate
 
       # No snapshot should have been taken!
       expect(@collection.findOne()).toMatch {
         _id: @aggregateId
-        type: TestAggregate.toString()
-        version: 1 # still at version 1
-        snapshot: @aggregate.getSnapshot()
+        snapshot: firstSnapshot
       }
 
     it 'makes snapshot when enough versions have passed', ->
       # Simulate a previous snapshot at version 1
       @collection.insert {
         _id: @aggregateId
-        type: TestAggregate.toString()
-        version: 1
         snapshot: @aggregate.getSnapshot()
       }
 
       # Increase aggregate version + 2 (enough for the frequency)
       @aggregate._version = 3
-      @snapshotter.makeSnapshotOf TestAggregate, @aggregate
+      @snapshotter.makeSnapshotOf @aggregate
 
       # No snapshot should have been taken!
       expect(@collection.findOne()).toMatch {
         _id: @aggregateId
-        type: TestAggregate.toString()
-        version: 3 # now at version 3!
         snapshot: @aggregate.getSnapshot()
       }
 
@@ -80,13 +70,12 @@ describe 'Space.cqrs.Snapshotter', ->
       # Simulate a previous snapshot at version 1
       @collection.insert {
         _id: @aggregateId
-        type: TestAggregate.toString()
-        version: 2
         snapshot: @aggregate.getSnapshot()
       }
 
       aggregate = @snapshotter.getSnapshotOf TestAggregate, @aggregateId
 
       expect(aggregate).to.be.instanceOf TestAggregate
-      expect(aggregate.getVersion()).to.equal 2
+      expect(aggregate.getVersion()).to.equal @aggregate.getVersion()
+      expect(aggregate.getState()).to.equal @aggregate.getState()
       expect(aggregate.getSnapshot()).toMatch @aggregate.getSnapshot()

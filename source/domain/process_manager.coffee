@@ -7,7 +7,7 @@ class Space.cqrs.ProcessManager extends Space.cqrs.Aggregate
 
   constructor: (id, data) ->
     @_commands = []
-    super(id, data)
+    super
 
   trigger: (command) -> @_commands.push command
 

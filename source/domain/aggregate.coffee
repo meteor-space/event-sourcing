@@ -10,23 +10,34 @@ class Space.cqrs.Aggregate
 
   @toString: -> 'Space.cqrs.Aggregate'
 
+  # Override to define which custom properties this aggregate has
+  @FIELDS: {}
+
   @ERRORS:
     guidRequired: "#{Aggregate}: Aggregate needs an GUID on creation."
     domainEventRequired: "#{Aggregate}: Event must inherit from Space.cqrs.Event"
     cannotHandleEvent: "#{Aggregate}: Cannot handle event of type: "
     invalidEventSourceId: "#{Aggregate}: The given event has an invalid source id."
 
+  @createFromSnapshot: (snapshot) -> new this(snapshot.id, snapshot, true)
+
   @handle: (eventType, handler) ->
     # create event handlers cache if it doesnt exist yet
     unless @_eventHandlers? then @_eventHandlers = {}
     @_eventHandlers[eventType.toString()] = handler
 
-  constructor: (id, data) ->
-
+  constructor: (id, data, isSnapshot) ->
     unless id? then throw new Error Aggregate.ERRORS.guidRequired
     @_id = id
     @_events = []
-    if @isHistory(data) then @replayHistory(data) else @initialize.apply(this, arguments)
+    fields = @constructor.FIELDS
+    (this[field] = fields[field]) for field of fields
+    if isSnapshot
+      @applySnapshot data
+    else if @isHistory data
+      @replayHistory data
+    else
+      @initialize.apply(this, arguments)
     return this
 
   initialize: ->
@@ -36,6 +47,21 @@ class Space.cqrs.Aggregate
   getVersion: -> @_version
 
   getEvents: -> @_events
+
+  getSnapshot: ->
+    snapshot = {}
+    snapshot.id = @_id
+    snapshot.state = @_state
+    snapshot.version = @_version
+    (snapshot[field] = this[field]) for field of @constructor.FIELDS
+    return snapshot
+
+  applySnapshot: (snapshot) ->
+    if not snapshot? then throw new Error "Invalid snapshot: #{snapshot}"
+    @_id = snapshot.id
+    @_state = snapshot.state
+    @_version = snapshot.version
+    (this[field] = snapshot[field]) for field of @constructor.FIELDS
 
   record: (event) ->
     @_validateEvent event
@@ -57,6 +83,8 @@ class Space.cqrs.Aggregate
     handler.call this, event
 
   hasState: (state) -> if state? then @_state == state else @_state?
+
+  getState: -> @_state
 
   # ============= PRIVATE ============ #
 
