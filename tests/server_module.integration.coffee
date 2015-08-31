@@ -151,23 +151,22 @@ class CustomerApp.CustomerRegistrationRouter extends Space.messaging.Controller
     registrations: 'CustomerApp.CustomerRegistrations'
 
   @handle CustomerApp.RegisterCustomer, (command) ->
-
     registration = new CustomerApp.CustomerRegistration command.registrationId, command
     @repository.save registration
 
   @on CustomerApp.CustomerCreated, (event) ->
-
-    registrationId = @registrations.findOne(customerId: event.sourceId)._id
-    registration = @repository.find CustomerApp.CustomerRegistration, registrationId
+    registration = @_findRegistrationByCustomerId event.sourceId
     registration.onCustomerCreated event
-    @repository.save registration, registration.getVersion()
+    @repository.save registration
 
   @on CustomerApp.WelcomeEmailSent, (event) ->
-
-    registrationId = @registrations.findOne(customerId: event.customerId)._id
-    registration = @repository.find CustomerApp.CustomerRegistration, registrationId
+    registration = @_findRegistrationByCustomerId event.customerId
     registration.onWelcomeEmailSent()
     @repository.save registration
+
+  _findRegistrationByCustomerId: (customerId) ->
+    registrationId = @registrations.findOne(customerId: customerId)._id
+    return @repository.find CustomerApp.CustomerRegistration, registrationId
 
 
 class CustomerApp.CustomerRouter extends Space.messaging.Controller
