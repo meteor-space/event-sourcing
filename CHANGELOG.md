@@ -1,5 +1,11 @@
 Changelog
 =========
+### 5.1.0
+Introduces snapshotting capabilities for `Space.cqrs.Repository` which can
+optionally be configured to take snapshots and replay history starting from
+a version offset. This greatly improves performance for aggregates which require
+many events to flow through, as only a tiny fraction of all events has to be
+replayed instead of the whole history.
 
 ### 5.0.0
 Updates to `space:base@2.1.0` and `space:messaging@1.2.1`, please look at
