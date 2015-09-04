@@ -1,7 +1,7 @@
 
 Event = Space.messaging.Event
 
-class Space.cqrs.Aggregate
+class Space.cqrs.Aggregate extends Space.Object
 
   _id: null
   _version: 0
