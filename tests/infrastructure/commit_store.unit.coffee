@@ -3,6 +3,34 @@ CommitStore = Space.cqrs.CommitStore
 Event = Space.messaging.Event
 Command = Space.messaging.Command
 
+# =========== TEST DATA ========== #
+
+class TestEvent extends Event
+  @type 'Space.cqrs.CommitStore.TestEvent'
+
+class TestCommand extends Command
+  @type 'Space.cqrs.CommitStore.TestCommand'
+  @fields: sourceId: String
+
+class CreatedEvent extends Event
+  @type 'tests.CommitStore.CreatedEvent', ->
+    sourceId: String
+    version: Match.Optional(Match.Integer)
+
+class QuantityChangedEvent extends Event
+  @type 'tests.CommitStore.QuantityChangedEvent', ->
+    sourceId: String
+    version: Match.Optional(Match.Integer)
+    quantity: Match.Integer
+
+class TotalChangedEvent extends Event
+  @type 'tests.CommitStore.TotalChangedEvent', ->
+    sourceId: String
+    version: Match.Optional(Match.Integer)
+    total: Number
+
+# =========== SPECS ============= #
+
 describe "Space.cqrs.CommitStore", ->
 
   beforeEach ->
@@ -17,13 +45,6 @@ describe "Space.cqrs.CommitStore", ->
       publisher: 'Space.cqrs.CommitPublisher'
 
   describe '#add', ->
-
-    class TestEvent extends Event
-      @type 'Space.cqrs.CommitStore.TestEvent'
-
-    class TestCommand extends Command
-      @type 'Space.cqrs.CommitStore.TestCommand'
-      @fields: sourceId: String
 
     it 'inserts changes as serialized and versioned commit', ->
 
@@ -62,24 +83,6 @@ describe "Space.cqrs.CommitStore", ->
     it 'returns all events versioned by batch for given aggregate', ->
 
       sourceId = '123'
-
-      class CreatedEvent extends Event
-        @type 'tests.CommitStore.CreatedEvent', ->
-          sourceId: String
-          version: Match.Optional(Match.Integer)
-
-      class QuantityChangedEvent extends Event
-        @type 'tests.CommitStore.QuantityChangedEvent', ->
-          sourceId: String
-          version: Match.Optional(Match.Integer)
-          quantity: Match.Integer
-
-      class TotalChangedEvent extends Event
-        @type 'tests.CommitStore.TotalChangedEvent', ->
-          sourceId: String
-          version: Match.Optional(Match.Integer)
-          total: Number
-
       firstChanges = events: [new CreatedEvent sourceId: sourceId]
 
       secondChanges = events: [
@@ -99,4 +102,19 @@ describe "Space.cqrs.CommitStore", ->
         new CreatedEvent sourceId: sourceId, version: 1
         new QuantityChangedEvent sourceId: sourceId, quantity: 1, version: 2
         new TotalChangedEvent sourceId: sourceId, total: 10, version: 2
+      ]
+
+    it 'skips events if a version offset is given', ->
+
+      sourceId = '123'
+      versionOffset = 2
+      @commitStore.add {events: [new CreatedEvent sourceId: sourceId]}, sourceId, 0
+      @commitStore.add {events: [new QuantityChangedEvent sourceId: sourceId, quantity: 1]}, sourceId, 1
+      @commitStore.add {events: [new TotalChangedEvent sourceId: sourceId, total: 10]}, sourceId, 2
+
+      events = @commitStore.getEvents sourceId, versionOffset
+
+      expect(events).to.eql [
+        new QuantityChangedEvent sourceId: sourceId, quantity: 1, version: 2
+        new TotalChangedEvent sourceId: sourceId, total: 10, version: 3
       ]

@@ -52,19 +52,28 @@ class Space.cqrs.CommitStore
       throw new Error "Expected entity <#{sourceId}> to be at version
                       #{expectedVersion} but was on #{currentVersion}"
 
-  getEvents: (sourceId) ->
+  getEvents: (sourceId, versionOffset) ->
 
+    versionOffset ?= 1
     events = []
 
     commits = @commits.find(
-      { sourceId: sourceId.toString() }, # selector
-      { sort: [['version', 'asc']] } # options
+      { # selector
+        sourceId: sourceId.toString()
+        version: $gte: versionOffset
+      },
+      { # options
+        sort: [['version', 'asc']]
+      }
     )
 
     commits.forEach (commit) =>
 
       for event in commit.changes.events
-        event = EJSON.parse(event)
+        try
+          event = EJSON.parse(event)
+        catch error
+          throw new Error "while parsing commit\nevent:#{event}\nerror:#{error}"
         event.version = commit.version
         events.push event
 

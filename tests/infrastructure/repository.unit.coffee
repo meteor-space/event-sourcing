@@ -7,6 +7,9 @@ describe 'Space.cqrs.Repository', ->
     @commitStore =
       getEvents: sinon.stub()
       add: sinon.stub()
+    @snapshotter =
+      getSnapshotOf: sinon.stub()
+      makeSnapshotOf: sinon.stub()
     @repository = new Repository()
     @repository.commitStore = @commitStore
 
@@ -68,3 +71,40 @@ describe 'Space.cqrs.Repository', ->
       expect(@commitStore.add).to.have.been.calledWithMatch(
         { events: events, commands: commands }, id, version
       )
+
+  describe 'snapshotting of aggregates', ->
+
+    describe 'saving snapshots', ->
+
+      it 'hands over the aggregate to the snapshotter before saving', ->
+        @repository.useSnapshotter @snapshotter
+        aggregate = getId: -> '123'
+        @repository.save aggregate, 1
+        expect(@snapshotter.makeSnapshotOf).to.have.been.calledWithExactly aggregate
+
+    describe 'finding snapshots', ->
+
+      it 'retrieves the aggregate from the snapshotter', ->
+        # Setup a fake aggregate that is returned by the snapshotter
+        Aggregate = ->
+        id = '123'
+        version = 3
+        aggregateInstance =
+          replayHistory: sinon.stub()
+          getVersion: -> version
+        events = [{ type: 'test' }]
+
+        @repository.useSnapshotter @snapshotter
+
+        @snapshotter.getSnapshotOf
+                    .withArgs(Aggregate, id)
+                    .returns(aggregateInstance)
+
+        @commitStore.getEvents
+                    .withArgs(id, version + 1)
+                    .returns(events)
+
+        aggregate = @repository.find Aggregate, id
+
+        expect(aggregateInstance.replayHistory).to.have.been.calledWith events
+        expect(aggregate).to.equal aggregateInstance

@@ -14,15 +14,23 @@ class @CustomerApp extends Space.Application
     'CustomerApp.CustomerRegistrationRouter'
     'CustomerApp.CustomerRouter'
     'CustomerApp.EmailRouter'
-    'CustomerApp.CustomerRegistrationViewModel'
+    'CustomerApp.CustomerRegistrationProjection'
   ]
 
   configure: ->
     @configuration.useInMemoryCollections = true
     collection = new @Mongo.Collection(null)
     @injector.map('CustomerApp.CustomerRegistrations').to collection
+    # Setup snapshotting
+    @snapshots = new @Mongo.Collection(null)
+    @snapshotter = new Space.cqrs.Snapshotter {
+      collection: @snapshots
+      versionFrequency: 2
+    }
 
-  startup: -> @resetDatabase()
+  startup: ->
+    @injector.get('Space.cqrs.Repository').useSnapshotter @snapshotter
+    @resetDatabase()
 
   sendCommand: -> @commandBus.send.apply @commandBus, arguments
 
@@ -34,7 +42,7 @@ class @CustomerApp extends Space.Application
 
 # -------------- COMMANDS ---------------
 
-Space.messaging.defineSerializables Space.messaging.Command, 'CustomerApp', {
+Space.messaging.define Space.messaging.Command, 'CustomerApp', {
 
   RegisterCustomer:
     registrationId: String
@@ -52,7 +60,7 @@ Space.messaging.defineSerializables Space.messaging.Command, 'CustomerApp', {
 
 # --------------- EVENTS ---------------
 
-Space.messaging.defineSerializables Space.messaging.Event, 'CustomerApp', {
+Space.messaging.define Space.messaging.Event, 'CustomerApp', {
 
   RegistrationInitiated:
     sourceId: String
@@ -85,7 +93,8 @@ Space.messaging.defineSerializables Space.messaging.Event, 'CustomerApp', {
 
 class CustomerApp.Customer extends Space.cqrs.Aggregate
 
-  _name: null
+  @FIELDS:
+    name: null
 
   initialize: (id, data) ->
 
@@ -93,14 +102,15 @@ class CustomerApp.Customer extends Space.cqrs.Aggregate
       sourceId: id
       customerName: data.name
 
-  @handle CustomerApp.CustomerCreated, (event) -> @_name = event.customerName
+  @handle CustomerApp.CustomerCreated, (event) -> @name = event.customerName
 
-# -------------- SAGAS ---------------
+# -------------- PROCESSES ---------------
 
 class CustomerApp.CustomerRegistration extends Space.cqrs.ProcessManager
 
-  _customerId: null
-  _customerName: null
+  @FIELDS:
+    customerId: null
+    customerName: null
 
   @STATES:
     creatingCustomer: 0
@@ -121,19 +131,18 @@ class CustomerApp.CustomerRegistration extends Space.cqrs.ProcessManager
   onCustomerCreated: (event) ->
 
     @trigger new CustomerApp.SendWelcomeEmail
-      customerId: @_customerId
-      customerName: @_customerName
+      customerId: @customerId
+      customerName: @customerName
 
     @record new CustomerApp.WelcomeEmailTriggered
       sourceId: @getId()
-      customerId: @_customerId
+      customerId: @customerId
 
   onWelcomeEmailSent: (event) ->
     @record new CustomerApp.RegistrationCompleted sourceId: @getId()
 
   @handle CustomerApp.RegistrationInitiated, (event) ->
-    @_customerId = event.customerId
-    @_customerName = event.customerName
+    { @customerId, @customerName } = event
     @_state = CustomerApp.CustomerRegistration.STATES.creatingCustomer
 
   @handle CustomerApp.WelcomeEmailTriggered, ->
@@ -151,23 +160,22 @@ class CustomerApp.CustomerRegistrationRouter extends Space.messaging.Controller
     registrations: 'CustomerApp.CustomerRegistrations'
 
   @handle CustomerApp.RegisterCustomer, (command) ->
-
     registration = new CustomerApp.CustomerRegistration command.registrationId, command
     @repository.save registration
 
   @on CustomerApp.CustomerCreated, (event) ->
-
-    registrationId = @registrations.findOne(customerId: event.sourceId)._id
-    registration = @repository.find CustomerApp.CustomerRegistration, registrationId
+    registration = @_findRegistrationByCustomerId event.sourceId
     registration.onCustomerCreated event
-    @repository.save registration, registration.getVersion()
+    @repository.save registration
 
   @on CustomerApp.WelcomeEmailSent, (event) ->
-
-    registrationId = @registrations.findOne(customerId: event.customerId)._id
-    registration = @repository.find CustomerApp.CustomerRegistration, registrationId
+    registration = @_findRegistrationByCustomerId event.customerId
     registration.onWelcomeEmailSent()
     @repository.save registration
+
+  _findRegistrationByCustomerId: (customerId) ->
+    registrationId = @registrations.findOne(customerId: customerId)._id
+    return @repository.find CustomerApp.CustomerRegistration, registrationId
 
 
 class CustomerApp.CustomerRouter extends Space.messaging.Controller
@@ -197,9 +205,9 @@ class CustomerApp.EmailRouter extends Space.messaging.Controller
       customerId: command.customerId
       email: "Hello #{command.customerName}"
 
-# -------------- VIEW MODELS --------------- #
+# -------------- VIEW PROJECTIONS --------------- #
 
-class CustomerApp.CustomerRegistrationViewModel extends Space.messaging.Controller
+class CustomerApp.CustomerRegistrationProjection extends Space.messaging.Controller
 
   Dependencies:
     registrations: 'CustomerApp.CustomerRegistrations'
@@ -282,3 +290,26 @@ describe.server 'Space.cqrs (integration)', ->
         sourceId: registration.id
         version: 3
     )
+
+    # Check snapshots
+    expect(@app.snapshots.find().fetch()).toMatch [
+      {
+        _id: "registration_123",
+        snapshot: {
+          id: "registration_123",
+          state: 2,
+          version: 2,
+          customerId: "customer_123",
+          customerName: "Dominik"
+        }
+      },
+      {
+        _id: "customer_123",
+        snapshot: {
+          id: "customer_123",
+          state: null,
+          version: 0,
+          name: "Dominik"
+        }
+      }
+    ]
