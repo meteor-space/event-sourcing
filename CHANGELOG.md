@@ -1,5 +1,10 @@
 Changelog
 =========
+
+### 5.1.1
+Let `Space.cqrs.Aggregate` extend `Space.Object` to improve compatibility with
+Javascript (in addition to Coffeescript).
+
 ### 5.1.0
 Introduces snapshotting capabilities for `Space.cqrs.Repository` which can
 optionally be configured to take snapshots and replay history starting from
