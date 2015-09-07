@@ -28,7 +28,7 @@ It also provides a (currently) extremely basic implementation of a MongoDB based
 It heavily uses the `space-messaging` package for Meter `EJSON` and runtime-`check`ed domain events and commands that are automatically serialized into the MongoDB and restored for you. So you don't have to deal with serialization concerns anywhere but within your value objects.
 
 ## Installation
-`meteor add space:cqrs`
+`meteor add space:event-sourcing`
 
 ## Documentation
 Please look through the tests to get a feeling what this package can do for you.
