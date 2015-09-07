@@ -1,9 +1,9 @@
 
-class Space.cqrs.ProcessManager extends Space.cqrs.Aggregate
+class Space.eventSourcing.Process extends Space.eventSourcing.Aggregate
 
   _commands: null
 
-  @toString: -> 'Space.cqrs.ProcessManager'
+  @toString: -> 'Space.eventSourcing.Process'
 
   constructor: (id, data) ->
     @_commands = []

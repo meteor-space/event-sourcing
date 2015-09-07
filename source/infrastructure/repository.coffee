@@ -1,8 +1,8 @@
 
-class Space.cqrs.Repository extends Space.Object
+class Space.eventSourcing.Repository extends Space.Object
 
   Dependencies:
-    commitStore: 'Space.cqrs.CommitStore'
+    commitStore: 'Space.eventSourcing.CommitStore'
 
   # Optional snapshotter that can be configured via `useSnapshotter`
   _snapshotter: null

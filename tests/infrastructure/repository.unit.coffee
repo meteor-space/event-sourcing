@@ -1,7 +1,7 @@
 
-{Repository} = Space.cqrs
+{Repository} = Space.eventSourcing
 
-describe 'Space.cqrs.Repository', ->
+describe 'Space.eventSourcing.Repository', ->
 
   beforeEach ->
     @commitStore =
@@ -15,7 +15,7 @@ describe 'Space.cqrs.Repository', ->
 
   it 'defines its dependencies correctly', ->
     expect(Repository).to.dependOn
-      commitStore: 'Space.cqrs.CommitStore'
+      commitStore: 'Space.eventSourcing.CommitStore'
 
   describe '#find', ->
 

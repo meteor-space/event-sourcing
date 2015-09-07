@@ -1,4 +1,4 @@
 
-Space.cqrs.Configuration =
+Space.eventSourcing.Configuration =
 
   useInMemoryCollections: false

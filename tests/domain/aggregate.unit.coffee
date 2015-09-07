@@ -1,8 +1,8 @@
 
-{Aggregate} = Space.cqrs
+{Aggregate} = Space.eventSourcing
 {Event} = Space.messaging
 
-describe "Space.cqrs.Aggregate", ->
+describe "Space.eventSourcing.Aggregate", ->
 
   beforeEach ->
     @aggregateId = '123'
@@ -174,7 +174,7 @@ describe "Space.cqrs.Aggregate", ->
       @toString: -> 'StateChangingEvent'
       typeName: -> 'StateChangingEvent'
 
-    class StateAggregate extends Space.cqrs.Aggregate
+    class StateAggregate extends Space.eventSourcing.Aggregate
       @handle StateChangingEvent, (event) -> @_state = event.state
 
     it 'has no state by default', ->

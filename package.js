@@ -1,7 +1,7 @@
 Package.describe({
   summary: 'Event Sourcing Infrastructure for Meteor.',
   name: 'space:event-sourcing',
-  version: '1.0.0',
+  version: '1.1.0',
   git: 'https://github.com/meteor-space/event-sourcing.git',
 });
 
@@ -17,11 +17,6 @@ Package.onUse(function(api) {
 
   api.addFiles(['source/server.coffee'], 'server');
 
-  // ========= SHARED =========
-
-  api.addFiles(['source/client.coffee']);
-  api.addFiles(['source/domain/value_object.coffee']);
-
   // ========= server =========
 
   api.addFiles([
@@ -33,7 +28,7 @@ Package.onUse(function(api) {
     'source/infrastructure/commit_publisher.coffee',
     // DOMAIN
     'source/domain/aggregate.coffee',
-    'source/domain/process_manager.coffee',
+    'source/domain/process.coffee',
 
   ], 'server');
 
@@ -52,8 +47,7 @@ Package.onTest(function(api) {
   api.addFiles([
     // DOMAIN
     'tests/domain/aggregate.unit.coffee',
-    'tests/domain/process_manager.unit.coffee',
-    'tests/domain/value_object.unit.coffee',
+    'tests/domain/process.unit.coffee',
     // INFRASTRUCTURE
     'tests/infrastructure/commit_store.unit.coffee',
     'tests/infrastructure/commit_publisher.unit.coffee',

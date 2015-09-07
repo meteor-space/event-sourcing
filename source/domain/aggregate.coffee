@@ -1,21 +1,21 @@
 
 Event = Space.messaging.Event
 
-class Space.cqrs.Aggregate extends Space.Object
+class Space.eventSourcing.Aggregate extends Space.Object
 
   _id: null
   _version: 0
   _events: null
   _state: null
 
-  @toString: -> 'Space.cqrs.Aggregate'
+  @toString: -> 'Space.eventSourcing.Aggregate'
 
   # Override to define which custom properties this aggregate has
   @FIELDS: {}
 
   @ERRORS:
     guidRequired: "#{Aggregate}: Aggregate needs an GUID on creation."
-    domainEventRequired: "#{Aggregate}: Event must inherit from Space.cqrs.Event"
+    domainEventRequired: "#{Aggregate}: Event must inherit from Space.eventSourcing.Event"
     cannotHandleEvent: "#{Aggregate}: Cannot handle event of type: "
     invalidEventSourceId: "#{Aggregate}: The given event has an invalid source id."
 

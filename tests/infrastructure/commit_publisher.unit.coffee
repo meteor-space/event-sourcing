@@ -1,9 +1,9 @@
 
-CommitPublisher = Space.cqrs.CommitPublisher
-Event = Space.cqrs.Event
-Command = Space.cqrs.Command
+CommitPublisher = Space.eventSourcing.CommitPublisher
+Event = Space.eventSourcing.Event
+Command = Space.eventSourcing.Command
 
-describe "Space.cqrs.CommitPublisher", ->
+describe "Space.eventSourcing.CommitPublisher", ->
 
   beforeEach ->
 
@@ -17,7 +17,7 @@ describe "Space.cqrs.CommitPublisher", ->
   it 'declares its dependencies correctly', ->
 
     expect(CommitPublisher).to.dependOn
-      commits: 'Space.cqrs.Commits'
+      commits: 'Space.eventSourcing.Commits'
       eventBus: 'Space.messaging.EventBus'
       commandBus: 'Space.messaging.CommandBus'
 

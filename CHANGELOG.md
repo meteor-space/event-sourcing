@@ -1,9 +1,13 @@
 Changelog
 =========
 
-### 1.0.0
-Updated Github repo location to https://github.com/meteor-space/event-sourcing
-The new Meteor package name is `space:event-sourcing`
+### 1.1.0
+BREAKING CHANGES:
+- The `Space.cqrs` namespace is now called `Space.eventSourcing`
+- `Space.cqrs.ValueObject` was removed from the project
+- `Space.cqrs.ProcessManager` is now `Space.eventSourcing.Process`
+- Updated Github repo location to https://github.com/meteor-space/event-sourcing
+- The new Meteor package name is `space:event-sourcing`
 
 ### 5.1.1
 Let `Space.cqrs.Aggregate` extend `Space.Object` to improve compatibility with
