@@ -28,7 +28,7 @@ Package.onUse(function(api) {
     'source/infrastructure/commit_publisher.coffee',
     // DOMAIN
     'source/domain/aggregate.coffee',
-    'source/domain/process_manager.coffee',
+    'source/domain/process.coffee',
 
   ], 'server');
 
@@ -47,7 +47,7 @@ Package.onTest(function(api) {
   api.addFiles([
     // DOMAIN
     'tests/domain/aggregate.unit.coffee',
-    'tests/domain/process_manager.unit.coffee',
+    'tests/domain/process.unit.coffee',
     // INFRASTRUCTURE
     'tests/infrastructure/commit_store.unit.coffee',
     'tests/infrastructure/commit_publisher.unit.coffee',
