@@ -2,12 +2,12 @@
 # ============== INTEGRATION SETUP =============== #
 class @CustomerApp extends Space.Application
 
-  RequiredModules: ['Space.cqrs']
+  RequiredModules: ['Space.eventSourcing']
 
   Dependencies:
     commandBus: 'Space.messaging.CommandBus'
     eventBus: 'Space.messaging.EventBus'
-    configuration: 'Space.cqrs.Configuration'
+    configuration: 'Space.eventSourcing.Configuration'
     Mongo: 'Mongo'
 
   Singletons: [
@@ -23,13 +23,13 @@ class @CustomerApp extends Space.Application
     @injector.map('CustomerApp.CustomerRegistrations').to collection
     # Setup snapshotting
     @snapshots = new @Mongo.Collection(null)
-    @snapshotter = new Space.cqrs.Snapshotter {
+    @snapshotter = new Space.eventSourcing.Snapshotter {
       collection: @snapshots
       versionFrequency: 2
     }
 
   startup: ->
-    @injector.get('Space.cqrs.Repository').useSnapshotter @snapshotter
+    @injector.get('Space.eventSourcing.Repository').useSnapshotter @snapshotter
     @resetDatabase()
 
   sendCommand: -> @commandBus.send.apply @commandBus, arguments
@@ -37,7 +37,7 @@ class @CustomerApp extends Space.Application
   subscribeTo: -> @eventBus.subscribeTo.apply @eventBus, arguments
 
   resetDatabase: ->
-    @commits = @injector.get 'Space.cqrs.Commits'
+    @commits = @injector.get 'Space.eventSourcing.Commits'
     @commits.remove {}
 
 # -------------- COMMANDS ---------------
@@ -91,7 +91,7 @@ Space.messaging.define Space.messaging.Event, 'CustomerApp', {
 
 # -------------- AGGREGATES ---------------
 
-class CustomerApp.Customer extends Space.cqrs.Aggregate
+class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
   @FIELDS:
     name: null
@@ -106,7 +106,7 @@ class CustomerApp.Customer extends Space.cqrs.Aggregate
 
 # -------------- PROCESSES ---------------
 
-class CustomerApp.CustomerRegistration extends Space.cqrs.ProcessManager
+class CustomerApp.CustomerRegistration extends Space.eventSourcing.ProcessManager
 
   @FIELDS:
     customerId: null
@@ -156,7 +156,7 @@ class CustomerApp.CustomerRegistration extends Space.cqrs.ProcessManager
 class CustomerApp.CustomerRegistrationRouter extends Space.messaging.Controller
 
   Dependencies:
-    repository: 'Space.cqrs.Repository'
+    repository: 'Space.eventSourcing.Repository'
     registrations: 'CustomerApp.CustomerRegistrations'
 
   @handle CustomerApp.RegisterCustomer, (command) ->
@@ -183,7 +183,7 @@ class CustomerApp.CustomerRouter extends Space.messaging.Controller
   @toString: -> 'CustomerApp.CustomerRouter'
 
   Dependencies:
-    repository: 'Space.cqrs.Repository'
+    repository: 'Space.eventSourcing.Repository'
 
   @handle CustomerApp.CreateCustomer, (command) ->
     @repository.save new CustomerApp.Customer command.customerId, command
@@ -227,7 +227,7 @@ class CustomerApp.CustomerRegistrationProjection extends Space.messaging.Control
 
 # ============== INTEGRATION TESTING =============== #
 
-describe.server 'Space.cqrs (integration)', ->
+describe.server 'Space.eventSourcing (integration)', ->
 
   # fixtures
   customer = id: 'customer_123', name: 'Dominik'

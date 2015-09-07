@@ -1,8 +1,8 @@
 
-class Space.cqrs.CommitPublisher
+class Space.eventSourcing.CommitPublisher
 
   Dependencies:
-    commits: 'Space.cqrs.Commits'
+    commits: 'Space.eventSourcing.Commits'
     eventBus: 'Space.messaging.EventBus'
     commandBus: 'Space.messaging.CommandBus'
 

@@ -1,5 +1,5 @@
 
-ProcessManager = Space.cqrs.ProcessManager
+ProcessManager = Space.eventSourcing.ProcessManager
 Event = Space.messaging.Event
 
 describe "#{ProcessManager}", ->
@@ -16,7 +16,7 @@ describe "#{ProcessManager}", ->
     @processManager = new TestProcess '123'
 
   it 'extends aggregate root', ->
-    expect(ProcessManager).to.extend Space.cqrs.Aggregate
+    expect(ProcessManager).to.extend Space.eventSourcing.Aggregate
 
   describe 'working with commands', ->
 

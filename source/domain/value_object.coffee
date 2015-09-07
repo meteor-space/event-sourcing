@@ -1,6 +1,6 @@
 
-class Space.cqrs.ValueObject extends Space.messaging.Serializable
+class Space.eventSourcing.ValueObject extends Space.messaging.Serializable
 
-  @toString: -> 'Space.cqrs.ValueObject'
+  @toString: -> 'Space.eventSourcing.ValueObject'
 
   freeze: -> Object.freeze? this

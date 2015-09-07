@@ -1,15 +1,15 @@
 
-CommitStore = Space.cqrs.CommitStore
+CommitStore = Space.eventSourcing.CommitStore
 Event = Space.messaging.Event
 Command = Space.messaging.Command
 
 # =========== TEST DATA ========== #
 
 class TestEvent extends Event
-  @type 'Space.cqrs.CommitStore.TestEvent'
+  @type 'Space.eventSourcing.CommitStore.TestEvent'
 
 class TestCommand extends Command
-  @type 'Space.cqrs.CommitStore.TestCommand'
+  @type 'Space.eventSourcing.CommitStore.TestCommand'
   @fields: sourceId: String
 
 class CreatedEvent extends Event
@@ -31,7 +31,7 @@ class TotalChangedEvent extends Event
 
 # =========== SPECS ============= #
 
-describe "Space.cqrs.CommitStore", ->
+describe "Space.eventSourcing.CommitStore", ->
 
   beforeEach ->
     @commitStore = new CommitStore()
@@ -41,8 +41,8 @@ describe "Space.cqrs.CommitStore", ->
   it 'defines its dependencies correctly', ->
 
     expect(CommitStore).to.dependOn
-      commits: 'Space.cqrs.Commits'
-      publisher: 'Space.cqrs.CommitPublisher'
+      commits: 'Space.eventSourcing.Commits'
+      publisher: 'Space.eventSourcing.CommitPublisher'
 
   describe '#add', ->
 

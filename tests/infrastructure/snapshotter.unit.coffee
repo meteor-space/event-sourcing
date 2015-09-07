@@ -1,9 +1,9 @@
 
-{Snapshotter} = Space.cqrs
+{Snapshotter} = Space.eventSourcing
 
-describe 'Space.cqrs.Snapshotter', ->
+describe 'Space.eventSourcing.Snapshotter', ->
 
-  class TestAggregate extends Space.cqrs.Aggregate
+  class TestAggregate extends Space.eventSourcing.Aggregate
     @toString: -> 'TestAggregate'
     @FIELDS: test: null
 

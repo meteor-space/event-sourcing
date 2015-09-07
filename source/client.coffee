@@ -1,1 +1,1 @@
-Space.cqrs ?= {}
+Space.eventSourcing ?= {}

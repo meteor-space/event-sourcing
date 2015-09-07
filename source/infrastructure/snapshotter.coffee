@@ -1,4 +1,4 @@
-class Space.cqrs.Snapshotter extends Space.Object
+class Space.eventSourcing.Snapshotter extends Space.Object
 
   _collection: null
   _versionFrequency: 0

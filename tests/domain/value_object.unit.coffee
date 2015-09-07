@@ -1,7 +1,7 @@
 
-{ValueObject} = Space.cqrs
+{ValueObject} = Space.eventSourcing
 
-describe 'Space.cqrs.ValueObject', ->
+describe 'Space.eventSourcing.ValueObject', ->
 
   class Quantity extends ValueObject
     @fields:

@@ -1,9 +1,9 @@
 
-class Space.cqrs.CommitStore
+class Space.eventSourcing.CommitStore
 
   Dependencies:
-    commits: 'Space.cqrs.Commits'
-    publisher: 'Space.cqrs.CommitPublisher'
+    commits: 'Space.eventSourcing.Commits'
+    publisher: 'Space.eventSourcing.CommitPublisher'
 
   add: (changes, sourceId, expectedVersion) ->
 
