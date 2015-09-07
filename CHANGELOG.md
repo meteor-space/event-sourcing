@@ -1,8 +1,9 @@
 Changelog
 =========
 
-### 5.1.2
-Updated Github repo location to https://github.com/meteor-space/cqrs
+### 1.0.0
+Updated Github repo location to https://github.com/meteor-space/event-sourcing
+The new Meteor package name is `space:event-sourcing`
 
 ### 5.1.1
 Let `Space.cqrs.Aggregate` extend `Space.Object` to improve compatibility with

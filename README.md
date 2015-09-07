@@ -1,7 +1,7 @@
-# CQRS and Event Sourcing for Meteor
+# Event Sourcing Infrastructure for Meteor
 
-[![Build Status](https://travis-ci.org/meteor-space/cqrs.svg?branch=master)](https://travis-ci.org/meteor-space/cqrs)
-[![Join the chat at https://gitter.im/meteor-space/cqrs](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/meteor-space/cqrs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build Status](https://travis-ci.org/meteor-space/event-sourcing.svg?branch=master)](https://travis-ci.org/meteor-space/event-sourcing)
+[![Join the chat at https://gitter.im/meteor-space/event-sourcing](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/meteor-space/event-sourcing?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This package provides a simple infrastructure for building your Meteor app
 with the CQRS (Command Query Responsibility Separation) and Event Sourcing
@@ -15,7 +15,7 @@ You can read up about these software architecture topics:
 * [Microsoft about CQRS](http://msdn.microsoft.com/en-us/library/dn568103.aspx)
 * [Event Sourcing](https://github.com/eventstore/eventstore/wiki/Event-Sourcing-Basics)
 
-A very contrived and bare bones example is the [integration test](https://github.com/meteor-space/cqrs/blob/master/tests/server_module.integration.coffee) for this package.
+A very contrived and bare bones example is the [integration test](https://github.com/meteor-space/event-sourcing/blob/master/tests/server_module.integration.coffee) for this package.
 
 But of course, this package mostly makes sense for more complex business domains which are hard to show in a small contrived example :wink:
 
@@ -42,7 +42,7 @@ Add unit / integration tests for any new or changed functionality.
 `meteor test-packages ./`
 
 ## Release History
-You can find the release history in the [changelog](https://github.com/meteor-space/cqrs/blob/master/CHANGELOG.md)
+You can find the release history in the [changelog](https://github.com/meteor-space/event-sourcing/blob/master/CHANGELOG.md)
 
 ## License
 Licensed under the MIT license.
