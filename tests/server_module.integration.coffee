@@ -106,7 +106,7 @@ class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
 # -------------- PROCESSES ---------------
 
-class CustomerApp.CustomerRegistration extends Space.eventSourcing.ProcessManager
+class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
 
   @FIELDS:
     customerId: null

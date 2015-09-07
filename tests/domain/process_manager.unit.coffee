@@ -1,5 +1,5 @@
 
-ProcessManager = Space.eventSourcing.ProcessManager
+ProcessManager = Space.eventSourcing.Process
 Event = Space.messaging.Event
 
 describe "#{ProcessManager}", ->

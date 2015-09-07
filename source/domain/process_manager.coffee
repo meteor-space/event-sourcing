@@ -1,9 +1,9 @@
 
-class Space.eventSourcing.ProcessManager extends Space.eventSourcing.Aggregate
+class Space.eventSourcing.Process extends Space.eventSourcing.Aggregate
 
   _commands: null
 
-  @toString: -> 'Space.eventSourcing.ProcessManager'
+  @toString: -> 'Space.eventSourcing.Process'
 
   constructor: (id, data) ->
     @_commands = []
