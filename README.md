@@ -1,5 +1,6 @@
-# CQRS and Event Sourcing for Meteor [![Build Status](https://travis-ci.org/meteor-space/cqrs.svg?branch=master)](https://travis-ci.org/meteor-space/cqrs)
+# CQRS and Event Sourcing for Meteor
 
+[![Build Status](https://travis-ci.org/meteor-space/cqrs.svg?branch=master)](https://travis-ci.org/meteor-space/cqrs)
 [![Join the chat at https://gitter.im/meteor-space/cqrs](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/meteor-space/cqrs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This package provides a simple infrastructure for building your Meteor app
