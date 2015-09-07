@@ -1,8 +1,8 @@
 
-ProcessManager = Space.eventSourcing.Process
+Process = Space.eventSourcing.Process
 Event = Space.messaging.Event
 
-describe "#{ProcessManager}", ->
+describe "Space.eventSourcing.Process", ->
 
   class TestCommand
 
@@ -10,17 +10,17 @@ describe "#{ProcessManager}", ->
     @event = event = new Event sourceId: '123', version: 1
     @handler = handler = sinon.spy()
 
-    class TestProcess extends ProcessManager
+    class TestProcess extends Process
       @handle event.typeName(), handler
 
     @processManager = new TestProcess '123'
 
   it 'extends aggregate root', ->
-    expect(ProcessManager).to.extend Space.eventSourcing.Aggregate
+    expect(Process).to.extend Space.eventSourcing.Aggregate
 
   describe 'working with commands', ->
 
-    it 'a processManager generates no commands by default', ->
+    it 'a process generates no commands by default', ->
       expect(@processManager.getCommands()).to.be.empty
 
     it 'allows to add commands', ->
