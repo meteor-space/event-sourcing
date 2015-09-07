@@ -1,6 +1,9 @@
 Changelog
 =========
 
+### 5.1.2
+Updated Github repo location to https://github.com/meteor-space/cqrs
+
 ### 5.1.1
 Let `Space.cqrs.Aggregate` extend `Space.Object` to improve compatibility with
 Javascript (in addition to Coffeescript).
