@@ -17,11 +17,6 @@ Package.onUse(function(api) {
 
   api.addFiles(['source/server.coffee'], 'server');
 
-  // ========= SHARED =========
-
-  api.addFiles(['source/client.coffee']);
-  api.addFiles(['source/domain/value_object.coffee']);
-
   // ========= server =========
 
   api.addFiles([
@@ -53,7 +48,6 @@ Package.onTest(function(api) {
     // DOMAIN
     'tests/domain/aggregate.unit.coffee',
     'tests/domain/process_manager.unit.coffee',
-    'tests/domain/value_object.unit.coffee',
     // INFRASTRUCTURE
     'tests/infrastructure/commit_store.unit.coffee',
     'tests/infrastructure/commit_publisher.unit.coffee',
