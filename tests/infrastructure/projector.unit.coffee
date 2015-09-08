@@ -1,13 +1,13 @@
 
-Migration = Space.eventSourcing.Migration
+Projector = Space.eventSourcing.Projector
 
-describe 'Space.eventSourcing.Migration', ->
+describe 'Space.eventSourcing.Projector', ->
 
   FirstCollection = new Mongo.Collection 'space_eventsourcing_firstCollection'
   SecondCollection = new Mongo.Collection 'space_eventsourcing_secondCollection'
 
   class TestEvent extends Space.messaging.Event
-    @type 'Space.eventSourcing.MigrationTestEvent'
+    @type 'Space.eventSourcing.ProjectorTestEvent'
     @fields: {
       sourceId: String
       value: String
@@ -23,16 +23,10 @@ describe 'Space.eventSourcing.Migration', ->
       record = {
         _id: event.sourceId
         value: event.value
-        isFromMigration: true # This is the difference that would be "new"
+        isFromReplay: true # This is the difference that would be "new"
       }
       @firstCollection.insert record
       @secondCollection.insert record
-
-  class TestMigration extends Space.eventSourcing.Migration
-    Collections: [
-      'FirstCollection'
-      'SecondCollection'
-    ]
 
   class TestApp extends Space.Application
 
@@ -46,12 +40,9 @@ describe 'Space.eventSourcing.Migration', ->
       @injector.map('FirstCollection').to FirstCollection
       @injector.map('SecondCollection').to SecondCollection
       @injector.map('TestProjection').toSingleton TestProjection
-      @injector.map('TestMigration').toSingleton TestMigration
       @eventSourcingConfig.useInMemoryCollections = true
 
-    startup: ->
-      @injector.create 'TestProjection'
-      @injector.create 'TestMigration'
+    startup: -> @injector.create 'TestProjection'
 
   describe 'replaying events to migrate projections', ->
 
@@ -64,7 +55,7 @@ describe 'Space.eventSourcing.Migration', ->
 
     it 'updates the collections with the new projection data', ->
 
-      # Insert some "old" data that has been in the DB before the migration
+      # Insert some "old" data that has been in the DB before the replay
       FirstCollection.insert _id: @event.sourceId, value: @event.value
       SecondCollection.insert _id: @event.sourceId, value: @event.value
 
@@ -80,14 +71,17 @@ describe 'Space.eventSourcing.Migration', ->
         insertedAt: new Date()
       }
 
-      migration = @app.injector.get 'TestMigration'
-      migration.rebuildProjections ['FirstCollection']
+      projector = @app.injector.get 'Space.eventSourcing.Projector'
+      projector.replay {
+        projections: ['FirstCollection', 'SecondCollection']
+        rebuildOnly: ['FirstCollection']
+      }
 
       # It should have updated the first collection
       expect(FirstCollection.find().fetch()).toMatch [
         _id: @event.sourceId
         value: @event.value
-        isFromMigration: true
+        isFromReplay: true
       ]
       # But not the second one!
       expect(SecondCollection.find().fetch()).toMatch [

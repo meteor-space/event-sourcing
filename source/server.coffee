@@ -15,5 +15,6 @@ class Space.eventSourcing extends Space.Module
     else
       commits = new @mongo.Collection 'space_cqrs_commits'
       commits._ensureIndex { "sourceId": 1, "version": 1 }, unique: true
-      
+
     @injector.map('Space.eventSourcing.Commits').to commits
+    @injector.map('Space.eventSourcing.Projector').asSingleton()
