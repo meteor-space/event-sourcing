@@ -66,9 +66,13 @@ class Space.eventSourcing.CommitStore
         sort: [['version', 'asc']]
       }
     )
+    return @_parseEventsFromCommits commits
 
+  getAllEvents: -> @_parseEventsFromCommits @commits.find()
+
+  _parseEventsFromCommits: (commits) ->
+    events = []
     commits.forEach (commit) =>
-
       for event in commit.changes.events
         try
           event = EJSON.parse(event)
@@ -76,5 +80,4 @@ class Space.eventSourcing.CommitStore
           throw new Error "while parsing commit\nevent:#{event}\nerror:#{error}"
         event.version = commit.version
         events.push event
-
     return events
