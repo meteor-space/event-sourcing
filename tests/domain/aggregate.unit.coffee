@@ -1,16 +1,20 @@
 
 {Aggregate} = Space.eventSourcing
 {Event} = Space.messaging
+{Command} = Space.messaging
 
 describe "Space.eventSourcing.Aggregate", ->
 
   beforeEach ->
     @aggregateId = '123'
     @event = event = new Event sourceId: @aggregateId, version: 2
-    @handler = handler = sinon.spy()
+    @command = command = new Command targetId: @aggregateId, version: 1
+    @eventHandler = eventHandler = sinon.spy()
+    @commandHandler = commandHandler = sinon.spy()
 
     class TestAggregate extends Aggregate
-      @handle event.typeName(), handler
+      @handle event.typeName(), eventHandler
+      @handle command.typeName(), commandHandler
 
     @aggregate = new TestAggregate @aggregateId
 
@@ -41,7 +45,7 @@ describe "Space.eventSourcing.Aggregate", ->
     it 'handles the given event', ->
 
       @aggregate.record @event
-      expect(@handler).to.have.been.calledWithExactly @event
+      expect(@eventHandler).to.have.been.calledWithExactly @event
 
     it 'appends the event to the queue', ->
 
@@ -57,7 +61,7 @@ describe "Space.eventSourcing.Aggregate", ->
 
       event = new Event sourceId: '123'
       aggregate = new Aggregate '123'
-      expectedError = Aggregate.ERRORS.cannotHandleEvent + event.typeName()
+      expectedError = Aggregate.ERRORS.cannotHandleMessage + event.typeName()
       expect(-> aggregate.record event).to.throw expectedError
 
     it 'does not append the event to the queue if something fails', ->
@@ -73,7 +77,7 @@ describe "Space.eventSourcing.Aggregate", ->
     it 'invokes the mapped event handler', ->
 
       @aggregate.replay @event
-      expect(@handler).to.have.been.calledWithExactly @event
+      expect(@eventHandler).to.have.been.calledWithExactly @event
 
     it 'does not add the event as uncommitted change', ->
 
@@ -101,21 +105,21 @@ describe "Space.eventSourcing.Aggregate", ->
       event = new Event sourceId: 'otherId'
       expect(=> @aggregate.replay event).to.throw Aggregate.INVALID_EVENT_SOURCE_ID_ERROR
 
-  # ========== HANDLING EXTERNAL EVENTS ========== #
+  # ========== HANDLING EVENTS AND COMMANDS ========== #
 
   describe "#handle", ->
 
     it 'invokes the mapped event handler', ->
 
       @aggregate.handle @event
-      expect(@handler).to.have.been.calledWithExactly @event
+      expect(@eventHandler).to.have.been.calledWithExactly @event
 
     it 'does not add the event as uncommitted change', ->
 
       @aggregate.handle @event
       expect(@aggregate.getEvents()).to.eql []
 
-    it 'it does not assign the event version to the process', ->
+    it 'it does not assign the event version to the aggregate', ->
 
       @aggregate.handle @event
       expect(@aggregate.getVersion()).not.to.equal @event.version
@@ -128,6 +132,11 @@ describe "Space.eventSourcing.Aggregate", ->
     it 'accepts events with different source id', ->
       @event.sourceId = 'different'
       expect(=> @aggregate.handle @event).not.to.throw Error
+
+    it 'accepts commands as well', ->
+
+      @aggregate.handle @command
+      expect(@commandHandler).to.have.been.calledWithExactly @command
 
   # ========== WORKING WITH EVENT HISTORY ========== #
 
