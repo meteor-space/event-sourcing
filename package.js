@@ -11,7 +11,7 @@ Package.onUse(function(api) {
 
   api.use([
     'coffeescript',
-    'udondan:bulk-collection-update@0.2.0',
+    'mikowals:batch-insert@1.1.9',
     'space:base@2.4.0',
     'space:messaging@1.7.0'
   ]);

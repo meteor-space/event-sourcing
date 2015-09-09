@@ -37,7 +37,8 @@ class Space.eventSourcing.Projector extends Space.Object
     # for the specified projections only.
     for collectionId, realCollection of realCollectionsBackups
       inMemoryCollection = @injector.get(collectionId)
-      bulkCollectionUpdate realCollection, inMemoryCollection.find().fetch()
+      realCollection.remove {}
+      realCollection.batchInsert inMemoryCollection.find().fetch()
       # Restore original collections
       @injector.override(collectionId).to realCollection
 
