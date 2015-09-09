@@ -1,6 +1,6 @@
 class Space.eventSourcing.Projection extends Space.messaging.Controller
 
-  Collections: []
+  Collections: {}
 
   constructor: ->
     super
