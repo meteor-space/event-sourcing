@@ -57,6 +57,7 @@ Package.onTest(function(api) {
     'tests/infrastructure/commit_publisher.unit.coffee',
     'tests/infrastructure/repository.unit.coffee',
     'tests/infrastructure/snapshotter.unit.coffee',
+    'tests/infrastructure/projection.unit.coffee',
     'tests/infrastructure/projector.integration.coffee',
     // MODULE
     'tests/server_module.integration.coffee',
