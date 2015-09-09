@@ -15,8 +15,8 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   @ERRORS:
     guidRequired: "#{Aggregate}: Aggregate needs an GUID on creation."
-    domainEventRequired: "#{Aggregate}: Event must inherit from Space.eventSourcing.Event"
-    cannotHandleMessage: "#{Aggregate}: Cannot handle message of type: "
+    domainEventRequired: "#{Aggregate}: Event must inherit from Space.messaging.Event"
+    cannotHandleMessage: "#{Aggregate}: Cannot handle: "
     invalidEventSourceId: "#{Aggregate}: The given event has an invalid source id."
 
   @createFromSnapshot: (snapshot) -> new this(snapshot.id, snapshot, true)
