@@ -10,32 +10,36 @@ class Space.eventSourcing.Projector extends Space.Object
 
   replay: (options) ->
 
-    # Rebuild all projections by default
-    options.rebuildOnly ?= options.projections
-    realCollectionsBackups = {}
+    if not options.projections?
+      throw new Error 'You have to provide an array of projection qualifiers.'
 
     # Tell commit publisher to queue up incoming requests
     @publisher.pausePublishing()
 
-    # Save backups of the real collections to restore them later and
-    # override the real collections with in-memory pendants
-    for collectionId in options.projections
-      realCollectionsBackups[collectionId] = @injector.get collectionId
-      @injector.override(collectionId).to new @mongo.Collection(null)
+    realCollectionsBackups = {}
+    projectionsToRebuild = []
 
-    # Retrieve and re-publish all events in the commit store
-    @eventBus.publish(event) for event in @commitStore.getAllEvents()
+    # Loop over all projections that should be rebuilt
+    for projectionId in options.projections
+      projection = @injector.get projectionId
+      projectionsToRebuild.push projection
+      # Save backups of the real collections to restore them later and
+      # override the real collections with in-memory pendants
+      for collectionId in projection.Collections
+        realCollectionsBackups[collectionId] = @injector.get collectionId
+        @injector.override(collectionId).to new @mongo.Collection(null)
+
+    # Loop through all events and hand them indiviually to all projections
+    for event in @commitStore.getAllEvents()
+      projection.on(event) for projection in projectionsToRebuild
 
     # Update the real collection data with the in-memory versions
     # for the specified projections only.
-    for collectionId in options.rebuildOnly
+    for collectionId, realCollection of realCollectionsBackups
       inMemoryCollection = @injector.get(collectionId)
-      realCollection = realCollectionsBackups[collectionId]
       bulkCollectionUpdate realCollection, inMemoryCollection.find().fetch()
-
-    # Restore all original collections
-    for collectionId in options.projections
-      @injector.override(collectionId).to realCollectionsBackups[collectionId]
+      # Restore original collections
+      @injector.override(collectionId).to realCollection
 
     # Tell commit publisher to continue with publishing (also the queued ones)
     @publisher.continuePublishing()

@@ -13,20 +13,29 @@ describe 'Space.eventSourcing.Projector', ->
       value: String
     }
 
-  class TestProjection extends Space.eventSourcing.Projection
+  class FirstProjection extends Space.eventSourcing.Projection
 
-    Dependencies:
-      firstCollection: 'FirstCollection'
-      secondCollection: 'SecondCollection'
+    Dependencies: { firstCollection: 'FirstCollection' }
+    Collections: ['FirstCollection']
 
     @on TestEvent, (event) ->
-      record = {
+      @firstCollection.insert {
         _id: event.sourceId
         value: event.value
         isFromReplay: true # This is the difference that would be "new"
       }
-      @firstCollection.insert record
-      @secondCollection.insert record
+
+  class SecondProjection extends Space.eventSourcing.Projection
+
+    Dependencies: { secondCollection: 'SecondCollection' }
+    Collections: ['SecondCollection']
+
+    @on TestEvent, (event) ->
+      @secondCollection.insert {
+        _id: event.sourceId
+        value: event.value
+        isFromReplay: true # This is the difference that would be "new"
+      }
 
   class TestApp extends Space.Application
 
@@ -39,10 +48,13 @@ describe 'Space.eventSourcing.Projector', ->
     configure: ->
       @injector.map('FirstCollection').to FirstCollection
       @injector.map('SecondCollection').to SecondCollection
-      @injector.map('TestProjection').toSingleton TestProjection
+      @injector.map('FirstProjection').toSingleton FirstProjection
+      @injector.map('SecondProjection').toSingleton SecondProjection
       @eventSourcingConfig.useInMemoryCollections = true
 
-    startup: -> @injector.create 'TestProjection'
+    startup: ->
+      @injector.create 'FirstProjection'
+      @injector.create 'SecondProjection'
 
   describe 'replaying events to migrate projections', ->
 
@@ -72,10 +84,7 @@ describe 'Space.eventSourcing.Projector', ->
       }
 
       projector = @app.injector.get 'Space.eventSourcing.Projector'
-      projector.replay {
-        projections: ['FirstCollection', 'SecondCollection']
-        rebuildOnly: ['FirstCollection']
-      }
+      projector.replay projections: ['FirstProjection']
 
       # It should have updated the first collection
       expect(FirstCollection.find().fetch()).toMatch [
