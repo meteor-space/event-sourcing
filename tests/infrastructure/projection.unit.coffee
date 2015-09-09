@@ -1,10 +1,8 @@
 
-{Projection} = Space.eventSourcing
-
 describe 'Space.eventSourcing.Projection', ->
 
   class TestEvent extends Space.messaging.Event
-  class TestProjection extends Projection
+  class TestProjection extends Space.eventSourcing.Projection
 
   beforeEach ->
     @handler = sinon.spy()
