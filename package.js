@@ -11,8 +11,9 @@ Package.onUse(function(api) {
 
   api.use([
     'coffeescript',
-    'space:base@2.3.1',
-    'space:messaging@1.6.0'
+    'mikowals:batch-insert@1.1.9',
+    'space:base@2.4.0',
+    'space:messaging@1.7.0'
   ]);
 
   api.addFiles(['source/server.coffee'], 'server');
@@ -26,6 +27,8 @@ Package.onUse(function(api) {
     'source/infrastructure/snapshotter.coffee',
     'source/infrastructure/commit_store.coffee',
     'source/infrastructure/commit_publisher.coffee',
+    'source/infrastructure/projection.coffee',
+    'source/infrastructure/projector.coffee',
     // DOMAIN
     'source/domain/aggregate.coffee',
     'source/domain/process.coffee',
@@ -39,6 +42,7 @@ Package.onTest(function(api) {
   api.use([
     'coffeescript',
     'check',
+    'mongo',
     'space:event-sourcing',
     'practicalmeteor:munit@2.1.4',
     'space:testing@1.3.0'
@@ -53,6 +57,8 @@ Package.onTest(function(api) {
     'tests/infrastructure/commit_publisher.unit.coffee',
     'tests/infrastructure/repository.unit.coffee',
     'tests/infrastructure/snapshotter.unit.coffee',
+    'tests/infrastructure/projection.unit.coffee',
+    'tests/infrastructure/projector.integration.coffee',
     // MODULE
     'tests/server_module.integration.coffee',
   ], 'server');
