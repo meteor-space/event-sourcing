@@ -13,8 +13,9 @@ describe 'Space.eventSourcing.Projector', ->
 
   class FirstProjection extends Space.eventSourcing.Projection
 
-    Dependencies: { firstCollection: 'FirstCollection' }
-    Collections: ['FirstCollection']
+    Dependencies: {
+      firstCollection: 'FirstCollection'
+    }
 
     @on TestEvent, (event) ->
       @firstCollection.insert {
@@ -25,8 +26,9 @@ describe 'Space.eventSourcing.Projector', ->
 
   class SecondProjection extends Space.eventSourcing.Projection
 
-    Dependencies: { secondCollection: 'SecondCollection' }
-    Collections: ['SecondCollection']
+    Dependencies: {
+      secondCollection: 'SecondCollection'
+    }
 
     @on TestEvent, (event) ->
       @secondCollection.insert {

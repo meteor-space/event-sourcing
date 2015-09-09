@@ -10,7 +10,7 @@ class Space.eventSourcing.Projector extends Space.Object
 
   replay: (options) ->
 
-    if not options.projections?
+    unless options.projections?
       throw new Error 'You have to provide an array of projection qualifiers.'
 
     # Tell commit publisher to queue up incoming requests
@@ -25,7 +25,7 @@ class Space.eventSourcing.Projector extends Space.Object
       projectionsToRebuild.push projection
       # Save backups of the real collections to restore them later and
       # override the real collections with in-memory pendants
-      for collectionId in projection.Collections
+      for collectionId in @_getCollectionsOfProjection(projection)
         realCollectionsBackups[collectionId] = @injector.get collectionId
         @injector.override(collectionId).to new @mongo.Collection(null)
 
@@ -43,3 +43,9 @@ class Space.eventSourcing.Projector extends Space.Object
 
     # Tell commit publisher to continue with publishing (also the queued ones)
     @publisher.continuePublishing()
+
+  _getCollectionsOfProjection: (projection) ->
+    collectionIds = []
+    for property, id of projection.Dependencies
+      collectionIds.push(id) if projection[property] instanceof Mongo.Collection
+    return collectionIds
