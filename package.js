@@ -12,7 +12,7 @@ Package.onUse(function(api) {
   api.use([
     'coffeescript',
     'mikowals:batch-insert@1.1.9',
-    'space:base@2.4.0',
+    'space:base@2.4.1',
     'space:messaging@1.7.0'
   ]);
 
