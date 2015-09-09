@@ -27,9 +27,7 @@ on to get a quick overview.
 -----------------------
 
 ### Event Sourcing
-*Events are the single source of truth*
-
-**What:** Storing all the changes (events) to the system, rather than just its
+Storing all the changes (events) to the system, rather than just its
 current state.
 
 #### Why haven't I heard of storing events before?
