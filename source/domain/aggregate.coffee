@@ -16,15 +16,15 @@ class Space.eventSourcing.Aggregate extends Space.Object
   @ERRORS:
     guidRequired: "#{Aggregate}: Aggregate needs an GUID on creation."
     domainEventRequired: "#{Aggregate}: Event must inherit from Space.eventSourcing.Event"
-    cannotHandleEvent: "#{Aggregate}: Cannot handle event of type: "
+    cannotHandleMessage: "#{Aggregate}: Cannot handle message of type: "
     invalidEventSourceId: "#{Aggregate}: The given event has an invalid source id."
 
   @createFromSnapshot: (snapshot) -> new this(snapshot.id, snapshot, true)
 
-  @handle: (eventType, handler) ->
+  @handle: (Type, handler) ->
     # create event handlers cache if it doesnt exist yet
-    unless @_eventHandlers? then @_eventHandlers = {}
-    @_eventHandlers[eventType.toString()] = handler
+    unless @_handlers? then @_handlers = {}
+    @_handlers[Type.toString()] = handler
 
   constructor: (id, data, isSnapshot) ->
     unless id? then throw new Error Aggregate.ERRORS.guidRequired
@@ -78,9 +78,9 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   replayHistory: (history) -> @replay(event) for event in history
 
-  handle: (event) ->
-    handler = @_getEventHandler event
-    handler.call this, event
+  handle: (message) ->
+    handler = @_getHandler message
+    handler.call this, message
 
   hasState: (state) -> if state? then @_state == state else @_state?
 
@@ -88,12 +88,12 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   # ============= PRIVATE ============ #
 
-  _getEventHandler: (event) ->
-    handlers = @constructor._eventHandlers
-    if !handlers? or !handlers[event.typeName()]
-      throw new Error Aggregate.ERRORS.cannotHandleEvent + event.typeName()
+  _getHandler: (message) ->
+    handlers = @constructor._handlers
+    if !handlers? or !handlers[message.typeName()]
+      throw new Error Aggregate.ERRORS.cannotHandleMessage + message.typeName()
     else
-      return handlers[event.typeName()]
+      return handlers[message.typeName()]
 
   _validateEvent: (event) ->
 
