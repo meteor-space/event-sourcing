@@ -13,7 +13,7 @@ describe 'Space.eventSourcing.Projector', ->
 
   class FirstProjection extends Space.eventSourcing.Projection
 
-    Dependencies: {
+    Collections: {
       firstCollection: 'FirstCollection'
     }
 
@@ -26,7 +26,7 @@ describe 'Space.eventSourcing.Projector', ->
 
   class SecondProjection extends Space.eventSourcing.Projection
 
-    Dependencies: {
+    Collections: {
       secondCollection: 'SecondCollection'
     }
 

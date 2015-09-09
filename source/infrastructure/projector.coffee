@@ -25,7 +25,7 @@ class Space.eventSourcing.Projector extends Space.Object
       projectionsToRebuild.push projection
       # Save backups of the real collections to restore them later and
       # override the real collections with in-memory pendants
-      for collectionId in @_getCollectionsOfProjection(projection)
+      for collectionId in @_getCollectionIdsOfProjection(projection)
         realCollectionsBackups[collectionId] = @injector.get collectionId
         @injector.override(collectionId).to new @mongo.Collection(null)
 
@@ -44,8 +44,8 @@ class Space.eventSourcing.Projector extends Space.Object
     # Tell commit publisher to continue with publishing (also the queued ones)
     @publisher.continuePublishing()
 
-  _getCollectionsOfProjection: (projection) ->
+  _getCollectionIdsOfProjection: (projection) ->
     collectionIds = []
-    for property, id of projection.Dependencies
-      collectionIds.push(id) if projection[property] instanceof Mongo.Collection
+    for property, id of projection.Collections
+      collectionIds.push(id) if projection[property]
     return collectionIds
