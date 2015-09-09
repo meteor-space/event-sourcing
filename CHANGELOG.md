@@ -1,6 +1,13 @@
 Changelog
 =========
 
+### 1.2.0
+Improvements:
+- Fixes some problematic error messages in aggregates and made it clear that
+aggregates can also handle commands, not only events.
+- Added `Space.eventSourcing.Projector` which can be used to rebuild certain
+projections from all historic events in the event-store.
+
 ### 1.1.0
 BREAKING CHANGES:
 - The `Space.cqrs` namespace is now called `Space.eventSourcing`
