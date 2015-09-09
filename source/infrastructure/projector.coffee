@@ -1,9 +1,7 @@
 class Space.eventSourcing.Projector extends Space.Object
 
   Dependencies: {
-    publisher: 'Space.eventSourcing.CommitPublisher'
     commitStore: 'Space.eventSourcing.CommitStore'
-    eventBus: 'Space.messaging.EventBus'
     injector: 'Injector'
     mongo: 'Mongo'
   }
@@ -13,15 +11,13 @@ class Space.eventSourcing.Projector extends Space.Object
     unless options.projections?
       throw new Error 'You have to provide an array of projection qualifiers.'
 
-    # Tell commit publisher to queue up incoming requests
-    @publisher.pausePublishing()
-
     realCollectionsBackups = {}
     projectionsToRebuild = []
 
     # Loop over all projections that should be rebuilt
     for projectionId in options.projections
       projection = @injector.get projectionId
+      projection.enterReplayMode()
       projectionsToRebuild.push projection
       # Save backups of the real collections to restore them later and
       # override the real collections with in-memory pendants
@@ -31,7 +27,7 @@ class Space.eventSourcing.Projector extends Space.Object
 
     # Loop through all events and hand them indiviually to all projections
     for event in @commitStore.getAllEvents()
-      projection.on(event) for projection in projectionsToRebuild
+      projection.on(event, true) for projection in projectionsToRebuild
 
     # Update the real collection data with the in-memory versions
     # for the specified projections only.
@@ -42,8 +38,8 @@ class Space.eventSourcing.Projector extends Space.Object
       # Restore original collections
       @injector.override(collectionId).to realCollection
 
-    # Tell commit publisher to continue with publishing (also the queued ones)
-    @publisher.continuePublishing()
+    for projection in projectionsToRebuild
+      projection.exitReplayMode()
 
   _getCollectionIdsOfProjection: (projection) ->
     collectionIds = []
