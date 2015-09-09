@@ -1,6 +1,4 @@
 
-Projector = Space.eventSourcing.Projector
-
 describe 'Space.eventSourcing.Projector', ->
 
   FirstCollection = new Mongo.Collection 'space_eventsourcing_firstCollection'
