@@ -1,6 +1,13 @@
 Changelog
 =========
 
+### 1.2.1
+Improvements:
+Added two new ways how `Space.eventSourcing.Aggregate` can be created:
+- By providing a command with `targetId` property (which is assigned as id)
+- Using the new static `Aggregate.createFromHistory` method and providing an
+array of historic events. You don't have to provide the id extra there ;-)
+
 ### 1.2.0
 Improvements:
 - Fixes some problematic error messages in aggregates and made it clear that
