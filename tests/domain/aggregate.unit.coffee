@@ -5,17 +5,25 @@
 
 describe "Space.eventSourcing.Aggregate", ->
 
+  class TestEvent extends Event
+    @type 'TestEvent'
+    @fields: sourceId: String, version: Match.Integer
+
+  class TestCommand extends Command
+    @type 'TestCommand'
+    @fields: targetId: String, version: Match.Integer
+
+  class TestAggregate extends Aggregate
+    @handle Event, ->
+
   beforeEach ->
     @aggregateId = '123'
-    @event = event = new Event sourceId: @aggregateId, version: 2
-    @command = command = new Command targetId: @aggregateId, version: 1
+    @event = event = new TestEvent sourceId: @aggregateId, version: 2
+    @command = command = new TestCommand targetId: @aggregateId, version: 1
     @eventHandler = eventHandler = sinon.spy()
     @commandHandler = commandHandler = sinon.spy()
-
-    class TestAggregate extends Aggregate
-      @handle event.typeName(), eventHandler
-      @handle command.typeName(), commandHandler
-
+    TestAggregate.handle TestEvent, eventHandler
+    TestAggregate.handle TestCommand, commandHandler
     @aggregate = new TestAggregate @aggregateId
 
   # =========== CONSTRUCTION ============ #
@@ -38,34 +46,35 @@ describe "Space.eventSourcing.Aggregate", ->
       aggregate = new Aggregate '123'
       expect(aggregate.getVersion()).to.eql 0
 
+    it 'can be created by providing a command', ->
+      TestAggregate::initialize = sinon.spy()
+      aggregate = new TestAggregate @command
+      expect(aggregate.getId()).to.equal @command.targetId
+      expect(TestAggregate::initialize).to.have.been.calledWithExactly @command
+
   # =========== RECORDING EVENTS =========== #
 
   describe "#record", ->
 
     it 'handles the given event', ->
-
       @aggregate.record @event
       expect(@eventHandler).to.have.been.calledWithExactly @event
 
     it 'appends the event to the queue', ->
-
       @aggregate.record @event
       expect(@aggregate.getEvents()).to.eql [@event]
 
     it 'only takes domain events', ->
-
       event = type: 'Test', aggregateId: 'bla'
       expect(=> @aggregate.record(event)).to.throw Aggregate.ERRORS.domainEventRequired
 
     it 'throws if no handler is defined for the event', ->
-
       event = new Event sourceId: '123'
       aggregate = new Aggregate '123'
       expectedError = Aggregate.ERRORS.cannotHandleMessage + event.typeName()
       expect(-> aggregate.record event).to.throw expectedError
 
     it 'does not append the event to the queue if something fails', ->
-
       expect(=> @aggregate.record()).to.throw Error
       expect(=> @aggregate.record 'unknownEvent', {}).to.throw Error
       expect(@aggregate.getEvents()).to.eql []
@@ -75,33 +84,27 @@ describe "Space.eventSourcing.Aggregate", ->
   describe "#replay", ->
 
     it 'invokes the mapped event handler', ->
-
       @aggregate.replay @event
       expect(@eventHandler).to.have.been.calledWithExactly @event
 
     it 'does not add the event as uncommitted change', ->
-
       @aggregate.replay @event
       expect(@aggregate.getEvents()).to.eql []
 
     it 'throws error when the event is not a domain event', ->
-
       aggregate = @aggregate
       expect(-> aggregate.replay()).to.throw Aggregate.DOMAIN_EVENT_REQUIRED_ERROR
       expect(-> aggregate.replay({})).to.throw Aggregate.DOMAIN_EVENT_REQUIRED_ERROR
 
     it 'it assigns the event version to the aggregate', ->
-
       @aggregate.replay @event
       expect(@aggregate.getVersion()).to.equal @event.version
 
     it 'also accepts events that have no version', ->
-
       @aggregate.replay new Event sourceId: @aggregateId
       expect(@aggregate.getVersion()).to.equal 0
 
     it 'only replays events that have the right source id', ->
-
       event = new Event sourceId: 'otherId'
       expect(=> @aggregate.replay event).to.throw Aggregate.INVALID_EVENT_SOURCE_ID_ERROR
 
@@ -110,22 +113,18 @@ describe "Space.eventSourcing.Aggregate", ->
   describe "#handle", ->
 
     it 'invokes the mapped event handler', ->
-
       @aggregate.handle @event
       expect(@eventHandler).to.have.been.calledWithExactly @event
 
     it 'does not add the event as uncommitted change', ->
-
       @aggregate.handle @event
       expect(@aggregate.getEvents()).to.eql []
 
     it 'it does not assign the event version to the aggregate', ->
-
       @aggregate.handle @event
       expect(@aggregate.getVersion()).not.to.equal @event.version
 
     it 'also accepts events that have no version', ->
-
       @aggregate.handle new Event sourceId: '123'
       expect(@aggregate.getVersion()).to.equal 0
 
@@ -134,7 +133,6 @@ describe "Space.eventSourcing.Aggregate", ->
       expect(=> @aggregate.handle @event).not.to.throw Error
 
     it 'accepts commands as well', ->
-
       @aggregate.handle @command
       expect(@commandHandler).to.have.been.calledWithExactly @command
 
@@ -146,7 +144,7 @@ describe "Space.eventSourcing.Aggregate", ->
       aggregate = new Aggregate '123'
       expect(aggregate.isHistory []).to.be.true
 
-  describe '#replayHistory', ->
+  describe 'replaying history', ->
 
     class Created extends Event
       @type 'Created'
@@ -176,6 +174,11 @@ describe "Space.eventSourcing.Aggregate", ->
       expect(replaySpy).to.have.been.calledWithExactly history[0]
       expect(replaySpy).to.have.been.calledWithExactly history[1]
       expect(replaySpy).to.have.been.calledWithExactly history[2]
+
+    it 'can create aggregate instance by providing an array of events', ->
+      aggregate = TestAggregate.createFromHistory [@event]
+      expect(aggregate.getId()).to.equal @event.sourceId
+      expect(@eventHandler).to.have.been.calledWithExactly @event
 
   describe 'working with state', ->
 

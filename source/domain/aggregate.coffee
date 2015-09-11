@@ -1,5 +1,6 @@
 
 Event = Space.messaging.Event
+Command = Space.messaging.Command
 
 class Space.eventSourcing.Aggregate extends Space.Object
 
@@ -19,6 +20,11 @@ class Space.eventSourcing.Aggregate extends Space.Object
     cannotHandleMessage: "#{Aggregate}: Cannot handle: "
     invalidEventSourceId: "#{Aggregate}: The given event has an invalid source id."
 
+  @createFromHistory: (events) ->
+    aggregate = new this(events[0].sourceId)
+    aggregate.replayHistory(events)
+    return aggregate
+
   @createFromSnapshot: (snapshot) -> new this(snapshot.id, snapshot, true)
 
   @handle: (Type, handler) ->
@@ -28,7 +34,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   constructor: (id, data, isSnapshot) ->
     unless id? then throw new Error Aggregate.ERRORS.guidRequired
-    @_id = id
+    @_id = if (id instanceof Command) then id.targetId else id
     @_events = []
     fields = @constructor.FIELDS
     (this[field] = fields[field]) for field of fields
