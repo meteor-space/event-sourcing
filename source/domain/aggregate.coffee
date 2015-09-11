@@ -20,10 +20,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
     cannotHandleMessage: "#{Aggregate}: Cannot handle: "
     invalidEventSourceId: "#{Aggregate}: The given event has an invalid source id."
 
-  @createFromHistory: (events) ->
-    aggregate = new this(events[0].sourceId)
-    aggregate.replayHistory(events)
-    return aggregate
+  @createFromHistory: (events) -> new this(events[0].sourceId, events)
 
   @createFromSnapshot: (snapshot) -> new this(snapshot.id, snapshot, true)
 
