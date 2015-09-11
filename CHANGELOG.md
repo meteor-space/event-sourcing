@@ -1,6 +1,9 @@
 Changelog
 =========
 
+### 1.2.2
+Simplified the `Space.eventSourcing.Aggregate.createFromHistory` method
+
 ### 1.2.1
 Improvements:
 Added two new ways how `Space.eventSourcing.Aggregate` can be created:
