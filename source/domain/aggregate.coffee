@@ -29,6 +29,8 @@ class Space.eventSourcing.Aggregate extends Space.Object
     unless @_handlers? then @_handlers = {}
     @_handlers[Type.toString()] = handler
 
+  @on: -> @handle.apply this, arguments
+
   constructor: (id, data, isSnapshot) ->
     unless id? then throw new Error Aggregate.ERRORS.guidRequired
     @_id = if (id instanceof Command) then id.targetId else id
