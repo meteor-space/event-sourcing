@@ -1,6 +1,10 @@
 Changelog
 =========
 
+### 1.2.3
+Added `@on` alias for `@handle` in `Space.eventSourcing.Aggregate` so you can
+use the same semantics as in `Space.messaging.Controller`
+
 ### 1.2.2
 Simplified the `Space.eventSourcing.Aggregate.createFromHistory` method
 
