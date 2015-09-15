@@ -29,6 +29,7 @@ Package.onUse(function(api) {
     'source/infrastructure/commit_publisher.coffee',
     'source/infrastructure/projection.coffee',
     'source/infrastructure/projector.coffee',
+    'source/infrastructure/router.coffee',
     // DOMAIN
     'source/domain/aggregate.coffee',
     'source/domain/process.coffee',
@@ -58,6 +59,7 @@ Package.onTest(function(api) {
     'tests/infrastructure/repository.unit.coffee',
     'tests/infrastructure/snapshotter.unit.coffee',
     'tests/infrastructure/projection.unit.coffee',
+    'tests/infrastructure/router.unit.coffee',
     'tests/infrastructure/projector.integration.coffee',
     // MODULE
     'tests/server_module.integration.coffee',
