@@ -71,12 +71,12 @@ class Space.eventSourcing.Aggregate extends Space.Object
   record: (event) ->
     @_validateEvent event
     @_events.push event
-    @handle event
+    @handle(event) if @hasHandlerFor(event)
     @_updateToEventVersion event
 
   replay: (event) ->
     @_validateEvent event
-    @handle event
+    @handle event if @hasHandlerFor(event)
     @_updateToEventVersion event
 
   isHistory: (data) -> toString.call(data) == '[object Array]'
@@ -90,6 +90,10 @@ class Space.eventSourcing.Aggregate extends Space.Object
   hasState: (state) -> if state? then @_state == state else @_state?
 
   getState: -> @_state
+
+  hasHandlerFor: (message) ->
+    handlers = @constructor._handlers
+    return handlers? and handlers[message.typeName()]?
 
   # ============= PRIVATE ============ #
 
