@@ -59,7 +59,7 @@ Package.onTest(function(api) {
     'tests/infrastructure/repository.unit.coffee',
     'tests/infrastructure/snapshotter.unit.coffee',
     'tests/infrastructure/projection.unit.coffee',
-    'tests/infrastructure/router.unit.coffee',
+    'tests/infrastructure/router.integration.coffee',
     'tests/infrastructure/projector.integration.coffee',
     // MODULE
     'tests/server_module.integration.coffee',
