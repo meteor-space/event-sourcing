@@ -21,7 +21,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     @_eventToCommandGeneratorMap = {}
 
   onDependenciesReady: ->
-    @constructor.handle @CreateWith, (command) => new @Aggregate(command)
+    @constructor.handle @CreateWith, (cmd) => @repository.save new @Aggregate(cmd)
     @_routeCommandToAggregate(commandType) for commandType in @RouteCommands
     super
 

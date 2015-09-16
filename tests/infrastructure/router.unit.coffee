@@ -1,77 +1,79 @@
+# =========== SETUP ============= #
+
+RouterTests = Space.namespace('RouterTests')
+
+Space.messaging.define Space.messaging.Command, 'RouterTests', {
+  Create: targetId: String
+  DoSomething: targetId: String
+}
+
+Space.messaging.define Space.messaging.Event, 'RouterTests', {
+  SomethingHappenedInOtherContext: correlationId: String
+  Created: sourceId: String
+  DidSomething: sourceId: String
+}
+
+class RouterTests.Aggregate extends Space.eventSourcing.Aggregate
+
+  initialize: (createCommand) -> @handle createCommand
+
+  @handle RouterTests.Create, (command) ->
+    @record new RouterTests.Created sourceId: @getId()
+
+  @handle RouterTests.DoSomething, (command) ->
+    @record new RouterTests.DidSomething sourceId: @getId()
+
+class RouterTests.Router extends Space.eventSourcing.Router
+  Aggregate: RouterTests.Aggregate
+  CreateWith: RouterTests.Create
+  RouteCommands: [RouterTests.DoSomething]
+  # Example of how integration events from other bounded contexts
+  # can be mapped to commands of this context.
+  @mapEvent RouterTests.SomethingHappenedInOtherContext, (event) ->
+    # The returned command will be routed to the aggregate
+    return new RouterTests.DoSomething targetId: event.correlationId
+
+class RouterTests.App extends Space.Application
+  RequiredModules: ['Space.eventSourcing']
+  Singletons: ['RouterTests.Router']
+  Dependencies: {
+    eventSourcingConfig: 'Space.eventSourcing.Configuration'
+  }
+  configure: -> @eventSourcingConfig.useInMemoryCollections = true
+
+# ============= TESTS =============== #
 
 describe 'Space.eventSourcing.Router', ->
 
-  class CreateCommand extends Space.messaging.Command
-    @toString: -> 'Create'
-    typeName: -> 'Create'
-    @fields: targetId: String
-
-  class IntegrationEvent extends Space.messaging.Event
-    @toString: -> 'IntegrationEvent'
-    typeName: -> 'IntegrationEvent'
-    @fields: correlationId: String
-
-  class IntegrationCommand extends Space.messaging.Command
-    @toString: -> 'IntegrationCommand'
-    typeName: -> 'IntegrationCommand'
-    @fields: targetId: String
-
   beforeEach ->
-    @createCommandSpy = createSpy = sinon.spy()
-    @integrationCommandSpy = integrationSpy = sinon.spy()
-    @fakeRepository = {
-      find: sinon.stub()
-      save: sinon.stub()
-    }
-
-    class TestAggregate extends Space.eventSourcing.Aggregate
-      initialize: (createCommand) -> @handle createCommand
-      @handle CreateCommand, createSpy
-      @handle IntegrationCommand, integrationSpy
-
-    class TestRouter extends Space.eventSourcing.Router
-      Aggregate: TestAggregate
-      CreateWith: CreateCommand
-      RouteCommands: [IntegrationCommand]
-      @mapEvent IntegrationEvent, (event) -> new IntegrationCommand {
-        targetId: event.correlationId
-      }
-
-    @router = new TestRouter {
-      eventBus: new Space.messaging.EventBus()
-      commandBus: new Space.messaging.CommandBus()
-      meteor: Meteor
-      underscore: _
-      repository: @fakeRepository
-    }
-    @router.onDependenciesReady()
-    @TestAggregate = TestAggregate
-    @TestRouter = TestRouter
+    @app = new RouterTests.App()
+    @eventBus = @app.injector.get 'Space.messaging.EventBus'
+    @commandBus = @app.injector.get 'Space.messaging.CommandBus'
     @aggregateId = '123'
-    @aggregate = new TestAggregate new CreateCommand(targetId: @aggregateId)
-    @fakeRepository.find.withArgs(TestAggregate, @aggregateId).returns @aggregate
+    @eventSpy = sinon.spy()
+    @app.start()
+    # Create the aggregate
+    @commandBus.send new RouterTests.Create targetId: @aggregateId
 
-  it 'routes creation commands to new instances of the specified aggregate', ->
-    createCommand = new CreateCommand targetId: '123'
-    @router.commandBus.send createCommand
-    expect(@createCommandSpy).to.have.been.calledWithExactly createCommand
-
-  it 'routes specificed commands to aggregates found by the repository', ->
-    integrationCommand = new IntegrationCommand(targetId: @aggregateId)
-    @router.commandBus.send integrationCommand
-    expect(@integrationCommandSpy).to.have.been.calledWithExactly integrationCommand
+  it 'routes specificed commands to the aggregate', ->
+    @eventBus.subscribeTo RouterTests.DidSomething, @eventSpy
+    @commandBus.send new RouterTests.DoSomething targetId: @aggregateId
+    expect(@eventSpy).to.have.been.called
 
   it 'allows to map integration events to commands', ->
-    integrationEvent = new IntegrationEvent correlationId: @aggregateId
-    @router.eventBus.publish integrationEvent
-    expect(@integrationCommandSpy).to.have.been.calledWithMatch new IntegrationCommand {
-      targetId: @aggregateId
+    @eventBus.subscribeTo RouterTests.DidSomething, @eventSpy
+    integrationEvent = new RouterTests.SomethingHappenedInOtherContext {
+      correlationId: @aggregateId
     }
+    @eventBus.publish integrationEvent
+    expect(@eventSpy).to.have.been.called
 
   it 'throws good error message if aggregate is not specified', ->
-    @TestRouter::Aggregate = null
-    expect(=> new @TestRouter()).to.throw @TestRouter.ERRORS.aggregateNotSpecified
+    RouterTests.Router::Aggregate = null
+    expect(=> new RouterTests.Router()).to.throw RouterTests.Router.ERRORS.aggregateNotSpecified
+    RouterTests.Router::Aggregate = RouterTests.Aggregate
 
   it 'throws good error message if creation command is not specified', ->
-    @TestRouter::CreateWith = null
-    expect(=> new @TestRouter()).to.throw @TestRouter.ERRORS.missingCreateCommand
+    RouterTests.Router::CreateWith = null
+    expect(=> new RouterTests.Router()).to.throw RouterTests.Router.ERRORS.missingCreateCommand
+    RouterTests.Router::CreateWith = RouterTests.Create
