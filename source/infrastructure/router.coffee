@@ -18,7 +18,6 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     if not @Aggregate? then throw new Error Router.ERRORS.aggregateNotSpecified
     if not @CreateWith? then throw new Error Router.ERRORS.missingCreateCommand
     super
-    @_eventToCommandGeneratorMap = {}
 
   onDependenciesReady: ->
     @constructor.handle @CreateWith, (cmd) => @repository.save new @Aggregate(cmd)
