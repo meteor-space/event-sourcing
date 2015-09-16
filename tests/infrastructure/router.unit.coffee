@@ -74,4 +74,4 @@ describe 'Space.eventSourcing.Router', ->
 
   it 'throws good error message if creation command is not specified', ->
     @TestRouter::CreateWith = null
-    expect(=> new @TestRouter()).to.throw @TestRouter.ERRORS.createCommandMissing
+    expect(=> new @TestRouter()).to.throw @TestRouter.ERRORS.missingCreateCommand

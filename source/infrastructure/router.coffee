@@ -3,7 +3,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
   @ERRORS: {
     aggregateNotSpecified: 'Please specify a Router::Aggregate class to be
     managed by the router.'
-    createCommandMissing: 'Please specify Router::CreateWith (a command class)
+    missingCreateCommand: 'Please specify Router::CreateWith (a command class)
     that will be used to create new instanes of the managed aggregate.'
   }
 
@@ -16,7 +16,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
 
   constructor: ->
     if not @Aggregate? then throw new Error Router.ERRORS.aggregateNotSpecified
-    if not @CreateWith? then throw new Error Router.ERRORS.createCommandMissing
+    if not @CreateWith? then throw new Error Router.ERRORS.missingCreateCommand
     super
     @_eventToCommandGeneratorMap = {}
 
