@@ -3,7 +3,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
   @ERRORS: {
     aggregateNotSpecified: 'Please specify a Router::Aggregate class to be
     managed by the router.'
-    missingCreateCommand: 'Please specify Router::CreateWith (a command class)
+    missingInitializingCommand: 'Please specify Router::InitializingCommand (a command class)
     that will be used to create new instanes of the managed aggregate.'
   }
 
@@ -12,15 +12,18 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
   }
 
   Aggregate: null
-  CreateWith: null
+  InitializingCommand: null
 
   constructor: ->
-    if not @Aggregate? then throw new Error Router.ERRORS.aggregateNotSpecified
-    if not @CreateWith? then throw new Error Router.ERRORS.missingCreateCommand
+    if not @Aggregate?
+      throw new Error Router.ERRORS.aggregateNotSpecified
+    if not @InitializingCommand?
+      throw new Error Router.ERRORS.missingInitializingCommand
     super
 
   onDependenciesReady: ->
-    @constructor.handle @CreateWith, (cmd) => @repository.save new @Aggregate(cmd)
+    @constructor.handle @InitializingCommand, (cmd) =>
+      @repository.save new @Aggregate(cmd)
     @_routeCommandToAggregate(commandType) for commandType in @RouteCommands
     super
 

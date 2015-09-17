@@ -68,7 +68,7 @@ describe "Space.eventSourcing.Aggregate", ->
       event = type: 'Test', aggregateId: 'bla'
       expect(=> @aggregate.record(event)).to.throw Aggregate.ERRORS.domainEventRequired
 
-    it 'is ok if no handler is defined for the event', ->
+    it 'does not throw error if missing handler for event', ->
       event = new Event sourceId: '123'
       aggregate = new Aggregate '123'
       error = Aggregate.ERRORS.cannotHandleMessage + event.typeName()

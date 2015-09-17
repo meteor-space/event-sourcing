@@ -3,29 +3,29 @@
 RouterTests = Space.namespace('RouterTests')
 
 Space.messaging.define Space.messaging.Command, 'RouterTests', {
-  Create: targetId: String
+  CreateTestAggregate: targetId: String
   DoSomething: targetId: String
 }
 
 Space.messaging.define Space.messaging.Event, 'RouterTests', {
   SomethingHappenedInOtherContext: correlationId: String
-  Created: sourceId: String
+  TestAggregateCreated: sourceId: String
   DidSomething: sourceId: String
 }
 
-class RouterTests.Aggregate extends Space.eventSourcing.Aggregate
+class RouterTests.TestAggregate extends Space.eventSourcing.Aggregate
 
   initialize: (createCommand) -> @handle createCommand
 
-  @handle RouterTests.Create, (command) ->
-    @record new RouterTests.Created sourceId: @getId()
+  @handle RouterTests.CreateTestAggregate, (command) ->
+    @record new RouterTests.TestAggregateCreated sourceId: @getId()
 
   @handle RouterTests.DoSomething, (command) ->
     @record new RouterTests.DidSomething sourceId: @getId()
 
-class RouterTests.Router extends Space.eventSourcing.Router
-  Aggregate: RouterTests.Aggregate
-  CreateWith: RouterTests.Create
+class RouterTests.TestRouter extends Space.eventSourcing.Router
+  Aggregate: RouterTests.TestAggregate
+  InitializingCommand: RouterTests.CreateTestAggregate
   RouteCommands: [RouterTests.DoSomething]
   # Example of how integration events from other bounded contexts
   # can be mapped to commands of this context.
@@ -33,9 +33,9 @@ class RouterTests.Router extends Space.eventSourcing.Router
     # The returned command will be routed to the aggregate
     return new RouterTests.DoSomething targetId: event.correlationId
 
-class RouterTests.App extends Space.Application
+class RouterTests.TestApp extends Space.Application
   RequiredModules: ['Space.eventSourcing']
-  Singletons: ['RouterTests.Router']
+  Singletons: ['RouterTests.TestRouter']
   Dependencies: {
     eventSourcingConfig: 'Space.eventSourcing.Configuration'
   }
@@ -46,21 +46,21 @@ class RouterTests.App extends Space.Application
 describe 'Space.eventSourcing.Router', ->
 
   beforeEach ->
-    @app = new RouterTests.App()
+    @app = new RouterTests.TestApp()
     @eventBus = @app.injector.get 'Space.messaging.EventBus'
     @commandBus = @app.injector.get 'Space.messaging.CommandBus'
     @aggregateId = '123'
     @eventSpy = sinon.spy()
     @app.start()
     # Create the aggregate
-    @commandBus.send new RouterTests.Create targetId: @aggregateId
+    @commandBus.send new RouterTests.CreateTestAggregate targetId: @aggregateId
 
-  it 'routes specificed commands to the aggregate', ->
+  it 'routes specified commands to the aggregate', ->
     @eventBus.subscribeTo RouterTests.DidSomething, @eventSpy
     @commandBus.send new RouterTests.DoSomething targetId: @aggregateId
     expect(@eventSpy).to.have.been.called
 
-  it 'allows to map integration events to commands', ->
+  it 'maps integration events to commands', ->
     @eventBus.subscribeTo RouterTests.DidSomething, @eventSpy
     integrationEvent = new RouterTests.SomethingHappenedInOtherContext {
       correlationId: @aggregateId
@@ -68,12 +68,12 @@ describe 'Space.eventSourcing.Router', ->
     @eventBus.publish integrationEvent
     expect(@eventSpy).to.have.been.called
 
-  it 'throws good error message if aggregate is not specified', ->
-    RouterTests.Router::Aggregate = null
-    expect(=> new RouterTests.Router()).to.throw RouterTests.Router.ERRORS.aggregateNotSpecified
-    RouterTests.Router::Aggregate = RouterTests.Aggregate
+  it 'throws custom error if aggregate is not specified', ->
+    RouterTests.TestRouter::Aggregate = null
+    expect(=> new RouterTests.TestRouter()).to.throw RouterTests.TestRouter.ERRORS.aggregateNotSpecified
+    RouterTests.TestRouter::Aggregate = RouterTests.TestAggregate
 
-  it 'throws good error message if creation command is not specified', ->
-    RouterTests.Router::CreateWith = null
-    expect(=> new RouterTests.Router()).to.throw RouterTests.Router.ERRORS.missingCreateCommand
-    RouterTests.Router::CreateWith = RouterTests.Create
+  it 'throws custom error if initializing command is not specified', ->
+    RouterTests.TestRouter::InitializingCommand = null
+    expect(=> new RouterTests.TestRouter()).to.throw RouterTests.TestRouter.ERRORS.missingInitializingCommand
+    RouterTests.TestRouter::InitializingCommand = RouterTests.CreateTestAggregate
