@@ -33,6 +33,8 @@ Package.onUse(function(api) {
     // DOMAIN
     'source/domain/aggregate.coffee',
     'source/domain/process.coffee',
+    // VALUE OBJECTS
+    'source/value-objects/guid.coffee'
 
   ], 'server');
 
@@ -63,6 +65,8 @@ Package.onTest(function(api) {
     'tests/infrastructure/projector.integration.coffee',
     // MODULE
     'tests/server_module.integration.coffee',
+    // VALUE OBJECTS
+    'tests/value-objects/guid.unit.coffee'
   ], 'server');
 
 });
