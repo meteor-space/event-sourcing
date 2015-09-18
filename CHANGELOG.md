@@ -1,6 +1,12 @@
 Changelog
 =========
 
+### 1.3.0
+- Adds `Space.eventSourcing.Router` to reduce the boilerplate that was necessary
+to route commands to aggregates.
+- Adds the `Guid` value object which is necessary for most event-sourcing projects
+- Fixes some minor issues and bugs with snapshotter
+
 ### 1.2.3
 Added `@on` alias for `@handle` in `Space.eventSourcing.Aggregate` so you can
 use the same semantics as in `Space.messaging.Controller`
