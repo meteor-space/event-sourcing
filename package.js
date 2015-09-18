@@ -33,10 +33,13 @@ Package.onUse(function(api) {
     // DOMAIN
     'source/domain/aggregate.coffee',
     'source/domain/process.coffee',
+  ], 'server');
+
+  // SHARED
+  api.addFiles([
     // VALUE OBJECTS
     'source/value-objects/guid.coffee'
-
-  ], 'server');
+  ]);
 
 });
 
