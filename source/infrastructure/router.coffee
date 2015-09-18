@@ -13,12 +13,14 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
 
   Aggregate: null
   InitializingCommand: null
+  RouteCommands: null
 
   constructor: ->
     if not @Aggregate?
       throw new Error Router.ERRORS.aggregateNotSpecified
     if not @InitializingCommand?
       throw new Error Router.ERRORS.missingInitializingCommand
+    @RouteCommands ?= []
     super
 
   onDependenciesReady: ->
