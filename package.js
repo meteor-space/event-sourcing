@@ -1,7 +1,7 @@
 Package.describe({
   summary: 'Event Sourcing Infrastructure for Meteor.',
   name: 'space:event-sourcing',
-  version: '1.2.3',
+  version: '1.3.1',
   git: 'https://github.com/meteor-space/event-sourcing.git',
 });
 
@@ -13,7 +13,7 @@ Package.onUse(function(api) {
     'coffeescript',
     'mikowals:batch-insert@1.1.9',
     'space:base@2.4.1',
-    'space:messaging@1.7.0'
+    'space:messaging@1.7.1'
   ]);
 
   api.addFiles(['source/server.coffee'], 'server');
@@ -29,11 +29,17 @@ Package.onUse(function(api) {
     'source/infrastructure/commit_publisher.coffee',
     'source/infrastructure/projection.coffee',
     'source/infrastructure/projector.coffee',
+    'source/infrastructure/router.coffee',
     // DOMAIN
     'source/domain/aggregate.coffee',
     'source/domain/process.coffee',
-
   ], 'server');
+
+  // SHARED
+  api.addFiles([
+    // VALUE OBJECTS
+    'source/value-objects/guid.coffee'
+  ]);
 
 });
 
@@ -58,9 +64,12 @@ Package.onTest(function(api) {
     'tests/infrastructure/repository.unit.coffee',
     'tests/infrastructure/snapshotter.unit.coffee',
     'tests/infrastructure/projection.unit.coffee',
+    'tests/infrastructure/router.integration.coffee',
     'tests/infrastructure/projector.integration.coffee',
     // MODULE
     'tests/server_module.integration.coffee',
+    // VALUE OBJECTS
+    'tests/value-objects/guid.unit.coffee'
   ], 'server');
 
 });

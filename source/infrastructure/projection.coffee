@@ -11,6 +11,7 @@ class Space.eventSourcing.Projection extends Space.messaging.Controller
     _.extend @Dependencies, @constructor::Dependencies, @Collections
 
   on: (event, isReplay=false) ->
+    return unless @canHandleEvent(event)
     if !@_isInReplayMode or (@_isInReplayMode and isReplay)
       super(event)
     else

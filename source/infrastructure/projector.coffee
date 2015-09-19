@@ -17,13 +17,15 @@ class Space.eventSourcing.Projector extends Space.Object
     # Loop over all projections that should be rebuilt
     for projectionId in options.projections
       projection = @injector.get projectionId
-      projection.enterReplayMode()
-      projectionsToRebuild.push projection
       # Save backups of the real collections to restore them later and
       # override the real collections with in-memory pendants
       for collectionId in @_getCollectionIdsOfProjection(projection)
         realCollectionsBackups[collectionId] = @injector.get collectionId
         @injector.override(collectionId).to new @mongo.Collection(null)
+
+      # Tell the projection that it will be replayed now
+      projection.enterReplayMode()
+      projectionsToRebuild.push projection
 
     # Loop through all events and hand them indiviually to all projections
     for event in @commitStore.getAllEvents()

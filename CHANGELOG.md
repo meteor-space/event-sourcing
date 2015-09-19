@@ -1,6 +1,19 @@
 Changelog
 =========
 
+### 1.3.1
+Makes it possible to hook into projection replaying via `Space.eventSourcing.Projection::enterReplayMode`, this hook is now called after
+the injected collections have been replaced. This is important for situations
+like the Meteor accounts system that writes to a globally accessible collection
+instead of the injected one. Now you can override global collections during
+replays to establish the same kind of functionality.
+
+### 1.3.0
+- Adds `Space.eventSourcing.Router` to reduce the boilerplate that was necessary
+to route commands to aggregates.
+- Adds the `Guid` value object which is necessary for most event-sourcing projects
+- Fixes some minor issues and bugs with snapshotter
+
 ### 1.2.3
 Added `@on` alias for `@handle` in `Space.eventSourcing.Aggregate` so you can
 use the same semantics as in `Space.messaging.Controller`
