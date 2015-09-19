@@ -13,7 +13,7 @@ Package.onUse(function(api) {
     'coffeescript',
     'mikowals:batch-insert@1.1.9',
     'space:base@2.4.1',
-    'space:messaging@1.7.0'
+    'space:messaging@1.7.1'
   ]);
 
   api.addFiles(['source/server.coffee'], 'server');
