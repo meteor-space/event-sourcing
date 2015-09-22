@@ -1,18 +1,21 @@
 Package.describe({
   summary: 'Event Sourcing Infrastructure for Meteor.',
   name: 'space:event-sourcing',
-  version: '1.3.2',
+  version: '1.3.3',
   git: 'https://github.com/meteor-space/event-sourcing.git',
 });
 
 Package.onUse(function(api) {
 
-  api.versionsFrom("METEOR@1.0");
+  api.versionsFrom("METEOR@1.1.0.2");
 
   api.use([
     'coffeescript',
+    'ejson',
+    'underscore',
+    'check',
     'mikowals:batch-insert@1.1.9',
-    'space:base@2.4.1',
+    'space:base@2.4.2',
     'space:messaging@1.7.1'
   ]);
 
@@ -48,6 +51,7 @@ Package.onTest(function(api) {
   api.use([
     'coffeescript',
     'check',
+    'ejson',
     'mongo',
     'space:event-sourcing',
     'practicalmeteor:munit@2.1.4',

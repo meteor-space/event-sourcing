@@ -1,6 +1,9 @@
 Changelog
 =========
 
+### 1.3.3
+Fixes issues introduced by the new Meteor dependency tracker / package system.
+
 ### 1.3.2
 Bind command generators in `Space.eventSourcing.Router::mapEvent` to the
 router instance like with the `@on` and `@handle` methods.
