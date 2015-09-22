@@ -1,6 +1,10 @@
 Changelog
 =========
 
+### 1.3.2
+Bind command generators in `Space.eventSourcing.Router::mapEvent` to the
+router instance like with the `@on` and `@handle` methods.
+
 ### 1.3.1
 Makes it possible to hook into projection replaying via `Space.eventSourcing.Projection::enterReplayMode`, this hook is now called after
 the injected collections have been replaced. This is important for situations

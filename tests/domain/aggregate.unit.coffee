@@ -60,7 +60,7 @@ describe "Space.eventSourcing.Aggregate", ->
       @aggregate.record @event
       expect(@eventHandler).to.have.been.calledWithExactly @event
 
-    it 'appends the event to the queue', ->
+    it 'pushes the event into the events array', ->
       @aggregate.record @event
       expect(@aggregate.getEvents()).to.eql [@event]
 
@@ -74,7 +74,7 @@ describe "Space.eventSourcing.Aggregate", ->
       error = Aggregate.ERRORS.cannotHandleMessage + event.typeName()
       expect(-> aggregate.record event).not.to.throw error
 
-    it 'does not append the event to the queue if something fails', ->
+    it 'does not push the event into the events array if something fails', ->
       expect(=> @aggregate.record()).to.throw Error
       expect(=> @aggregate.record 'unknownEvent', {}).to.throw Error
       expect(@aggregate.getEvents()).to.eql []
@@ -87,7 +87,7 @@ describe "Space.eventSourcing.Aggregate", ->
       @aggregate.replay @event
       expect(@eventHandler).to.have.been.calledWithExactly @event
 
-    it 'does not add the event as uncommitted change', ->
+    it 'does not push the event into the events array', ->
       @aggregate.replay @event
       expect(@aggregate.getEvents()).to.eql []
 
@@ -116,7 +116,7 @@ describe "Space.eventSourcing.Aggregate", ->
       @aggregate.handle @event
       expect(@eventHandler).to.have.been.calledWithExactly @event
 
-    it 'does not add the event as uncommitted change', ->
+    it 'does not push the event into the events array', ->
       @aggregate.handle @event
       expect(@aggregate.getEvents()).to.eql []
 
