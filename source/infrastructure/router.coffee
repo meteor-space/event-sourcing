@@ -30,7 +30,8 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     super
 
   @mapEvent: (eventType, commandGenerator) ->
-    @on eventType, (event) -> @_genericCommandHandler commandGenerator(event)
+    @on eventType, (event) ->
+      @_genericCommandHandler commandGenerator.call(this, event)
 
   _routeCommandToAggregate: (commandType) ->
     @constructor.handle commandType, @_genericCommandHandler
