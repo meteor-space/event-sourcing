@@ -37,6 +37,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     @constructor.handle commandType, @_genericCommandHandler
 
   _genericCommandHandler: (command) ->
+    if not command? then return
     aggregate = @repository.find @Aggregate, command.targetId
     aggregate.handle command
     @repository.save aggregate
