@@ -1,10 +1,16 @@
 class Space.eventSourcing.Router extends Space.messaging.Controller
 
   @ERRORS: {
+
     aggregateNotSpecified: 'Please specify a Router::Aggregate class to be
     managed by the router.'
+
     missingInitializingCommand: 'Please specify Router::InitializingCommand (a command class)
     that will be used to create new instanes of the managed aggregate.'
+
+    noAggregateFoundToHandleCommand: (command) ->
+      new Error "No aggregate <#{command.targetId}> found to
+                 handle #{command.typeName()}"
   }
 
   Dependencies: {
@@ -39,5 +45,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
   _genericCommandHandler: (command) ->
     if not command? then return
     aggregate = @repository.find @Aggregate, command.targetId
+    if not aggregate?
+      throw Router.ERRORS.noAggregateFoundToHandleCommand(command)
     aggregate.handle command
     @repository.save aggregate
