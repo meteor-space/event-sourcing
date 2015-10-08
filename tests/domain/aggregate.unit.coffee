@@ -47,10 +47,9 @@ describe "Space.eventSourcing.Aggregate", ->
       expect(aggregate.getVersion()).to.eql 0
 
     it 'can be created by providing a command', ->
-      TestAggregate::initialize = sinon.spy()
       aggregate = new TestAggregate @command
       expect(aggregate.getId()).to.equal @command.targetId
-      expect(TestAggregate::initialize).to.have.been.calledWithExactly @command
+      expect(@commandHandler).to.have.been.calledWithExactly @command
 
   # =========== RECORDING EVENTS =========== #
 

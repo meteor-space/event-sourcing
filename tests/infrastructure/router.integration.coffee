@@ -3,14 +3,14 @@
 RouterTests = Space.namespace('RouterTests')
 
 Space.messaging.define Space.messaging.Command, 'RouterTests', {
-  CreateTestAggregate: targetId: String
-  DoSomething: targetId: String
+  CreateTestAggregate: {}
+  DoSomething: {}
 }
 
 Space.messaging.define Space.messaging.Event, 'RouterTests', {
   SomethingHappenedInOtherContext: correlationId: String
-  TestAggregateCreated: sourceId: String
-  DidSomething: sourceId: String
+  TestAggregateCreated: {}
+  DidSomething: {}
 }
 
 class RouterTests.TestAggregate extends Space.eventSourcing.Aggregate
@@ -63,6 +63,7 @@ describe 'Space.eventSourcing.Router', ->
   it 'maps integration events to commands', ->
     @eventBus.subscribeTo RouterTests.DidSomething, @eventSpy
     integrationEvent = new RouterTests.SomethingHappenedInOtherContext {
+      sourceId: '123'
       correlationId: @aggregateId
     }
     @eventBus.publish integrationEvent

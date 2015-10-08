@@ -10,24 +10,17 @@ class TestEvent extends Event
 
 class TestCommand extends Command
   @type 'Space.eventSourcing.CommitStore.TestCommand'
-  @fields: sourceId: String
 
 class CreatedEvent extends Event
   @type 'tests.CommitStore.CreatedEvent', ->
-    sourceId: String
-    version: Match.Optional(Match.Integer)
 
 class QuantityChangedEvent extends Event
-  @type 'tests.CommitStore.QuantityChangedEvent', ->
-    sourceId: String
-    version: Match.Optional(Match.Integer)
-    quantity: Match.Integer
+  @type 'tests.CommitStore.QuantityChangedEvent'
+  @fields: quantity: Match.Integer
 
 class TotalChangedEvent extends Event
-  @type 'tests.CommitStore.TotalChangedEvent', ->
-    sourceId: String
-    version: Match.Optional(Match.Integer)
-    total: Number
+  @type 'tests.CommitStore.TotalChangedEvent'
+  @fields: total: Number
 
 # =========== SPECS ============= #
 
@@ -82,6 +75,7 @@ describe "Space.eventSourcing.CommitStore", ->
 
     it 'returns all events versioned by batch for given aggregate', ->
 
+      fakeTimers = sinon.useFakeTimers('Date')
       sourceId = '123'
       firstChanges = events: [new CreatedEvent sourceId: sourceId]
 
@@ -98,11 +92,12 @@ describe "Space.eventSourcing.CommitStore", ->
       for event in events
         expect(event).to.be.instanceof Event
 
-      expect(events).to.eql [
+      expect(events).toMatch [
         new CreatedEvent sourceId: sourceId, version: 1
         new QuantityChangedEvent sourceId: sourceId, quantity: 1, version: 2
         new TotalChangedEvent sourceId: sourceId, total: 10, version: 2
       ]
+      fakeTimers.restore()
 
     it 'skips events if a version offset is given', ->
 

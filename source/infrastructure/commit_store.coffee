@@ -27,7 +27,7 @@ class Space.eventSourcing.CommitStore
     if currentVersion is expectedVersion
 
       newVersion = currentVersion + 1
-
+      
       @_setEventVersion(event, newVersion) for event in changes.events
       # serialize events and commands
       serializedChanges = events: [], commands: []

@@ -30,77 +30,39 @@ class @CustomerApp extends Space.Application
 
   startup: ->
     @injector.get('Space.eventSourcing.Repository').useSnapshotter @snapshotter
-    @resetDatabase()
-
-  sendCommand: -> @commandBus.send.apply @commandBus, arguments
-
-  subscribeTo: -> @eventBus.subscribeTo.apply @eventBus, arguments
-
-  resetDatabase: ->
-    @commits = @injector.get 'Space.eventSourcing.Commits'
-    @commits.remove {}
+    @reset()
 
 # -------------- COMMANDS ---------------
 
 Space.messaging.define Space.messaging.Command, 'CustomerApp', {
-
-  RegisterCustomer:
-    registrationId: String
-    customerId: String
-    customerName: String
-
-  CreateCustomer:
-    customerId: String
-    name: String
-
-  SendWelcomeEmail:
-    customerId: String
-    customerName: String
+  RegisterCustomer: { customerId: String, customerName: String }
+  CreateCustomer: { name: String }
+  HandleNewCustomer: { customerId: String }
+  SendWelcomeEmail: { customerId: String, customerName: String }
+  MarkRegistrationAsComplete: {}
 }
 
 # --------------- EVENTS ---------------
 
 Space.messaging.define Space.messaging.Event, 'CustomerApp', {
-
-  RegistrationInitiated:
-    sourceId: String
-    version: Match.Optional(Match.Integer)
-    customerId: String
-    customerName: String
-
-  CustomerCreated:
-    sourceId: String
-    version: Match.Optional(Match.Integer)
-    customerName: String
-
-  WelcomeEmailTriggered:
-    sourceId: String
-    version: Match.Optional(Match.Integer)
-    customerId: String
-
-  WelcomeEmailSent:
-    sourceId: String
-    version: Match.Optional(Match.Integer)
-    customerId: String
-    email: String
-
-  RegistrationCompleted:
-    sourceId: String
-    version: Match.Optional(Match.Integer)
+  RegistrationInitiated: { customerId: String, customerName: String }
+  CustomerCreated: { customerName: String }
+  WelcomeEmailTriggered: { customerId: String }
+  WelcomeEmailSent: { email: String, customerId: String }
+  RegistrationCompleted: {}
 }
 
 # -------------- AGGREGATES ---------------
 
 class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
-  @FIELDS:
-    name: null
+  @FIELDS: name: null
 
-  initialize: (id, data) ->
-
-    @record new CustomerApp.CustomerCreated
-      sourceId: id
-      customerName: data.name
+  @handle CustomerApp.CreateCustomer, (command) ->
+    @record new CustomerApp.CustomerCreated {
+      sourceId: @getId()
+      customerName: command.name
+    }
 
   @handle CustomerApp.CustomerCreated, (event) -> @name = event.customerName
 
@@ -108,37 +70,40 @@ class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
 class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
 
-  @FIELDS:
+  @FIELDS: {
     customerId: null
     customerName: null
+  }
 
-  @STATES:
+  @STATES: {
     creatingCustomer: 0
     sendingWelcomeEmail: 1
     completed: 2
+  }
 
-  initialize: (id, data) ->
+  @handle CustomerApp.RegisterCustomer, (command) ->
 
     @trigger new CustomerApp.CreateCustomer
-      customerId: data.customerId
-      name: data.customerName
+      targetId: command.customerId
+      name: command.customerName
 
     @record new CustomerApp.RegistrationInitiated
-      sourceId: id
-      customerId: data.customerId
-      customerName: data.customerName
+      sourceId: @getId()
+      customerId: command.customerId
+      customerName: command.customerName
 
-  onCustomerCreated: (event) ->
+  @handle CustomerApp.HandleNewCustomer, (command) ->
 
     @trigger new CustomerApp.SendWelcomeEmail
-      customerId: @customerId
+      targetId: @customerId
+      customerId: command.customerId
       customerName: @customerName
 
     @record new CustomerApp.WelcomeEmailTriggered
       sourceId: @getId()
       customerId: @customerId
 
-  onWelcomeEmailSent: (event) ->
+  @handle CustomerApp.MarkRegistrationAsComplete, (command) ->
     @record new CustomerApp.RegistrationCompleted sourceId: @getId()
 
   @handle CustomerApp.RegistrationInitiated, (event) ->
@@ -153,41 +118,38 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
 
 # -------------- ROUTERS --------------- #
 
-class CustomerApp.CustomerRegistrationRouter extends Space.messaging.Controller
+class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.Router
 
-  Dependencies:
-    repository: 'Space.eventSourcing.Repository'
+  Dependencies: {
     registrations: 'CustomerApp.CustomerRegistrations'
+  }
 
-  @handle CustomerApp.RegisterCustomer, (command) ->
-    registration = new CustomerApp.CustomerRegistration command.registrationId, command
-    @repository.save registration
+  Aggregate: CustomerApp.CustomerRegistration
 
-  @on CustomerApp.CustomerCreated, (event) ->
-    registration = @_findRegistrationByCustomerId event.sourceId
-    registration.onCustomerCreated event
-    @repository.save registration
+  InitializingCommand: CustomerApp.RegisterCustomer
 
-  @on CustomerApp.WelcomeEmailSent, (event) ->
-    registration = @_findRegistrationByCustomerId event.customerId
-    registration.onWelcomeEmailSent()
-    @repository.save registration
+  RouteCommands: [
+    CustomerApp.HandleNewCustomer
+    CustomerApp.MarkRegistrationAsComplete
+  ]
 
-  _findRegistrationByCustomerId: (customerId) ->
-    registrationId = @registrations.findOne(customerId: customerId)._id
-    return @repository.find CustomerApp.CustomerRegistration, registrationId
+  @mapEvent CustomerApp.CustomerCreated, (event) -> new CustomerApp.HandleNewCustomer {
+    targetId: @_findRegistrationIdByCustomerId event.sourceId
+    customerId: event.sourceId
+  }
 
+  @mapEvent CustomerApp.WelcomeEmailSent, (event) ->
+    new CustomerApp.MarkRegistrationAsComplete {
+      targetId: @_findRegistrationIdByCustomerId event.customerId
+    }
 
-class CustomerApp.CustomerRouter extends Space.messaging.Controller
+  _findRegistrationIdByCustomerId: (customerId) ->
+    @registrations.findOne(customerId: customerId)._id
 
-  @toString: -> 'CustomerApp.CustomerRouter'
+class CustomerApp.CustomerRouter extends Space.eventSourcing.Router
 
-  Dependencies:
-    repository: 'Space.eventSourcing.Repository'
-
-  @handle CustomerApp.CreateCustomer, (command) ->
-    @repository.save new CustomerApp.Customer command.customerId, command
-
+  Aggregate: CustomerApp.Customer
+  InitializingCommand: CustomerApp.CreateCustomer
 
 class CustomerApp.EmailRouter extends Space.messaging.Controller
 
@@ -238,78 +200,44 @@ describe.server 'Space.eventSourcing (integration)', ->
     @app.start()
 
   it 'handles commands and publishes events correctly', ->
-    registrationInitiatedSpy = sinon.spy()
-    customerCreatedSpy = sinon.spy()
-    welcomeEmailTriggeredSpy = sinon.spy()
-    welcomeEmailSentSpy = sinon.spy()
-    registrationCompletedSpy = sinon.spy()
 
-    @app.subscribeTo CustomerApp.RegistrationInitiated, registrationInitiatedSpy
-    @app.subscribeTo CustomerApp.CustomerCreated, customerCreatedSpy
-    @app.subscribeTo CustomerApp.WelcomeEmailTriggered, welcomeEmailTriggeredSpy
-    @app.subscribeTo CustomerApp.WelcomeEmailSent, welcomeEmailSentSpy
-    @app.subscribeTo CustomerApp.RegistrationCompleted, registrationCompletedSpy
-
-    @app.sendCommand new CustomerApp.RegisterCustomer
-      registrationId: registration.id
-      customerId: customer.id
-      customerName: customer.name
-
-    expect(registrationInitiatedSpy).to.have.been.calledWithMatch(
-      new CustomerApp.RegistrationInitiated
-        sourceId: registration.id
-        version: 1
+    CustomerApp.given(
+      new CustomerApp.RegisterCustomer {
+        targetId: registration.id
         customerId: customer.id
         customerName: customer.name
+      }
     )
-
-    expect(customerCreatedSpy).to.have.been.calledWithMatch(
-      new CustomerApp.CustomerCreated
+    .expect([
+      new CustomerApp.RegistrationInitiated({
+        sourceId: registration.id
+        version: 1
+        timestamp: new Date()
+        customerId: customer.id
+        customerName: customer.name
+      })
+      new CustomerApp.CustomerCreated({
         sourceId: customer.id
         version: 1
+        timestamp: new Date()
         customerName: customer.name
-    )
-
-    expect(welcomeEmailTriggeredSpy).to.have.been.calledWithMatch(
-      new CustomerApp.WelcomeEmailTriggered
+      })
+      new CustomerApp.WelcomeEmailTriggered({
         sourceId: registration.id
         version: 2
+        timestamp: new Date()
         customerId: customer.id
-    )
-
-    expect(welcomeEmailSentSpy).to.have.been.calledWithMatch(
-      new CustomerApp.WelcomeEmailSent
+      })
+      new CustomerApp.WelcomeEmailSent({
         sourceId: '999'
         version: 1
+        timestamp: new Date()
         email: "Hello #{customer.name}"
         customerId: customer.id
-    )
-
-    expect(registrationCompletedSpy).to.have.been.calledWithMatch(
-      new CustomerApp.RegistrationCompleted
+      })
+      new CustomerApp.RegistrationCompleted({
         sourceId: registration.id
         version: 3
-    )
-
-    # Check snapshots
-    expect(@app.snapshots.find().fetch()).toMatch [
-      {
-        _id: "registration_123",
-        snapshot: {
-          id: "registration_123",
-          state: 2,
-          version: 2,
-          customerId: "customer_123",
-          customerName: "Dominik"
-        }
-      },
-      {
-        _id: "customer_123",
-        snapshot: {
-          id: "customer_123",
-          state: null,
-          version: 0,
-          name: "Dominik"
-        }
-      }
-    ]
+        timestamp: new Date()
+      })
+    ])

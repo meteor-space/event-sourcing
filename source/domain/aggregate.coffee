@@ -41,6 +41,8 @@ class Space.eventSourcing.Aggregate extends Space.Object
       @applySnapshot data
     else if @isHistory data
       @replayHistory data
+    else if (id instanceof Command)
+      @handle id
     else
       @initialize.apply(this, arguments)
     return this

@@ -15,6 +15,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
 
   Dependencies: {
     repository: 'Space.eventSourcing.Repository'
+    commitStore: 'Space.eventSourcing.CommitStore'
   }
 
   Aggregate: null
@@ -30,19 +31,19 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     super
 
   onDependenciesReady: ->
-    @constructor.handle @InitializingCommand, (cmd) =>
+    super
+    @commandBus.registerHandler @InitializingCommand, (cmd) =>
       @repository.save new @Aggregate(cmd)
     @_routeCommandToAggregate(commandType) for commandType in @RouteCommands
-    super
 
   @mapEvent: (eventType, commandGenerator) ->
     @on eventType, (event) ->
       @_genericCommandHandler commandGenerator.call(this, event)
 
   _routeCommandToAggregate: (commandType) ->
-    @constructor.handle commandType, @_genericCommandHandler
+    @commandBus.registerHandler commandType, @_genericCommandHandler
 
-  _genericCommandHandler: (command) ->
+  _genericCommandHandler: (command) =>
     if not command? then return
     aggregate = @repository.find @Aggregate, command.targetId
     if not aggregate?
