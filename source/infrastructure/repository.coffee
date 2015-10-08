@@ -29,6 +29,7 @@ class Space.eventSourcing.Repository extends Space.Object
       events: aggregate.getEvents?() ? []
       commands: aggregate.getCommands?() ? []
     expectedVersion ?= aggregate.getVersion()
+    
     @commitStore.add changes, aggregate.getId(), expectedVersion
 
   useSnapshotter: (@_snapshotter) ->
