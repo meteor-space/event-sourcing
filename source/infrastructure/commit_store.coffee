@@ -28,6 +28,7 @@ class Space.eventSourcing.CommitStore
 
       newVersion = currentVersion + 1
 
+      @_setEventVersion(event, newVersion) for event in changes.events
       # serialize events and commands
       serializedChanges = events: [], commands: []
       serializedChanges.events.push(EJSON.stringify(event)) for event in changes.events
@@ -78,6 +79,7 @@ class Space.eventSourcing.CommitStore
           event = EJSON.parse(event)
         catch error
           throw new Error "while parsing commit\nevent:#{event}\nerror:#{error}"
-        event.version = commit.version
         events.push event
     return events
+
+  _setEventVersion: (event, version) -> event.version = version
