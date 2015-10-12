@@ -38,12 +38,6 @@ Package.onUse(function(api) {
     'source/domain/process.coffee',
   ], 'server');
 
-  // SHARED
-  api.addFiles([
-    // VALUE OBJECTS
-    'source/value-objects/guid.coffee'
-  ]);
-
 });
 
 Package.onTest(function(api) {
@@ -72,8 +66,6 @@ Package.onTest(function(api) {
     'tests/infrastructure/projector.integration.coffee',
     // MODULE
     'tests/server_module.integration.coffee',
-    // VALUE OBJECTS
-    'tests/value-objects/guid.unit.coffee'
   ], 'server');
 
 });
