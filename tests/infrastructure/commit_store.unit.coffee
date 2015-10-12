@@ -27,11 +27,18 @@ class TotalChangedEvent extends Event
 describe "Space.eventSourcing.CommitStore", ->
 
   beforeEach ->
-    @commitStore = new CommitStore commits: new Mongo.Collection(null)
+    @appId = 'TestApp'
+    @commitStore = new CommitStore {
+      commits: new Mongo.Collection(null)
+      configuration: { appId: @appId }
+    }
 
   it 'defines its dependencies correctly', ->
 
-    expect(CommitStore).to.dependOn commits: 'Space.eventSourcing.Commits'
+    expect(CommitStore).to.dependOn {
+      commits: 'Space.eventSourcing.Commits'
+      configuration: 'Configuration'
+    }
 
   describe '#add', ->
 
@@ -56,8 +63,9 @@ describe "Space.eventSourcing.CommitStore", ->
         changes:
           events: [EJSON.stringify(testEvent)]
           commands: [EJSON.stringify(testCommand)]
-        isPublished: false
         insertedAt: sinon.match.date
+        sentBy: @appId
+        receivedBy: []
 
       expect(insertedCommits).toMatch [serializedCommit]
 

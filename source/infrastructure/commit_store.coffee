@@ -3,6 +3,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
 
   Dependencies:
     commits: 'Space.eventSourcing.Commits'
+    configuration: 'Configuration'
 
   add: (changes, sourceId, expectedVersion) ->
 
@@ -38,8 +39,9 @@ class Space.eventSourcing.CommitStore extends Space.Object
         sourceId: sourceId.toString()
         version: newVersion
         changes: serializedChanges # insert EJSON serialized changes
-        isPublished: false
         insertedAt: new Date()
+        sentBy: @configuration.appId
+        receivedBy: []
       }
 
     else
