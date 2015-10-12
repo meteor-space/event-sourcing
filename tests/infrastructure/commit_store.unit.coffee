@@ -27,15 +27,11 @@ class TotalChangedEvent extends Event
 describe "Space.eventSourcing.CommitStore", ->
 
   beforeEach ->
-    @commitStore = new CommitStore()
-    @commitStore.commits = new Mongo.Collection(null)
-    @commitStore.publisher = publishCommit: sinon.spy()
+    @commitStore = new CommitStore commits: new Mongo.Collection(null)
 
   it 'defines its dependencies correctly', ->
 
-    expect(CommitStore).to.dependOn
-      commits: 'Space.eventSourcing.Commits'
-      publisher: 'Space.eventSourcing.CommitPublisher'
+    expect(CommitStore).to.dependOn commits: 'Space.eventSourcing.Commits'
 
   describe '#add', ->
 
@@ -64,12 +60,6 @@ describe "Space.eventSourcing.CommitStore", ->
         insertedAt: sinon.match.date
 
       expect(insertedCommits).toMatch [serializedCommit]
-
-      deserializedCommit = serializedCommit
-      deserializedCommit.changes = changes
-
-      expect(@commitStore.publisher.publishCommit)
-        .to.have.been.calledWithMatch deserializedCommit
 
   describe '#getEvents', ->
 
@@ -108,8 +98,7 @@ describe "Space.eventSourcing.CommitStore", ->
       @commitStore.add {events: [new TotalChangedEvent sourceId: sourceId, total: 10]}, sourceId, 2
 
       events = @commitStore.getEvents sourceId, versionOffset
-
-      expect(events).to.eql [
+      expect(events).toMatch [
         new QuantityChangedEvent sourceId: sourceId, quantity: 1, version: 2
         new TotalChangedEvent sourceId: sourceId, total: 10, version: 3
       ]

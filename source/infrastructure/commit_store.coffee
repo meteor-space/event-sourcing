@@ -1,9 +1,8 @@
 
-class Space.eventSourcing.CommitStore
+class Space.eventSourcing.CommitStore extends Space.Object
 
   Dependencies:
     commits: 'Space.eventSourcing.Commits'
-    publisher: 'Space.eventSourcing.CommitPublisher'
 
   add: (changes, sourceId, expectedVersion) ->
 
@@ -27,7 +26,7 @@ class Space.eventSourcing.CommitStore
     if currentVersion is expectedVersion
 
       newVersion = currentVersion + 1
-      
+
       @_setEventVersion(event, newVersion) for event in changes.events
       # serialize events and commands
       serializedChanges = events: [], commands: []
@@ -35,17 +34,13 @@ class Space.eventSourcing.CommitStore
       serializedChanges.commands.push(EJSON.stringify(command)) for command in changes.commands
 
       # insert commit with next version
-      commit =
+      @commits.insert {
         sourceId: sourceId.toString()
         version: newVersion
         changes: serializedChanges # insert EJSON serialized changes
         isPublished: false
         insertedAt: new Date()
-
-      commit._id = @commits.insert commit
-      commit.changes = changes # dont publish serialized changes
-
-      @publisher.publishCommit commit
+      }
 
     else
 
