@@ -16,7 +16,6 @@ class Space.eventSourcing.CommitStore extends Space.Object
       { sourceId: sourceId.toString() }, # selector
       { sort: [['version', 'desc']], fields: { version: 1 } } # options
     )
-
     if lastCommit?
       # take version of last existing commit
       currentVersion = lastCommit.version
@@ -40,6 +39,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
         version: newVersion
         changes: serializedChanges # insert EJSON serialized changes
         insertedAt: new Date()
+        eventTypes: @_getEventTypes(changes.events)
         sentBy: @configuration.appId
         receivedBy: []
       }
@@ -54,16 +54,12 @@ class Space.eventSourcing.CommitStore extends Space.Object
 
     versionOffset ?= 1
     events = []
-
-    commits = @commits.find(
-      { # selector
-        sourceId: sourceId.toString()
-        version: $gte: versionOffset
-      },
-      { # options
-        sort: [['version', 'asc']]
-      }
-    )
+    withVersionOffset = {
+      sourceId: sourceId.toString()
+      version: $gte: versionOffset
+    }
+    sortByVersion = sort: [['version', 'asc']]
+    commits = @commits.find withVersionOffset, sortByVersion
     return @_parseEventsFromCommits commits
 
   getAllEvents: -> @_parseEventsFromCommits @commits.find()
@@ -80,3 +76,5 @@ class Space.eventSourcing.CommitStore extends Space.Object
     return events
 
   _setEventVersion: (event, version) -> event.version = version
+
+  _getEventTypes: (events) -> events.map (event) -> event.typeName()

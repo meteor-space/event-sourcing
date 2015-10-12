@@ -58,14 +58,12 @@ Package.onTest(function(api) {
     'tests/domain/process.unit.coffee',
     // INFRASTRUCTURE
     'tests/infrastructure/commit_store.unit.coffee',
-    'tests/infrastructure/commit_publisher.unit.coffee',
-    'tests/infrastructure/repository.unit.coffee',
     'tests/infrastructure/snapshotter.unit.coffee',
     'tests/infrastructure/projection.unit.coffee',
-    'tests/infrastructure/router.integration.coffee',
     'tests/infrastructure/projector.integration.coffee',
-    // MODULE
-    'tests/server_module.integration.coffee',
+    // INTEGRATION TESTS
+    'tests/test_application.coffee',
+    'tests/messaging.tests.coffee',
   ], 'server');
 
 });

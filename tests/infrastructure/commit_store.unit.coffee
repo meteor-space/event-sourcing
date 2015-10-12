@@ -66,6 +66,7 @@ describe "Space.eventSourcing.CommitStore", ->
         insertedAt: sinon.match.date
         sentBy: @appId
         receivedBy: []
+        eventTypes: [TestEvent.toString()]
 
       expect(insertedCommits).toMatch [serializedCommit]
 

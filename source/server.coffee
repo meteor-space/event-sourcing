@@ -1,20 +1,38 @@
 
+CommitsCollection = null
+
 class Space.eventSourcing extends Space.Module
 
   @publish this, 'Space.eventSourcing'
 
   RequiredModules: ['Space.messaging']
 
-  Dependencies:
+  Dependencies: {
     mongo: 'Mongo'
+  }
 
-  startup: ->
-    configuration = @injector.get 'Space.eventSourcing.Configuration'
-    if configuration.useInMemoryCollections
-      commits = new @mongo.Collection null
-    else
-      commits = new @mongo.Collection 'space_cqrs_commits'
-      commits._ensureIndex { "sourceId": 1, "version": 1 }, unique: true
+  Singletons: [
+    'Space.eventSourcing.CommitPublisher'
+  ]
 
-    @injector.map('Space.eventSourcing.Commits').to commits
+  Configuration: {
+    eventSourcing: {}
+  }
+
+  configure: ->
+    if @Configuration.eventSourcing.commitsCollection?
+      CommitsCollection = @Configuration.eventSourcing.commitsCollection
+    else if !CommitsCollection?
+      CommitsCollection = new @mongo.Collection 'space_cqrs_commits'
+      CommitsCollection._ensureIndex { "sourceId": 1, "version": 1 }, unique: true
+
+    @injector.map('Space.eventSourcing.Commits').to CommitsCollection
     @injector.map('Space.eventSourcing.Projector').asSingleton()
+
+  afterApplicationStart: ->
+    @commitPublisher = @injector.get('Space.eventSourcing.CommitPublisher')
+    @commitPublisher.startPublishing()
+
+  reset: ->
+    @commitPublisher.stopPublishing()
+    @injector.get('Space.eventSourcing.Commits').remove {}

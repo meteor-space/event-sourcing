@@ -1,5 +1,4 @@
-
-describe 'Space.eventSourcing.Projector', ->
+describe 'Space.eventSourcing - replaying projections', ->
 
   FirstCollection = new Mongo.Collection 'space_eventsourcing_firstCollection'
   SecondCollection = new Mongo.Collection 'space_eventsourcing_secondCollection'
@@ -41,16 +40,11 @@ describe 'Space.eventSourcing.Projector', ->
 
     RequiredModules: ['Space.eventSourcing']
 
-    Dependencies: {
-      eventSourcingConfig: 'Space.eventSourcing.Configuration'
-    }
-
     configure: ->
       @injector.map('FirstCollection').to FirstCollection
       @injector.map('SecondCollection').to SecondCollection
       @injector.map('FirstProjection').toSingleton FirstProjection
       @injector.map('SecondProjection').toSingleton SecondProjection
-      @eventSourcingConfig.useInMemoryCollections = true
 
     startup: ->
       @injector.create 'FirstProjection'
@@ -62,8 +56,10 @@ describe 'Space.eventSourcing.Projector', ->
       FirstCollection.remove {}
       SecondCollection.remove {}
       @event = new TestEvent sourceId: 'test123', value: 'test'
-      @app = new TestApp()
+      @app = new TestApp { appId: 'TestApp' }
       @app.start()
+
+    afterEach -> @app.reset()
 
     it 'updates the collections with the new projection data', ->
 
