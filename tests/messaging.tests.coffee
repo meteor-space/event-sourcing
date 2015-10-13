@@ -2,24 +2,15 @@ describe 'Space.eventSourcing - messaging', ->
 
   customer = id: 'customer_123', name: 'Dominik'
   registration = id: 'registration_123'
+  sharedCommitCollection = new Mongo.Collection('messaging_shared_commits')
 
   beforeEach ->
-    @app = new CustomerApp Configuration: { appId: 'CustomerApp' }
-    @app.start()
-
-  afterEach ->
-    @app.reset()
-
-  it 'handles messages within one app correctly', (test, done) ->
-
-    @app.given(
-      new CustomerApp.RegisterCustomer {
-        targetId: registration.id
-        customerId: customer.id
-        customerName: customer.name
-      }
-    )
-    .expect([
+    @fakeDates = sinon.useFakeTimers('Date')
+    @app = new CustomerApp Configuration: {
+      appId: 'CustomerApp'
+      eventSourcing: { commitsCollection: sharedCommitCollection }
+    }
+    @generatedEventsForCustomerRegistration = [
       new CustomerApp.RegistrationInitiated({
         sourceId: registration.id
         version: 1
@@ -39,6 +30,9 @@ describe 'Space.eventSourcing - messaging', ->
         timestamp: new Date()
         customerId: customer.id
       })
+      # This is just visible in the app that runs the code
+      # since it is directly published via the event store
+      # instead of saved to the DB as part of a commit!
       new CustomerApp.WelcomeEmailSent({
         sourceId: '999'
         version: 1
@@ -51,5 +45,49 @@ describe 'Space.eventSourcing - messaging', ->
         version: 3
         timestamp: new Date()
       })
-    ])
+    ]
+    @app.start()
+
+  afterEach ->
+    @app.reset()
+    @fakeDates.restore()
+
+  it 'handles messages within one app correctly', (test, done) ->
+
+    @app.given(
+      new CustomerApp.RegisterCustomer {
+        targetId: registration.id
+        customerId: customer.id
+        customerName: customer.name
+      }
+    )
+    .expect(@generatedEventsForCustomerRegistration)
     .run(done)
+
+  it 'supports distributed messaging via a shared commits collection', (test, done) ->
+
+    secondApp = Space.Application.create {
+      RequiredModules: ['Space.eventSourcing']
+      Configuration: {
+        appId: 'SecondApp'
+        eventSourcing: { commitsCollection: sharedCommitCollection }
+      }
+    }
+    secondApp.start()
+    # Aggregate all published events on the second app
+    publishedEvents = []
+    secondApp.eventBus.onPublish (event) -> publishedEvents.push event
+
+    @app.send new CustomerApp.RegisterCustomer {
+      targetId: registration.id
+      customerId: customer.id
+      customerName: customer.name
+    }
+
+    Meteor.setTimeout (done =>
+      # Remove the event that is only visible to the other app
+      # because it is directly published on its event bus!
+      @generatedEventsForCustomerRegistration.splice(3,1)
+      expect(publishedEvents).toMatch @generatedEventsForCustomerRegistration
+      secondApp.reset()
+    ), 100
