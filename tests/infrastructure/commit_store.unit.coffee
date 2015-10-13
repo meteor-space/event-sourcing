@@ -30,6 +30,7 @@ describe "Space.eventSourcing.CommitStore", ->
     @appId = 'TestApp'
     @commitStore = new CommitStore {
       commits: new Mongo.Collection(null)
+      commitPublisher: publishCommit: sinon.spy()
       configuration: { appId: @appId }
     }
 
@@ -37,6 +38,7 @@ describe "Space.eventSourcing.CommitStore", ->
 
     expect(CommitStore).to.dependOn {
       commits: 'Space.eventSourcing.Commits'
+      commitPublisher: 'Space.eventSourcing.CommitPublisher'
       configuration: 'Configuration'
     }
 
@@ -56,7 +58,7 @@ describe "Space.eventSourcing.CommitStore", ->
       @commitStore.add changes, sourceId, expectedVersion
       insertedCommits = @commitStore.commits.find().fetch()
 
-      serializedCommit =
+      serializedCommit = {
         _id: insertedCommits[0]._id
         sourceId: sourceId
         version: newVersion
@@ -65,10 +67,16 @@ describe "Space.eventSourcing.CommitStore", ->
           commands: [EJSON.stringify(testCommand)]
         insertedAt: sinon.match.date
         sentBy: @appId
-        receivedBy: []
+        receivedBy: [@appId]
         eventTypes: [TestEvent.toString()]
+      }
 
       expect(insertedCommits).toMatch [serializedCommit]
+      expect(@commitStore.commitPublisher.publishCommit)
+      .to.have.been.calledWithMatch changes: {
+        events: [testEvent]
+        commands: [testCommand]
+      }
 
   describe '#getEvents', ->
 

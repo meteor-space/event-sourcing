@@ -3,6 +3,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
 
   Dependencies:
     commits: 'Space.eventSourcing.Commits'
+    commitPublisher: 'Space.eventSourcing.CommitPublisher'
     configuration: 'Configuration'
 
   add: (changes, sourceId, expectedVersion) ->
@@ -41,7 +42,12 @@ class Space.eventSourcing.CommitStore extends Space.Object
         insertedAt: new Date()
         eventTypes: @_getEventTypes(changes.events)
         sentBy: @configuration.appId
-        receivedBy: []
+        receivedBy: [@configuration.appId]
+      }
+
+      @commitPublisher.publishCommit changes: {
+        events: changes.events
+        commands: changes.commands
       }
 
     else
