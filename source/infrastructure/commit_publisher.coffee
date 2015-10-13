@@ -29,7 +29,6 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
 
   publishCommit: (commit) =>
     for event in commit.changes.events
-      event.version = commit.version
       @eventBus.publish event
     for command in commit.changes.commands
       @commandBus.send command
