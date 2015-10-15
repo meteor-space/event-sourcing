@@ -13,7 +13,11 @@ class Space.eventSourcing.Repository extends Space.Object
       remainingEvents = @commitStore.getEvents id, aggregate.getVersion() + 1
       aggregate.replayHistory remainingEvents
     else
-      aggregate = Type.createFromHistory @commitStore.getEvents(id)
+      eventHistory = @commitStore.getEvents(id)
+      if eventHistory.length > 0
+        aggregate = Type.createFromHistory eventHistory
+      else
+        throw new Error "No events found for aggregate #{Type}<#{id}>"
     return aggregate
 
   save: (aggregate, expectedVersion) ->
