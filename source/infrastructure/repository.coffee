@@ -27,6 +27,7 @@ class Space.eventSourcing.Repository extends Space.Object
 
     # Save the changes into the commit store
     changes =
+      aggregateType: aggregate.toString()
       events: aggregate.getEvents?() ? []
       commands: aggregate.getCommands?() ? []
     expectedVersion ?= aggregate.getVersion()
