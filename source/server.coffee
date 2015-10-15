@@ -16,7 +16,9 @@ class Space.eventSourcing extends Space.Module
   ]
 
   Configuration: {
-    eventSourcing: {}
+    eventSourcing: {
+      debug: false
+    }
   }
 
   configure: ->
@@ -28,6 +30,8 @@ class Space.eventSourcing extends Space.Module
 
     @injector.map('Space.eventSourcing.Commits').to CommitsCollection
     @injector.map('Space.eventSourcing.Projector').asSingleton()
+    @injector.map('Space.eventSourcing.Log').to =>
+      console.log.apply(null, arguments) if @Configuration.eventSourcing.debug
 
   afterApplicationStart: ->
     @commitPublisher = @injector.get('Space.eventSourcing.CommitPublisher')

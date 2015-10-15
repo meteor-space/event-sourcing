@@ -7,8 +7,12 @@ class Space.eventSourcing.CommitStore extends Space.Object
     commits: 'Space.eventSourcing.Commits'
     commitPublisher: 'Space.eventSourcing.CommitPublisher'
     configuration: 'Configuration'
+    log: 'Space.eventSourcing.Log'
 
   add: (changes, sourceId, expectedVersion) ->
+
+    @log "#{this}: Adding commit for #{changes.aggregateType}<#{sourceId}>
+          expected at version #{expectedVersion}"
 
     # only continue if there actually ARE changes to be added
     if !changes? or !changes.events or changes.events.length is 0 then return
@@ -36,8 +40,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
       serializedChanges.events.push(EJSON.stringify(event)) for event in changes.events
       serializedChanges.commands.push(EJSON.stringify(command)) for command in changes.commands
 
-      # insert commit with next version
-      @commits.insert {
+      commit = {
         sourceId: sourceId.toString()
         version: newVersion
         changes: serializedChanges # insert EJSON serialized changes
@@ -46,6 +49,10 @@ class Space.eventSourcing.CommitStore extends Space.Object
         sentBy: @configuration.appId
         receivedBy: [@configuration.appId]
       }
+
+      # insert commit with next version
+      @log "#{this}: Inserting commit\n", commit
+      @commits.insert commit
 
       @commitPublisher.publishCommit changes: {
         events: changes.events

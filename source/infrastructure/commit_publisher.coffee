@@ -9,12 +9,14 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
     eventBus: 'Space.messaging.EventBus'
     commandBus: 'Space.messaging.CommandBus'
     ejson: 'EJSON'
+    log: 'Space.eventSourcing.Log'
 
   _publishHandle: null
 
   startPublishing: ->
     appId = @configuration.appId
     notReceivedYet = receivedBy: $nin: [appId]
+    @log "#{this}: Start publishing commits for app #{appId}"
     # Save the observe handle so that it can be stopped later on
     @_publishHandle = @commits.find(notReceivedYet).observe {
       added: (commit) =>
@@ -27,12 +29,16 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
         @publishCommit(@_parseCommit(lockedCommit)) if lockedCommit?
     }
 
-  stopPublishing: -> @_publishHandle?.stop()
+  stopPublishing: ->
+    @log "#{this}: Stop publishing commits for app #{@configuration.appId}"
+    @_publishHandle?.stop()
 
   publishCommit: (commit) =>
     for event in commit.changes.events
+      @log "#{this}: Publishing event #{event.typeName()}\n", event
       @eventBus.publish event
     for command in commit.changes.commands
+      @log "#{this}: Publishing command #{command.typeName()}\n", command
       @commandBus.send command
 
   _parseCommit: (commit) ->
