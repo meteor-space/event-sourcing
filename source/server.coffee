@@ -38,5 +38,7 @@ class Space.eventSourcing extends Space.Module
     @commitPublisher.startPublishing()
 
   reset: ->
-    @commitPublisher.stopPublishing()
     @injector.get('Space.eventSourcing.Commits').remove {}
+
+  stop: ->
+    @commitPublisher.stopPublishing()
