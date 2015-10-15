@@ -35,7 +35,7 @@ class @CustomerApp extends Space.Application
       }
 
   startup: ->
-    @injector.get('Space.eventSourcing.Commits').remove {}
+    @reset()
     if @Configuration.useSnapshotting
       @injector.get('Space.eventSourcing.Repository').useSnapshotter @snapshotter
 

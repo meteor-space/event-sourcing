@@ -32,14 +32,7 @@ describe "Space.eventSourcing.CommitStore", ->
       commits: new Mongo.Collection(null)
       commitPublisher: publishCommit: sinon.spy()
       configuration: { appId: @appId }
-    }
-
-  it 'defines its dependencies correctly', ->
-
-    expect(CommitStore).to.dependOn {
-      commits: 'Space.eventSourcing.Commits'
-      commitPublisher: 'Space.eventSourcing.CommitPublisher'
-      configuration: 'Configuration'
+      log: ->
     }
 
   describe '#add', ->

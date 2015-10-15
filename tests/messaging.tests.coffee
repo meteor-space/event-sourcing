@@ -49,7 +49,7 @@ describe 'Space.eventSourcing - messaging', ->
     @app.start()
 
   afterEach ->
-    @app.reset()
+    @app.stop()
     @fakeDates.restore()
 
   it 'handles messages within one app correctly', (test, done) ->
@@ -88,5 +88,5 @@ describe 'Space.eventSourcing - messaging', ->
       # because it is directly published on its event bus!
       @generatedEventsForCustomerRegistration.splice(3,1)
       expect(publishedEvents).toMatch @generatedEventsForCustomerRegistration
-      secondApp.reset()
+      secondApp.stop()
     ), 100
