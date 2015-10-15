@@ -1,6 +1,24 @@
 Changelog
 =========
 
+### 1.4.0
+**Bugfixes:**
+- Keep minimal Meteor version at 1.0
+- Fixes versioning of events in the commit store
+
+**Improvements:**
+- Allow router event mappings to return null if no command should be routed
+- Adds better error message if router cant find a certain aggregate
+
+**Feature: Distributed Commit Store**
+The commit store and publishing of events & commands has been greatly
+improved and simplified. Everything is distributed by default, simply
+by sharing a MongoDB collection between apps, used for the commits.
+The commit publish now observes the commits collection and thus also
+handles changes made in other apps (distribution). The commit store and
+publisher ensure that a single application only handles a commit once
+even if it has multiple processes running (via `find-and-modify`).
+
 ### 1.3.3
 Fixes issues introduced by the new Meteor dependency tracker / package system.
 
