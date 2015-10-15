@@ -1,13 +1,13 @@
 Package.describe({
   summary: 'Event Sourcing Infrastructure for Meteor.',
   name: 'space:event-sourcing',
-  version: '1.3.3',
+  version: '1.4.0',
   git: 'https://github.com/meteor-space/event-sourcing.git',
 });
 
 Package.onUse(function(api) {
 
-  api.versionsFrom("METEOR@1.1.0.2");
+  api.versionsFrom("METEOR@1.0");
 
   api.use([
     'coffeescript',
@@ -15,8 +15,8 @@ Package.onUse(function(api) {
     'underscore',
     'check',
     'mikowals:batch-insert@1.1.9',
-    'space:base@2.4.2',
-    'space:messaging@1.7.1'
+    'space:base@2.5.1',
+    'space:messaging@1.8.0'
   ]);
 
   api.addFiles(['source/server.coffee'], 'server');
@@ -38,12 +38,6 @@ Package.onUse(function(api) {
     'source/domain/process.coffee',
   ], 'server');
 
-  // SHARED
-  api.addFiles([
-    // VALUE OBJECTS
-    'source/value-objects/guid.coffee'
-  ]);
-
 });
 
 Package.onTest(function(api) {
@@ -55,7 +49,7 @@ Package.onTest(function(api) {
     'mongo',
     'space:event-sourcing',
     'practicalmeteor:munit@2.1.4',
-    'space:testing@1.3.0'
+    'space:testing@1.5.0'
   ]);
 
   api.addFiles([
@@ -64,16 +58,12 @@ Package.onTest(function(api) {
     'tests/domain/process.unit.coffee',
     // INFRASTRUCTURE
     'tests/infrastructure/commit_store.unit.coffee',
-    'tests/infrastructure/commit_publisher.unit.coffee',
-    'tests/infrastructure/repository.unit.coffee',
     'tests/infrastructure/snapshotter.unit.coffee',
     'tests/infrastructure/projection.unit.coffee',
-    'tests/infrastructure/router.integration.coffee',
     'tests/infrastructure/projector.integration.coffee',
-    // MODULE
-    'tests/server_module.integration.coffee',
-    // VALUE OBJECTS
-    'tests/value-objects/guid.unit.coffee'
+    // INTEGRATION TESTS
+    'tests/test_application.coffee',
+    'tests/messaging.tests.coffee',
   ], 'server');
 
 });

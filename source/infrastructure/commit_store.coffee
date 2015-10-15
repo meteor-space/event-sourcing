@@ -1,11 +1,18 @@
 
-class Space.eventSourcing.CommitStore
+class Space.eventSourcing.CommitStore extends Space.Object
+
+  @type 'Space.eventSourcing.CommitStore'
 
   Dependencies:
     commits: 'Space.eventSourcing.Commits'
-    publisher: 'Space.eventSourcing.CommitPublisher'
+    commitPublisher: 'Space.eventSourcing.CommitPublisher'
+    configuration: 'Configuration'
+    log: 'Space.eventSourcing.Log'
 
   add: (changes, sourceId, expectedVersion) ->
+
+    @log "#{this}: Adding commit for #{changes.aggregateType}<#{sourceId}>
+          expected at version #{expectedVersion}"
 
     # only continue if there actually ARE changes to be added
     if !changes? or !changes.events or changes.events.length is 0 then return
@@ -16,7 +23,6 @@ class Space.eventSourcing.CommitStore
       { sourceId: sourceId.toString() }, # selector
       { sort: [['version', 'desc']], fields: { version: 1 } } # options
     )
-
     if lastCommit?
       # take version of last existing commit
       currentVersion = lastCommit.version
@@ -28,23 +34,30 @@ class Space.eventSourcing.CommitStore
 
       newVersion = currentVersion + 1
 
+      @_setEventVersion(event, newVersion) for event in changes.events
       # serialize events and commands
       serializedChanges = events: [], commands: []
       serializedChanges.events.push(EJSON.stringify(event)) for event in changes.events
       serializedChanges.commands.push(EJSON.stringify(command)) for command in changes.commands
 
-      # insert commit with next version
-      commit =
+      commit = {
         sourceId: sourceId.toString()
         version: newVersion
         changes: serializedChanges # insert EJSON serialized changes
-        isPublished: false
         insertedAt: new Date()
+        eventTypes: @_getEventTypes(changes.events)
+        sentBy: @configuration.appId
+        receivedBy: [@configuration.appId]
+      }
 
-      commit._id = @commits.insert commit
-      commit.changes = changes # dont publish serialized changes
+      # insert commit with next version
+      @log "#{this}: Inserting commit\n", commit
+      @commits.insert commit
 
-      @publisher.publishCommit commit
+      @commitPublisher.publishCommit changes: {
+        events: changes.events
+        commands: changes.commands
+      }
 
     else
 
@@ -56,16 +69,12 @@ class Space.eventSourcing.CommitStore
 
     versionOffset ?= 1
     events = []
-
-    commits = @commits.find(
-      { # selector
-        sourceId: sourceId.toString()
-        version: $gte: versionOffset
-      },
-      { # options
-        sort: [['version', 'asc']]
-      }
-    )
+    withVersionOffset = {
+      sourceId: sourceId.toString()
+      version: $gte: versionOffset
+    }
+    sortByVersion = sort: [['version', 'asc']]
+    commits = @commits.find withVersionOffset, sortByVersion
     return @_parseEventsFromCommits commits
 
   getAllEvents: -> @_parseEventsFromCommits @commits.find()
@@ -78,6 +87,9 @@ class Space.eventSourcing.CommitStore
           event = EJSON.parse(event)
         catch error
           throw new Error "while parsing commit\nevent:#{event}\nerror:#{error}"
-        event.version = commit.version
         events.push event
     return events
+
+  _setEventVersion: (event, version) -> event.version = version
+
+  _getEventTypes: (events) -> events.map (event) -> event.typeName()
