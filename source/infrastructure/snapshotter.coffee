@@ -1,8 +1,5 @@
 class Space.eventSourcing.Snapshotter extends Space.Object
 
-  ERRORS:
-    noSnapshotFound: (id) -> new Error "No snapshot was found for aggregate <#{id}>"
-
   _collection: null
   _versionFrequency: 0
 
@@ -23,9 +20,8 @@ class Space.eventSourcing.Snapshotter extends Space.Object
       @_collection.insert _id: id, snapshot: aggregate.getSnapshot()
 
   getSnapshotOf: (Type, id) ->
-    id = id.toString()
-    record = @_collection.findOne(_id: id)
+    record = @_collection.findOne(_id: id.toString())
     if record?
       return Type.createFromSnapshot record.snapshot
     else
-      throw @ERRORS.noSnapshotFound(id)
+      return null

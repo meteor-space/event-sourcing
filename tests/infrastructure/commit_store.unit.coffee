@@ -27,15 +27,13 @@ class TotalChangedEvent extends Event
 describe "Space.eventSourcing.CommitStore", ->
 
   beforeEach ->
-    @commitStore = new CommitStore()
-    @commitStore.commits = new Mongo.Collection(null)
-    @commitStore.publisher = publishCommit: sinon.spy()
-
-  it 'defines its dependencies correctly', ->
-
-    expect(CommitStore).to.dependOn
-      commits: 'Space.eventSourcing.Commits'
-      publisher: 'Space.eventSourcing.CommitPublisher'
+    @appId = 'TestApp'
+    @commitStore = new CommitStore {
+      commits: new Mongo.Collection(null)
+      commitPublisher: publishCommit: sinon.spy()
+      configuration: { appId: @appId }
+      log: ->
+    }
 
   describe '#add', ->
 
@@ -53,23 +51,25 @@ describe "Space.eventSourcing.CommitStore", ->
       @commitStore.add changes, sourceId, expectedVersion
       insertedCommits = @commitStore.commits.find().fetch()
 
-      serializedCommit =
+      serializedCommit = {
         _id: insertedCommits[0]._id
         sourceId: sourceId
         version: newVersion
         changes:
           events: [EJSON.stringify(testEvent)]
           commands: [EJSON.stringify(testCommand)]
-        isPublished: false
         insertedAt: sinon.match.date
+        sentBy: @appId
+        receivedBy: [@appId]
+        eventTypes: [TestEvent.toString()]
+      }
 
       expect(insertedCommits).toMatch [serializedCommit]
-
-      deserializedCommit = serializedCommit
-      deserializedCommit.changes = changes
-
-      expect(@commitStore.publisher.publishCommit)
-        .to.have.been.calledWithMatch deserializedCommit
+      expect(@commitStore.commitPublisher.publishCommit)
+      .to.have.been.calledWithMatch changes: {
+        events: [testEvent]
+        commands: [testCommand]
+      }
 
   describe '#getEvents', ->
 
@@ -108,8 +108,7 @@ describe "Space.eventSourcing.CommitStore", ->
       @commitStore.add {events: [new TotalChangedEvent sourceId: sourceId, total: 10]}, sourceId, 2
 
       events = @commitStore.getEvents sourceId, versionOffset
-
-      expect(events).to.eql [
+      expect(events).toMatch [
         new QuantityChangedEvent sourceId: sourceId, quantity: 1, version: 2
         new TotalChangedEvent sourceId: sourceId, total: 10, version: 3
       ]

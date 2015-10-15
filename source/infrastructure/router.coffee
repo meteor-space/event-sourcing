@@ -1,5 +1,7 @@
 class Space.eventSourcing.Router extends Space.messaging.Controller
 
+  @type 'Space.eventSourcing.Router'
+
   @ERRORS: {
 
     aggregateNotSpecified: 'Please specify a Router::Aggregate class to be
@@ -16,6 +18,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
   Dependencies: {
     repository: 'Space.eventSourcing.Repository'
     commitStore: 'Space.eventSourcing.CommitStore'
+    log: 'Space.eventSourcing.Log'
   }
 
   Aggregate: null
@@ -33,6 +36,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
   onDependenciesReady: ->
     super
     @commandBus.registerHandler @InitializingCommand, (cmd) =>
+      @log "#{this}: Creating new #{@Aggregate} with command #{cmd.typeName()}\n", cmd
       @repository.save new @Aggregate(cmd)
     @_routeCommandToAggregate(commandType) for commandType in @RouteCommands
 
@@ -45,6 +49,8 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
 
   _genericCommandHandler: (command) =>
     if not command? then return
+    @log "#{this}: Handling command #{command.typeName()} for
+          #{@Aggregate}<#{command.targetId}>\n", command
     aggregate = @repository.find @Aggregate, command.targetId
     if not aggregate?
       throw Router.ERRORS.noAggregateFoundToHandleCommand(command)

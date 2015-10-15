@@ -8,16 +8,17 @@ class Space.eventSourcing.Repository extends Space.Object
   _snapshotter: null
 
   find: (Type, id) ->
-    if @_snapshotter?
-      # Get the latest snapshot of the aggregate and replay remaining events
-      aggregate = @_snapshotter.getSnapshotOf Type, id
+    aggregate = @_snapshotter?.getSnapshotOf(Type, id)
+    if aggregate?
       remainingEvents = @commitStore.getEvents id, aggregate.getVersion() + 1
       aggregate.replayHistory remainingEvents
-      return aggregate
     else
-      # Get all events for the aggregate and create it directly from history
-      events = @commitStore.getEvents id
-      if events.length > 0 then return new Type(id, events) else return null
+      eventHistory = @commitStore.getEvents(id)
+      if eventHistory.length > 0
+        aggregate = Type.createFromHistory eventHistory
+      else
+        throw new Error "No events found for aggregate #{Type}<#{id}>"
+    return aggregate
 
   save: (aggregate, expectedVersion) ->
 
@@ -26,6 +27,7 @@ class Space.eventSourcing.Repository extends Space.Object
 
     # Save the changes into the commit store
     changes =
+      aggregateType: aggregate.toString()
       events: aggregate.getEvents?() ? []
       commands: aggregate.getCommands?() ? []
     expectedVersion ?= aggregate.getVersion()

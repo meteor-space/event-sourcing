@@ -1,5 +1,9 @@
+'''
+This test application is a simple event sourcing example that can be used
+by integration tests to work in a real-world setup. The app can be configured
+via the new configuration api introduced in space:base.
+'''
 
-# ============== INTEGRATION SETUP =============== #
 class @CustomerApp extends Space.Application
 
   RequiredModules: ['Space.eventSourcing']
@@ -7,8 +11,12 @@ class @CustomerApp extends Space.Application
   Dependencies:
     commandBus: 'Space.messaging.CommandBus'
     eventBus: 'Space.messaging.EventBus'
-    configuration: 'Space.eventSourcing.Configuration'
+    eventSourcingConfig: 'Space.eventSourcing.Configuration'
     Mongo: 'Mongo'
+
+  Configuration: {
+    useSnapshotting: true
+  }
 
   Singletons: [
     'CustomerApp.CustomerRegistrationRouter'
@@ -18,19 +26,18 @@ class @CustomerApp extends Space.Application
   ]
 
   configure: ->
-    @configuration.useInMemoryCollections = true
-    collection = new @Mongo.Collection(null)
-    @injector.map('CustomerApp.CustomerRegistrations').to collection
-    # Setup snapshotting
-    @snapshots = new @Mongo.Collection(null)
-    @snapshotter = new Space.eventSourcing.Snapshotter {
-      collection: @snapshots
-      versionFrequency: 2
-    }
+    @injector.map('CustomerApp.CustomerRegistrations').to new @Mongo.Collection(null)
+    if @Configuration.useSnapshotting
+      @snapshots = new @Mongo.Collection(null)
+      @snapshotter = new Space.eventSourcing.Snapshotter {
+        collection: @snapshots
+        versionFrequency: 2
+      }
 
   startup: ->
-    @injector.get('Space.eventSourcing.Repository').useSnapshotter @snapshotter
     @reset()
+    if @Configuration.useSnapshotting
+      @injector.get('Space.eventSourcing.Repository').useSnapshotter @snapshotter
 
 # -------------- COMMANDS ---------------
 
@@ -185,59 +192,3 @@ class CustomerApp.CustomerRegistrationProjection extends Space.messaging.Control
   @on CustomerApp.RegistrationCompleted, (event) ->
 
     @registrations.update { _id: event.sourceId }, $set: isCompleted: true
-
-
-# ============== INTEGRATION TESTING =============== #
-
-describe.server 'Space.eventSourcing (integration)', ->
-
-  # fixtures
-  customer = id: 'customer_123', name: 'Dominik'
-  registration = id: 'registration_123'
-
-  beforeEach ->
-    @app = new CustomerApp()
-    @app.start()
-
-  it 'handles commands and publishes events correctly', ->
-
-    CustomerApp.given(
-      new CustomerApp.RegisterCustomer {
-        targetId: registration.id
-        customerId: customer.id
-        customerName: customer.name
-      }
-    )
-    .expect([
-      new CustomerApp.RegistrationInitiated({
-        sourceId: registration.id
-        version: 1
-        timestamp: new Date()
-        customerId: customer.id
-        customerName: customer.name
-      })
-      new CustomerApp.CustomerCreated({
-        sourceId: customer.id
-        version: 1
-        timestamp: new Date()
-        customerName: customer.name
-      })
-      new CustomerApp.WelcomeEmailTriggered({
-        sourceId: registration.id
-        version: 2
-        timestamp: new Date()
-        customerId: customer.id
-      })
-      new CustomerApp.WelcomeEmailSent({
-        sourceId: '999'
-        version: 1
-        timestamp: new Date()
-        email: "Hello #{customer.name}"
-        customerId: customer.id
-      })
-      new CustomerApp.RegistrationCompleted({
-        sourceId: registration.id
-        version: 3
-        timestamp: new Date()
-      })
-    ])
