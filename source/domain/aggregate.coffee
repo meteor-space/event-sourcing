@@ -9,7 +9,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
   _events: null
   _state: null
 
-  @toString: -> 'Space.eventSourcing.Aggregate'
+  @type 'Space.eventSourcing.Aggregate'
 
   # Override to define which custom properties this aggregate has
   @FIELDS: {}

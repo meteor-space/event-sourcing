@@ -1,5 +1,7 @@
 class Space.eventSourcing.Router extends Space.messaging.Controller
 
+  @type 'Space.eventSourcing.Router'
+
   @ERRORS: {
 
     aggregateNotSpecified: 'Please specify a Router::Aggregate class to be

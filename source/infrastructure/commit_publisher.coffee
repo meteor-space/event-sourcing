@@ -1,6 +1,8 @@
 
 class Space.eventSourcing.CommitPublisher extends Space.Object
 
+  @type 'Space.eventSourcing.CommitPublisher'
+
   Dependencies:
     commits: 'Space.eventSourcing.Commits'
     configuration: 'Configuration'
