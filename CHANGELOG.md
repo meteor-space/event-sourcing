@@ -1,6 +1,10 @@
 Changelog
 =========
 
+### 2.1.0
+**CONTINUED BREAKING CHANGES**
+- `Aggregate::handlers` was now split up into `eventMap` and `commandMap`
+
 ### 2.0.0
 **BREAKING CHANGES**
 - Updates dependencies to the new major versions `space:base@3.1.0` and
