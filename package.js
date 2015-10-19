@@ -15,8 +15,8 @@ Package.onUse(function(api) {
     'underscore',
     'check',
     'mikowals:batch-insert@1.1.9',
-    'space:base@3.0.0',
-    'space:messaging@2.0.0'
+    'space:base@3.1.0',
+    'space:messaging@2.1.0'
   ]);
 
   api.addFiles(['source/server.coffee'], 'server');
