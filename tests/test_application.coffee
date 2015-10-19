@@ -63,65 +63,70 @@ Space.messaging.define Space.messaging.Event, 'CustomerApp', {
 
 class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
-  @FIELDS: name: null
+  FIELDS: {
+    name: null
+  }
 
-  @handle CustomerApp.CreateCustomer, (command) ->
-    @record new CustomerApp.CustomerCreated {
-      sourceId: @getId()
-      customerName: command.name
-    }
-
-  @handle CustomerApp.CustomerCreated, (event) -> @name = event.customerName
+  handlers: -> {
+    'CustomerApp.CreateCustomer': (command) ->
+      @record new CustomerApp.CustomerCreated {
+        sourceId: @getId()
+        customerName: command.name
+      }
+    'CustomerApp.CustomerCreated': (event) -> @name = event.customerName
+  }
 
 # -------------- PROCESSES ---------------
 
 class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
 
-  @FIELDS: {
+  FIELDS: {
     customerId: null
     customerName: null
   }
 
-  @STATES: {
+  STATES: {
     creatingCustomer: 0
     sendingWelcomeEmail: 1
     completed: 2
   }
 
-  @handle CustomerApp.RegisterCustomer, (command) ->
+  handlers: -> {
+    'CustomerApp.RegisterCustomer': @_registerCustomer
+    'CustomerApp.HandleNewCustomer': @_handleNewCustomer
+    'CustomerApp.MarkRegistrationAsComplete': @_markAsComplete
+    'CustomerApp.RegistrationInitiated': @_onRegistrationInitiated
+    'CustomerApp.WelcomeEmailTriggered': -> @_state = @STATES.sendingWelcomeEmail
+    'CustomerApp.RegistrationCompleted': -> @_state = @STATES.completed
+  }
 
-    @trigger new CustomerApp.CreateCustomer
+  _registerCustomer: (command) ->
+    @trigger new CustomerApp.CreateCustomer {
       targetId: command.customerId
       name: command.customerName
-
-    @record new CustomerApp.RegistrationInitiated
+    }
+    @record new CustomerApp.RegistrationInitiated {
       sourceId: @getId()
       customerId: command.customerId
       customerName: command.customerName
+    }
 
-  @handle CustomerApp.HandleNewCustomer, (command) ->
-
-    @trigger new CustomerApp.SendWelcomeEmail
+  _handleNewCustomer: (command) ->
+    @trigger new CustomerApp.SendWelcomeEmail {
       targetId: @customerId
       customerId: command.customerId
       customerName: @customerName
-
-    @record new CustomerApp.WelcomeEmailTriggered
+    }
+    @record new CustomerApp.WelcomeEmailTriggered {
       sourceId: @getId()
       customerId: @customerId
+    }
 
-  @handle CustomerApp.MarkRegistrationAsComplete, (command) ->
-    @record new CustomerApp.RegistrationCompleted sourceId: @getId()
+  _markAsComplete: -> @record new CustomerApp.RegistrationCompleted sourceId: @getId()
 
-  @handle CustomerApp.RegistrationInitiated, (event) ->
+  _onRegistrationInitiated: (event) ->
     { @customerId, @customerName } = event
-    @_state = CustomerApp.CustomerRegistration.STATES.creatingCustomer
-
-  @handle CustomerApp.WelcomeEmailTriggered, ->
-    @_state = CustomerApp.CustomerRegistration.STATES.sendingWelcomeEmail
-
-  @handle CustomerApp.RegistrationCompleted, ->
-    @_state = CustomerApp.CustomerRegistration.STATES.completed
+    @_state = @STATES.creatingCustomer
 
 # -------------- ROUTERS --------------- #
 

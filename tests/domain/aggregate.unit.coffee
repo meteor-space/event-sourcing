@@ -13,7 +13,6 @@ describe "Space.eventSourcing.Aggregate", ->
     @fields: targetId: String, version: Match.Integer
 
   class TestAggregate extends Aggregate
-    @handle Event, ->
 
   beforeEach ->
     @aggregateId = '123'
@@ -21,8 +20,11 @@ describe "Space.eventSourcing.Aggregate", ->
     @command = command = new TestCommand targetId: @aggregateId, version: 1
     @eventHandler = eventHandler = sinon.spy()
     @commandHandler = commandHandler = sinon.spy()
-    TestAggregate.handle TestEvent, eventHandler
-    TestAggregate.handle TestCommand, commandHandler
+    TestAggregate::handlers = -> {
+      'Space.messaging.Event': ->
+      TestEvent: eventHandler
+      TestCommand: commandHandler
+    }
     @aggregate = new TestAggregate @aggregateId
 
   # =========== CONSTRUCTION ============ #
@@ -185,7 +187,7 @@ describe "Space.eventSourcing.Aggregate", ->
       typeName: -> 'StateChangingEvent'
 
     class StateAggregate extends Space.eventSourcing.Aggregate
-      @handle StateChangingEvent, (event) -> @_state = event.state
+      handlers: -> 'StateChangingEvent': (event) -> @_state = event.state
 
     it 'has no state by default', ->
       expect(@aggregate.hasState()).to.be.false
