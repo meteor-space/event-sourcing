@@ -53,6 +53,8 @@ Package.onTest(function(api) {
   ]);
 
   api.addFiles([
+    // HELPERS
+    'tests/test_application.coffee',
     // DOMAIN
     'tests/domain/aggregate.unit.coffee',
     'tests/domain/process.unit.coffee',
@@ -60,10 +62,8 @@ Package.onTest(function(api) {
     'tests/infrastructure/commit_store.unit.coffee',
     'tests/infrastructure/snapshotter.unit.coffee',
     'tests/infrastructure/projection.unit.coffee',
-    'tests/infrastructure/projector.integration.coffee',
-    // INTEGRATION TESTS
-    'tests/test_application.coffee',
-    'tests/messaging.tests.coffee',
+    'tests/infrastructure/replaying-projections.tests.coffee',
+    'tests/infrastructure/messaging.tests.coffee',
   ], 'server');
 
 });
