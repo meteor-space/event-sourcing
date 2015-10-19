@@ -3,12 +3,12 @@
 
 class Space.eventSourcing.Aggregate extends Space.Object
 
+  @type 'Space.eventSourcing.Aggregate'
+
   _id: null
   _version: 0
   _events: null
   _state: null
-
-  @type 'Space.eventSourcing.Aggregate'
 
   # Override to define which custom properties this aggregate has
   FIELDS: {}
