@@ -16,7 +16,7 @@ Package.onUse(function(api) {
     'check',
     'mikowals:batch-insert@1.1.9',
     'space:base@3.1.0',
-    'space:messaging@2.1.0'
+    'space:messaging@2.1.1'
   ]);
 
   api.addFiles(['source/server.coffee'], 'server');
@@ -48,8 +48,8 @@ Package.onTest(function(api) {
     'mongo',
     'underscore',
     'space:event-sourcing',
-    'practicalmeteor:munit@2.1.4',
-    'space:testing@1.5.0'
+    'space:testing@2.0.0',
+    'practicalmeteor:munit@2.1.5',
   ]);
 
   api.addFiles([
