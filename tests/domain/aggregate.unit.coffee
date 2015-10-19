@@ -20,9 +20,11 @@ describe "Space.eventSourcing.Aggregate", ->
     @command = command = new TestCommand targetId: @aggregateId, version: 1
     @eventHandler = eventHandler = sinon.spy()
     @commandHandler = commandHandler = sinon.spy()
-    TestAggregate::handlers = -> {
+    TestAggregate::eventMap = -> {
       'Space.messaging.Event': ->
       TestEvent: eventHandler
+    }
+    TestAggregate::commandMap = -> {
       TestCommand: commandHandler
     }
     @aggregate = new TestAggregate @aggregateId
@@ -187,7 +189,7 @@ describe "Space.eventSourcing.Aggregate", ->
       typeName: -> 'StateChangingEvent'
 
     class StateAggregate extends Space.eventSourcing.Aggregate
-      handlers: -> 'StateChangingEvent': (event) -> @_state = event.state
+      eventMap: -> 'StateChangingEvent': (event) -> @_state = event.state
 
     it 'has no state by default', ->
       expect(@aggregate.hasState()).to.be.false
