@@ -67,12 +67,15 @@ class CustomerApp.Customer extends Space.eventSourcing.Aggregate
     name: null
   }
 
-  handlers: -> {
+  commandMap: -> {
     'CustomerApp.CreateCustomer': (command) ->
       @record new CustomerApp.CustomerCreated {
         sourceId: @getId()
         customerName: command.name
       }
+  }
+
+  eventMap: -> {
     'CustomerApp.CustomerCreated': (event) -> @name = event.customerName
   }
 
@@ -91,10 +94,13 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
     completed: 2
   }
 
-  handlers: -> {
+  commandMap: -> {
     'CustomerApp.RegisterCustomer': @_registerCustomer
     'CustomerApp.HandleNewCustomer': @_handleNewCustomer
     'CustomerApp.MarkRegistrationAsComplete': @_markAsComplete
+  }
+
+  eventMap: -> {
     'CustomerApp.RegistrationInitiated': @_onRegistrationInitiated
     'CustomerApp.WelcomeEmailTriggered': -> @_state = @STATES.sendingWelcomeEmail
     'CustomerApp.RegistrationCompleted': -> @_state = @STATES.completed

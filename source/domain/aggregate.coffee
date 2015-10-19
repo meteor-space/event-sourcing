@@ -90,7 +90,8 @@ class Space.eventSourcing.Aggregate extends Space.Object
   # ============= PRIVATE ============ #
 
   _setupHandlers: ->
-    @_handlers[messageType] = handler for messageType, handler of @handlers?()
+    mappings = _.extend {}, @eventMap?(), @commandMap?()
+    @_handlers[messageType] = handler for messageType, handler of mappings
 
   _getHandler: (message) ->
     if not @hasHandlerFor(message)
