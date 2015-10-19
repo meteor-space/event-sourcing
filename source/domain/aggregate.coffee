@@ -1,6 +1,5 @@
 
-Event = Space.messaging.Event
-Command = Space.messaging.Command
+{Event, Command} = Space.messaging
 
 class Space.eventSourcing.Aggregate extends Space.Object
 
