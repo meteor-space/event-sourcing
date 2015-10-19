@@ -40,10 +40,6 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
       @repository.save new @Aggregate(cmd)
     @_routeCommandToAggregate(commandType) for commandType in @RouteCommands
 
-  @mapEvent: (eventType, commandGenerator) ->
-    @on eventType, (event) ->
-      @_genericCommandHandler commandGenerator.call(this, event)
-
   _routeCommandToAggregate: (commandType) ->
     @commandBus.registerHandler commandType, @_genericCommandHandler
 

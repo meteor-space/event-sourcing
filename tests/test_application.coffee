@@ -8,11 +8,11 @@ class @CustomerApp extends Space.Application
 
   RequiredModules: ['Space.eventSourcing']
 
-  Dependencies:
+  Dependencies: {
     commandBus: 'Space.messaging.CommandBus'
     eventBus: 'Space.messaging.EventBus'
-    eventSourcingConfig: 'Space.eventSourcing.Configuration'
     Mongo: 'Mongo'
+  }
 
   Configuration: {
     useSnapshotting: true
@@ -25,7 +25,7 @@ class @CustomerApp extends Space.Application
     'CustomerApp.CustomerRegistrationProjection'
   ]
 
-  configure: ->
+  beforeStart: ->
     @injector.map('CustomerApp.CustomerRegistrations').to new @Mongo.Collection(null)
     if @Configuration.useSnapshotting
       @snapshots = new @Mongo.Collection(null)
@@ -34,7 +34,7 @@ class @CustomerApp extends Space.Application
         versionFrequency: 2
       }
 
-  startup: ->
+  afterStart: ->
     @reset()
     if @Configuration.useSnapshotting
       @injector.get('Space.eventSourcing.Repository').useSnapshotter @snapshotter
@@ -63,65 +63,70 @@ Space.messaging.define Space.messaging.Event, 'CustomerApp', {
 
 class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
-  @FIELDS: name: null
+  FIELDS: {
+    name: null
+  }
 
-  @handle CustomerApp.CreateCustomer, (command) ->
-    @record new CustomerApp.CustomerCreated {
-      sourceId: @getId()
-      customerName: command.name
-    }
-
-  @handle CustomerApp.CustomerCreated, (event) -> @name = event.customerName
+  handlers: -> {
+    'CustomerApp.CreateCustomer': (command) ->
+      @record new CustomerApp.CustomerCreated {
+        sourceId: @getId()
+        customerName: command.name
+      }
+    'CustomerApp.CustomerCreated': (event) -> @name = event.customerName
+  }
 
 # -------------- PROCESSES ---------------
 
 class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
 
-  @FIELDS: {
+  FIELDS: {
     customerId: null
     customerName: null
   }
 
-  @STATES: {
+  STATES: {
     creatingCustomer: 0
     sendingWelcomeEmail: 1
     completed: 2
   }
 
-  @handle CustomerApp.RegisterCustomer, (command) ->
+  handlers: -> {
+    'CustomerApp.RegisterCustomer': @_registerCustomer
+    'CustomerApp.HandleNewCustomer': @_handleNewCustomer
+    'CustomerApp.MarkRegistrationAsComplete': @_markAsComplete
+    'CustomerApp.RegistrationInitiated': @_onRegistrationInitiated
+    'CustomerApp.WelcomeEmailTriggered': -> @_state = @STATES.sendingWelcomeEmail
+    'CustomerApp.RegistrationCompleted': -> @_state = @STATES.completed
+  }
 
-    @trigger new CustomerApp.CreateCustomer
+  _registerCustomer: (command) ->
+    @trigger new CustomerApp.CreateCustomer {
       targetId: command.customerId
       name: command.customerName
-
-    @record new CustomerApp.RegistrationInitiated
+    }
+    @record new CustomerApp.RegistrationInitiated {
       sourceId: @getId()
       customerId: command.customerId
       customerName: command.customerName
+    }
 
-  @handle CustomerApp.HandleNewCustomer, (command) ->
-
-    @trigger new CustomerApp.SendWelcomeEmail
+  _handleNewCustomer: (command) ->
+    @trigger new CustomerApp.SendWelcomeEmail {
       targetId: @customerId
       customerId: command.customerId
       customerName: @customerName
-
-    @record new CustomerApp.WelcomeEmailTriggered
+    }
+    @record new CustomerApp.WelcomeEmailTriggered {
       sourceId: @getId()
       customerId: @customerId
+    }
 
-  @handle CustomerApp.MarkRegistrationAsComplete, (command) ->
-    @record new CustomerApp.RegistrationCompleted sourceId: @getId()
+  _markAsComplete: -> @record new CustomerApp.RegistrationCompleted sourceId: @getId()
 
-  @handle CustomerApp.RegistrationInitiated, (event) ->
+  _onRegistrationInitiated: (event) ->
     { @customerId, @customerName } = event
-    @_state = CustomerApp.CustomerRegistration.STATES.creatingCustomer
-
-  @handle CustomerApp.WelcomeEmailTriggered, ->
-    @_state = CustomerApp.CustomerRegistration.STATES.sendingWelcomeEmail
-
-  @handle CustomerApp.RegistrationCompleted, ->
-    @_state = CustomerApp.CustomerRegistration.STATES.completed
+    @_state = @STATES.creatingCustomer
 
 # -------------- ROUTERS --------------- #
 
@@ -140,15 +145,17 @@ class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.Router
     CustomerApp.MarkRegistrationAsComplete
   ]
 
-  @mapEvent CustomerApp.CustomerCreated, (event) -> new CustomerApp.HandleNewCustomer {
-    targetId: @_findRegistrationIdByCustomerId event.sourceId
-    customerId: event.sourceId
-  }
-
-  @mapEvent CustomerApp.WelcomeEmailSent, (event) ->
-    new CustomerApp.MarkRegistrationAsComplete {
-      targetId: @_findRegistrationIdByCustomerId event.customerId
-    }
+  eventSubscriptions: -> [
+    'CustomerApp.CustomerCreated': (event) ->
+      @send new CustomerApp.HandleNewCustomer {
+        targetId: @_findRegistrationIdByCustomerId event.sourceId
+        customerId: event.sourceId
+      }
+    'CustomerApp.WelcomeEmailSent': (event) ->
+      @send new CustomerApp.MarkRegistrationAsComplete {
+        targetId: @_findRegistrationIdByCustomerId event.customerId
+      }
+  ]
 
   _findRegistrationIdByCustomerId: (customerId) ->
     @registrations.findOne(customerId: customerId)._id
@@ -158,37 +165,42 @@ class CustomerApp.CustomerRouter extends Space.eventSourcing.Router
   Aggregate: CustomerApp.Customer
   InitializingCommand: CustomerApp.CreateCustomer
 
-class CustomerApp.EmailRouter extends Space.messaging.Controller
+class CustomerApp.EmailRouter extends Space.Object
 
-  @toString: -> 'CustomerApp.EmailRouter'
+  @type 'CustomerApp.EmailRouter'
 
-  Dependencies:
-    eventBus: 'Space.messaging.EventBus'
+  @mixin [
+    Space.messaging.CommandHandling
+    Space.messaging.EventPublishing
+  ]
 
-  @handle CustomerApp.SendWelcomeEmail, (command) ->
-
-    # simulate sub-system sending emails
-    @eventBus.publish new CustomerApp.WelcomeEmailSent
-      sourceId: '999'
-      version: 1
-      customerId: command.customerId
-      email: "Hello #{command.customerName}"
+  commandHandlers: -> [
+    'CustomerApp.SendWelcomeEmail': (command) ->
+      # simulate sub-system sending emails
+      @publish new CustomerApp.WelcomeEmailSent {
+        sourceId: '999'
+        version: 1
+        customerId: command.customerId
+        email: "Hello #{command.customerName}"
+      }
+  ]
 
 # -------------- VIEW PROJECTIONS --------------- #
 
-class CustomerApp.CustomerRegistrationProjection extends Space.messaging.Controller
+class CustomerApp.CustomerRegistrationProjection extends Space.eventSourcing.Projection
 
-  Dependencies:
+  Dependencies: {
     registrations: 'CustomerApp.CustomerRegistrations'
+  }
 
-  @on CustomerApp.RegistrationInitiated, (event) ->
-
-    @registrations.insert
-      _id: event.sourceId
-      customerId: event.customerId
-      customerName: event.customerName
-      isCompleted: false
-
-  @on CustomerApp.RegistrationCompleted, (event) ->
-
-    @registrations.update { _id: event.sourceId }, $set: isCompleted: true
+  eventSubscriptions: -> [
+    'CustomerApp.RegistrationInitiated': (event) ->
+      @registrations.insert {
+        _id: event.sourceId
+        customerId: event.customerId
+        customerName: event.customerName
+        isCompleted: false
+      }
+    'CustomerApp.RegistrationCompleted': (event) ->
+      @registrations.update { _id: event.sourceId }, $set: isCompleted: true
+  ]

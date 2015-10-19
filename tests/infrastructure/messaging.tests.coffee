@@ -6,7 +6,8 @@ describe 'Space.eventSourcing - messaging', ->
 
   beforeEach ->
     @fakeDates = sinon.useFakeTimers('Date')
-    @app = new CustomerApp Configuration: {
+    @app = new CustomerApp()
+    @app.configure {
       appId: 'CustomerApp'
       eventSourcing: { commitsCollection: sharedCommitCollection }
     }
@@ -65,12 +66,10 @@ describe 'Space.eventSourcing - messaging', ->
 
   it 'supports distributed messaging via a shared commits collection', (test, done) ->
 
-    secondApp = Space.Application.create {
-      RequiredModules: ['Space.eventSourcing']
-      Configuration: {
-        appId: 'SecondApp'
-        eventSourcing: { commitsCollection: sharedCommitCollection }
-      }
+    secondApp = Space.Application.create RequiredModules: ['Space.eventSourcing']
+    secondApp.configure {
+      appId: 'SecondApp'
+      eventSourcing: { commitsCollection: sharedCommitCollection }
     }
     secondApp.start()
     # Aggregate all published events on the second app

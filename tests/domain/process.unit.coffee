@@ -11,7 +11,7 @@ describe "Space.eventSourcing.Process", ->
     @handler = handler = sinon.spy()
 
     class TestProcess extends Process
-      @handle event.typeName(), handler
+      handlers: -> 'Space.messaging.Event': handler
 
     @processManager = new TestProcess '123'
 

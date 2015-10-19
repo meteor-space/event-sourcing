@@ -1,53 +1,47 @@
 
-Event = Space.messaging.Event
-Command = Space.messaging.Command
+{Event, Command} = Space.messaging
 
 class Space.eventSourcing.Aggregate extends Space.Object
+
+  @type 'Space.eventSourcing.Aggregate'
 
   _id: null
   _version: 0
   _events: null
   _state: null
-
-  @type 'Space.eventSourcing.Aggregate'
+  _handlers: null
 
   # Override to define which custom properties this aggregate has
-  @FIELDS: {}
+  FIELDS: {}
 
-  @ERRORS:
+  ERRORS: {
     guidRequired: "#{Aggregate}: Aggregate needs an GUID on creation."
     domainEventRequired: "#{Aggregate}: Event must inherit from Space.messaging.Event"
     cannotHandleMessage: "#{Aggregate}: Cannot handle: "
     invalidEventSourceId: "#{Aggregate}: The given event has an invalid source id."
+  }
 
   @createFromHistory: (events) -> new this(events[0].sourceId, events)
 
   @createFromSnapshot: (snapshot) -> new this(snapshot.id, snapshot, true)
 
-  @handle: (Type, handler) ->
-    # create event handlers cache if it doesnt exist yet
-    unless @_handlers? then @_handlers = {}
-    @_handlers[Type.toString()] = handler
-
-  @on: -> @handle.apply this, arguments
-
   constructor: (id, data, isSnapshot) ->
-    unless id? then throw new Error Aggregate.ERRORS.guidRequired
+    unless id? then throw new Error Aggregate::ERRORS.guidRequired
+    # Initialize properties
     @_id = if (id instanceof Command) then id.targetId else id
     @_events = []
-    fields = @constructor.FIELDS
+    @_handlers = {}
+    # Apply default values for fields
+    fields = @FIELDS
     (this[field] = fields[field]) for field of fields
-    if isSnapshot
-      @applySnapshot data
-    else if @isHistory data
-      @replayHistory data
-    else if (id instanceof Command)
-      @handle id
-    else
-      @initialize.apply(this, arguments)
+    # Setup event and command handlers
+    @_setupHandlers()
+    # Bootstrap the aggregate
+    if isSnapshot then @applySnapshot data
+    else if @isHistory data then @replayHistory data
+    else if (id instanceof Command) then @handle id
+    else @initialize?.apply(this, arguments)
     return this
-
-  initialize: ->
 
   getId: -> @_id
 
@@ -60,7 +54,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
     snapshot.id = @_id
     snapshot.state = @_state
     snapshot.version = @_version
-    (snapshot[field] = this[field]) for field of @constructor.FIELDS
+    (snapshot[field] = this[field]) for field of @FIELDS
     return snapshot
 
   applySnapshot: (snapshot) ->
@@ -68,7 +62,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
     @_id = snapshot.id
     @_state = snapshot.state
     @_version = snapshot.version
-    (this[field] = snapshot[field]) for field of @constructor.FIELDS
+    (this[field] = snapshot[field]) for field of @FIELDS
 
   record: (event) ->
     @_validateEvent event
@@ -85,34 +79,30 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   replayHistory: (history) -> @replay(event) for event in history
 
-  handle: (message) ->
-    handler = @_getHandler message
-    handler.call this, message
+  handle: (message) -> @_getHandler(message).call this, message
 
   hasState: (state) -> if state? then @_state == state else @_state?
 
   getState: -> @_state
 
-  hasHandlerFor: (message) ->
-    handlers = @constructor._handlers
-    return handlers? and handlers[message.typeName()]?
+  hasHandlerFor: (message) -> @_handlers[message.typeName()]?
 
   # ============= PRIVATE ============ #
 
+  _setupHandlers: ->
+    @_handlers[messageType] = handler for messageType, handler of @handlers?()
+
   _getHandler: (message) ->
-    handlers = @constructor._handlers
-    if !handlers? or !handlers[message.typeName()]
-      throw new Error Aggregate.ERRORS.cannotHandleMessage + message.typeName()
+    if not @hasHandlerFor(message)
+      throw new Error @ERRORS.cannotHandleMessage + message.typeName()
     else
-      return handlers[message.typeName()]
+      return @_handlers[message.typeName()]
 
   _validateEvent: (event) ->
-
     unless event instanceof Event
-      throw new Error Aggregate.ERRORS.domainEventRequired
-
+      throw new Error @ERRORS.domainEventRequired
     unless event.sourceId.toString() == @getId().toString()
-      throw new Error Aggregate.ERRORS.invalidEventSourceId
+      throw new Error @ERRORS.invalidEventSourceId
 
   _updateToEventVersion: (event) ->
     if event.version? then @_version = event.version

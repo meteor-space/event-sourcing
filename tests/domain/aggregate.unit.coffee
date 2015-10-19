@@ -1,7 +1,6 @@
 
 {Aggregate} = Space.eventSourcing
-{Event} = Space.messaging
-{Command} = Space.messaging
+{Event, Command} = Space.messaging
 
 describe "Space.eventSourcing.Aggregate", ->
 
@@ -14,7 +13,6 @@ describe "Space.eventSourcing.Aggregate", ->
     @fields: targetId: String, version: Match.Integer
 
   class TestAggregate extends Aggregate
-    @handle Event, ->
 
   beforeEach ->
     @aggregateId = '123'
@@ -22,8 +20,11 @@ describe "Space.eventSourcing.Aggregate", ->
     @command = command = new TestCommand targetId: @aggregateId, version: 1
     @eventHandler = eventHandler = sinon.spy()
     @commandHandler = commandHandler = sinon.spy()
-    TestAggregate.handle TestEvent, eventHandler
-    TestAggregate.handle TestCommand, commandHandler
+    TestAggregate::handlers = -> {
+      'Space.messaging.Event': ->
+      TestEvent: eventHandler
+      TestCommand: commandHandler
+    }
     @aggregate = new TestAggregate @aggregateId
 
   # =========== CONSTRUCTION ============ #
@@ -31,7 +32,7 @@ describe "Space.eventSourcing.Aggregate", ->
   describe 'construction', ->
 
     it 'requires an id on creation', ->
-      expect(-> new Aggregate()).to.throw Aggregate.UID_REQUIRED_ERROR
+      expect(-> new Aggregate()).to.throw Aggregate::ERRORS.guidRequired
 
     it 'makes the id publicly available', ->
       id = '123'
@@ -65,12 +66,12 @@ describe "Space.eventSourcing.Aggregate", ->
 
     it 'only takes domain events', ->
       event = type: 'Test', aggregateId: 'bla'
-      expect(=> @aggregate.record(event)).to.throw Aggregate.ERRORS.domainEventRequired
+      expect(=> @aggregate.record(event)).to.throw Aggregate::ERRORS.domainEventRequired
 
     it 'does not throw error if missing handler for event', ->
       event = new Event sourceId: '123'
       aggregate = new Aggregate '123'
-      error = Aggregate.ERRORS.cannotHandleMessage + event.typeName()
+      error = Aggregate::ERRORS.cannotHandleMessage + event.typeName()
       expect(-> aggregate.record event).not.to.throw error
 
     it 'does not push the event into the events array if something fails', ->
@@ -92,8 +93,8 @@ describe "Space.eventSourcing.Aggregate", ->
 
     it 'throws error when the event is not a domain event', ->
       aggregate = @aggregate
-      expect(-> aggregate.replay()).to.throw Aggregate.DOMAIN_EVENT_REQUIRED_ERROR
-      expect(-> aggregate.replay({})).to.throw Aggregate.DOMAIN_EVENT_REQUIRED_ERROR
+      expect(-> aggregate.replay()).to.throw Aggregate::ERRORS.domainEventRequired
+      expect(-> aggregate.replay({})).to.throw Aggregate::ERRORS.domainEventRequired
 
     it 'it assigns the event version to the aggregate', ->
       @aggregate.replay @event
@@ -105,7 +106,7 @@ describe "Space.eventSourcing.Aggregate", ->
 
     it 'only replays events that have the right source id', ->
       event = new Event sourceId: 'otherId'
-      expect(=> @aggregate.replay event).to.throw Aggregate.INVALID_EVENT_SOURCE_ID_ERROR
+      expect(=> @aggregate.replay event).to.throw Aggregate::ERRORS.invalidEventSourceId
 
   # ========== HANDLING EVENTS AND COMMANDS ========== #
 
@@ -186,7 +187,7 @@ describe "Space.eventSourcing.Aggregate", ->
       typeName: -> 'StateChangingEvent'
 
     class StateAggregate extends Space.eventSourcing.Aggregate
-      @handle StateChangingEvent, (event) -> @_state = event.state
+      handlers: -> 'StateChangingEvent': (event) -> @_state = event.state
 
     it 'has no state by default', ->
       expect(@aggregate.hasState()).to.be.false
