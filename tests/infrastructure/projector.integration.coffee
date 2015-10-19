@@ -16,12 +16,14 @@ describe 'Space.eventSourcing - replaying projections', ->
       firstCollection: 'FirstCollection'
     }
 
-    @on TestEvent, (event) ->
-      @firstCollection.insert {
-        _id: event.sourceId
-        value: event.value
-        isFromReplay: true # This is the difference that would be "new"
-      }
+    eventSubscriptions: -> [
+      'Space.eventSourcing.ProjectorTestEvent': (event) ->
+        @firstCollection.insert {
+          _id: event.sourceId
+          value: event.value
+          isFromReplay: true # This is the difference that would be "new"
+        }
+    ]
 
   class SecondProjection extends Space.eventSourcing.Projection
 
@@ -29,24 +31,30 @@ describe 'Space.eventSourcing - replaying projections', ->
       secondCollection: 'SecondCollection'
     }
 
-    @on TestEvent, (event) ->
-      @secondCollection.insert {
-        _id: event.sourceId
-        value: event.value
-        isFromReplay: true # This is the difference that would be "new"
-      }
+    eventSubscriptions: -> [
+      'Space.eventSourcing.ProjectorTestEvent': (event) ->
+        @secondCollection.insert {
+          _id: event.sourceId
+          value: event.value
+          isFromReplay: true # This is the difference that would be "new"
+        }
+    ]
 
   class TestApp extends Space.Application
 
     RequiredModules: ['Space.eventSourcing']
+    Configuration: {
+      appId: 'TestApp'
+    }
 
-    configure: ->
+    onStart: ->
+      @reset()
       @injector.map('FirstCollection').to FirstCollection
       @injector.map('SecondCollection').to SecondCollection
       @injector.map('FirstProjection').toSingleton FirstProjection
       @injector.map('SecondProjection').toSingleton SecondProjection
 
-    startup: ->
+    afterStart: ->
       @injector.create 'FirstProjection'
       @injector.create 'SecondProjection'
 
@@ -56,10 +64,13 @@ describe 'Space.eventSourcing - replaying projections', ->
       FirstCollection.remove {}
       SecondCollection.remove {}
       @event = new TestEvent sourceId: 'test123', value: 'test'
-      @app = new TestApp { appId: 'TestApp' }
+      @app = new TestApp()
+      @app.configure { appId: 'TestApp' }
       @app.start()
 
-    afterEach -> @app.reset()
+    afterEach ->
+      @app.reset()
+      @app.stop()
 
     it 'updates the collections with the new projection data', ->
 
@@ -75,8 +86,10 @@ describe 'Space.eventSourcing - replaying projections', ->
           events: [EJSON.stringify(@event)]
           commands: []
         }
-        isPublished: true
         insertedAt: new Date()
+        eventTypes: [TestEvent]
+        sentBy: @app.Configuration.appId
+        receivedBy: [@app.Configuration.appId]
       }
 
       projector = @app.injector.get 'Space.eventSourcing.Projector'

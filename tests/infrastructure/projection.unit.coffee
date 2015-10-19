@@ -6,8 +6,13 @@ describe 'Space.eventSourcing.Projection', ->
 
   beforeEach ->
     @handler = sinon.spy()
-    TestProjection.on TestEvent, @handler
-    @projection = new TestProjection()
+    @projection = new TestProjection({
+      eventBus: new Space.messaging.EventBus()
+      meteor: Meteor
+      underscore: _
+    })
+    @projection.onDependenciesReady()
+    @projection.subscribe TestEvent, @handler
     @testEvent = new TestEvent()
 
   describe 'replay mode', ->

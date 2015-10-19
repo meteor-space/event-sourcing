@@ -1,4 +1,6 @@
-class Space.eventSourcing.Projection extends Space.messaging.Controller
+class Space.eventSourcing.Projection extends Space.Object
+
+  @mixin Space.messaging.EventSubscribing
 
   Collections: {}
   _isInReplayMode: false
@@ -13,7 +15,7 @@ class Space.eventSourcing.Projection extends Space.messaging.Controller
   on: (event, isReplay=false) ->
     return unless @canHandleEvent(event)
     if !@_isInReplayMode or (@_isInReplayMode and isReplay)
-      super(event)
+      Space.messaging.EventSubscribing.on.call this, event
     else
       @_queuedEvents.push event
 

@@ -1,5 +1,7 @@
 class Space.eventSourcing.Projector extends Space.Object
 
+  @type 'Space.eventSourcing.Projector'
+
   Dependencies: {
     commitStore: 'Space.eventSourcing.CommitStore'
     injector: 'Injector'
@@ -35,8 +37,12 @@ class Space.eventSourcing.Projector extends Space.Object
     # for the specified projections only.
     for collectionId, realCollection of realCollectionsBackups
       inMemoryCollection = @injector.get(collectionId)
+      inMemoryData = inMemoryCollection.find().fetch()
       realCollection.remove {}
-      realCollection.batchInsert inMemoryCollection.find().fetch()
+      if inMemoryData.length
+        realCollection.batchInsert inMemoryData
+      else
+        throw new Error "No data to insert after replaying projection for #{collectionId}"
       # Restore original collections
       @injector.override(collectionId).to realCollection
 

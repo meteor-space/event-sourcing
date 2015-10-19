@@ -21,24 +21,21 @@ class Space.eventSourcing extends Space.Module
     }
   }
 
-  configure: ->
+  beforeStart: ->
     if @Configuration.eventSourcing.commitsCollection?
       CommitsCollection = @Configuration.eventSourcing.commitsCollection
     else if !CommitsCollection?
       CommitsCollection = new @mongo.Collection 'space_cqrs_commits'
       CommitsCollection._ensureIndex { "sourceId": 1, "version": 1 }, unique: true
-
     @injector.map('Space.eventSourcing.Commits').to CommitsCollection
     @injector.map('Space.eventSourcing.Projector').asSingleton()
     @injector.map('Space.eventSourcing.Log').to =>
       console.log.apply(null, arguments) if @Configuration.eventSourcing.debug
 
-  afterApplicationStart: ->
+  afterStart: ->
     @commitPublisher = @injector.get('Space.eventSourcing.CommitPublisher')
     @commitPublisher.startPublishing()
 
-  reset: ->
-    @injector.get('Space.eventSourcing.Commits').remove {}
+  onReset: -> @injector.get('Space.eventSourcing.Commits').remove {}
 
-  stop: ->
-    @commitPublisher.stopPublishing()
+  onStop: -> @commitPublisher.stopPublishing()

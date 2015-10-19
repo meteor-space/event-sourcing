@@ -15,8 +15,8 @@ Package.onUse(function(api) {
     'underscore',
     'check',
     'mikowals:batch-insert@1.1.9',
-    'space:base@2.5.1',
-    'space:messaging@1.8.0'
+    'space:base@3.0.0',
+    'space:messaging@2.0.0'
   ]);
 
   api.addFiles(['source/server.coffee'], 'server');
@@ -24,7 +24,6 @@ Package.onUse(function(api) {
   // ========= server =========
 
   api.addFiles([
-    'source/configuration.coffee',
     // INFRASTRUCTURE
     'source/infrastructure/repository.coffee',
     'source/infrastructure/snapshotter.coffee',
@@ -47,6 +46,7 @@ Package.onTest(function(api) {
     'check',
     'ejson',
     'mongo',
+    'underscore',
     'space:event-sourcing',
     'practicalmeteor:munit@2.1.4',
     'space:testing@1.5.0'
