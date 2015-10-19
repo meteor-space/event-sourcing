@@ -1,6 +1,18 @@
 Changelog
 =========
 
+### 2.0.0
+**BREAKING CHANGES**
+- Updates dependencies to the new major versions `space:base@3.1.0` and
+`space:messaging@2.1.0`. Take look at the changelogs there to see what is
+different now.
+- Removed the static api for aggregates to register event and command handlers.
+Now you have to define a `handlers: -> { My.awesome.Event: -> }` method on the
+aggregate class which returns a map of handlers.
+- The static `FIELDS` property of aggregates was refactored to be on the prototype
+
+As always, take a look at the tests to see the current api in action.
+
 ### 1.4.0
 **Bugfixes:**
 - Keep minimal Meteor version at 1.0
