@@ -15,6 +15,13 @@ describe 'Space.eventSourcing.Projection', ->
     @projection.subscribe TestEvent, @handler
     @testEvent = new TestEvent()
 
+  describe 'default mode', ->
+
+    it 'handles events by default', ->
+      @projection.on @testEvent
+      expect(@handler).to.have.been.called
+
+
   describe 'replay mode', ->
 
     it 'does not handle normal events', ->
