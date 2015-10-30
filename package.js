@@ -14,6 +14,7 @@ Package.onUse(function(api) {
     'ejson',
     'underscore',
     'check',
+    'mongo',
     'mikowals:batch-insert@1.1.9',
     'space:base@3.1.0',
     'space:messaging@2.1.1'
