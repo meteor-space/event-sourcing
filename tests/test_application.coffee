@@ -6,16 +6,24 @@ via the new configuration api introduced in space:base.
 
 class @CustomerApp extends Space.Application
 
+  @publish -> 'CustomerApp'
+
   RequiredModules: ['Space.eventSourcing']
 
   Dependencies: {
     commandBus: 'Space.messaging.CommandBus'
     eventBus: 'Space.messaging.EventBus'
-    Mongo: 'Mongo'
+    mongo: 'Mongo'
   }
 
   Configuration: {
-    useSnapshotting: true
+    testMode: true
+    eventSourcing: {
+      snapshotting: {
+        frequency: 2
+        collectionName: 'my_collection'
+      }
+    }
   }
 
   Singletons: [
@@ -26,18 +34,7 @@ class @CustomerApp extends Space.Application
   ]
 
   beforeStart: ->
-    @injector.map('CustomerApp.CustomerRegistrations').to new @Mongo.Collection(null)
-    if @Configuration.useSnapshotting
-      @snapshots = new @Mongo.Collection(null)
-      @snapshotter = new Space.eventSourcing.Snapshotter {
-        collection: @snapshots
-        versionFrequency: 2
-      }
-
-  afterStart: ->
-    @reset()
-    if @Configuration.useSnapshotting
-      @injector.get('Space.eventSourcing.Repository').useSnapshotter @snapshotter
+    @injector.map('CustomerApp.CustomerRegistrations').to new @mongo.Collection(null)
 
 # -------------- COMMANDS ---------------
 

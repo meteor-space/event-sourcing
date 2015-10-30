@@ -2,14 +2,14 @@ describe 'Space.eventSourcing - messaging', ->
 
   customer = id: 'customer_123', name: 'Dominik'
   registration = id: 'registration_123'
-  sharedCommitCollection = new Mongo.Collection('messaging_shared_commits')
+#  sharedCommitCollection = new Mongo.Collection('messaging_shared_commits')
 
   beforeEach ->
     @fakeDates = sinon.useFakeTimers('Date')
     @app = new CustomerApp()
     @app.configure {
       appId: 'CustomerApp'
-      eventSourcing: { commitsCollection: sharedCommitCollection }
+#      eventSourcing: { commitsCollection: sharedCommitCollection }
     }
     @generatedEventsForCustomerRegistration = [
       new CustomerApp.RegistrationInitiated({
@@ -50,7 +50,7 @@ describe 'Space.eventSourcing - messaging', ->
     @app.start()
 
   afterEach ->
-    @app.stop()
+    @app.reset()
     @fakeDates.restore()
 
   it 'handles messages within one app correctly', (test, done) ->
@@ -69,7 +69,7 @@ describe 'Space.eventSourcing - messaging', ->
     secondApp = Space.Application.create RequiredModules: ['Space.eventSourcing']
     secondApp.configure {
       appId: 'SecondApp'
-      eventSourcing: { commitsCollection: sharedCommitCollection }
+#      eventSourcing: { commitsCollection: sharedCommitCollection }
     }
     secondApp.start()
     # Aggregate all published events on the second app
