@@ -69,7 +69,6 @@ describe 'Space.eventSourcing - messaging', ->
     secondApp = Space.Application.create RequiredModules: ['Space.eventSourcing']
     secondApp.configure {
       appId: 'SecondApp'
-#      eventSourcing: { commitsCollection: sharedCommitCollection }
     }
     secondApp.start()
     # Aggregate all published events on the second app

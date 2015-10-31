@@ -33,7 +33,7 @@ class @CustomerApp extends Space.Application
     'CustomerApp.CustomerRegistrationProjection'
   ]
 
-  beforeStart: ->
+  afterInitialize: ->
     @injector.map('CustomerApp.CustomerRegistrations').to new @mongo.Collection(null)
 
 # -------------- COMMANDS ---------------
