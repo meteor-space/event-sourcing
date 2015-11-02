@@ -15,7 +15,6 @@ class Space.eventSourcing extends Space.Module
         mongoUrl: ['SPACE_ES_COMMITS_MONGO_URL', '', 'string']
         mongoOplogUrl: ['SPACE_ES_COMMITS_MONGO_OPLOG_URL', '', 'string']
         collectionName: ['SPACE_ES_COMMITS_COLLECTION_NAME', 'space_eventSourcing_commits', 'string']
-        processingTimeout: ['SPACE_ES_COMMITS_PROCESSING_TIMEOUT', 1000, 'int']
       }
       snapshotting: {
         enabled: ['SPACE_ES_SNAPSHOTTING_ENABLED', true, 'bool']
@@ -93,7 +92,7 @@ class Space.eventSourcing extends Space.Module
       else
         driverOptions = {}
       { mongoUrl } = @Configuration.eventSourcing.commits
-      return _driver: new @mongoInternals.RemoteCollectionDriver(mongoUrl, driverOptions)        
+      return _driver: new @mongoInternals.RemoteCollectionDriver(mongoUrl, driverOptions)
     else
       return {}
 
