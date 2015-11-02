@@ -2,14 +2,12 @@ describe 'Space.eventSourcing - messaging', ->
 
   customer = id: 'customer_123', name: 'Dominik'
   registration = id: 'registration_123'
-#  sharedCommitCollection = new Mongo.Collection('messaging_shared_commits')
 
   beforeEach ->
     @fakeDates = sinon.useFakeTimers('Date')
     @app = new CustomerApp()
     @app.configure {
       appId: 'CustomerApp'
-#      eventSourcing: { commitsCollection: sharedCommitCollection }
     }
     @generatedEventsForCustomerRegistration = [
       new CustomerApp.RegistrationInitiated({
