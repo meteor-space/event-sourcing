@@ -70,7 +70,6 @@ class Space.eventSourcing extends Space.Module
     else
       snapshotsName = Space.getenv('SPACE_ES_SNAPSHOTTING_COLLECTION_NAME', 'space_eventSourcing_snapshots')
       SnapshotsCollection = new @mongo.Collection snapshotsName, @_collectionOptions()
-      SnapshotsCollection._ensureIndex { "snapshot.state": 1, "snapshot.version": 1 }, unique: true
       Space.eventSourcing.snapshotsCollection = SnapshotsCollection
     snapshotter = new Space.eventSourcing.Snapshotter {
       collection: SnapshotsCollection,
