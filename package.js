@@ -17,7 +17,7 @@ Package.onUse(function(api) {
     'mongo',
     'mikowals:batch-insert@1.1.9',
     'space:base@3.1.0',
-    'space:messaging@2.1.1'
+    'space:messaging@2.1.0'
   ]);
 
   api.addFiles(['source/server.coffee'], 'server');
