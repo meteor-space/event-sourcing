@@ -20,7 +20,6 @@ class @CustomerApp extends Space.Application
     eventSourcing: {
       snapshotting: {
         frequency: 2
-        collectionName: 'my_collection'
       }
     }
   }
