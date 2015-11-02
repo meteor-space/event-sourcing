@@ -9,7 +9,7 @@ class Space.eventSourcing extends Space.Module
   Configuration: Space.getenv.multi({
     eventSourcing: {
       log: {
-        enabled: ['SPACE_ES_LOG_ENABLED', true, 'bool']
+        enabled: ['SPACE_ES_LOG_ENABLED', false, 'bool']
       }
       commits: {
         mongoUrl: ['SPACE_ES_COMMITS_MONGO_URL', '', 'string']
@@ -49,17 +49,14 @@ class Space.eventSourcing extends Space.Module
     @commitPublisher = @injector.get('Space.eventSourcing.CommitPublisher')
 
   onStart: ->
-    console.log('onStart')
     @commitPublisher.startPublishing()
 
   onReset: ->
-    console.log('onReset')
     @injector.get('Space.eventSourcing.Commits').remove {}
     @injector.get('Space.eventSourcing.Snapshots').remove {}
 
   onStop: ->
     @commitPublisher.stopPublishing()
-    console.log('onStop')
 
   _setupLogging: ->
     @injector.map('Space.eventSourcing.Log').to =>
