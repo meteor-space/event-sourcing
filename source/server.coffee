@@ -11,15 +11,9 @@ class Space.eventSourcing extends Space.Module
       log: {
         enabled: ['SPACE_ES_LOG_ENABLED', false, 'bool']
       }
-      commits: {
-        mongoUrl: ['SPACE_ES_COMMITS_MONGO_URL', '', 'string']
-        mongoOplogUrl: ['SPACE_ES_COMMITS_MONGO_OPLOG_URL', '', 'string']
-        collectionName: ['SPACE_ES_COMMITS_COLLECTION_NAME', 'space_eventSourcing_commits', 'string']
-      }
       snapshotting: {
         enabled: ['SPACE_ES_SNAPSHOTTING_ENABLED', true, 'bool']
         frequency: ['SPACE_ES_SNAPSHOTTING_FREQUENCY', 10, 'int']
-        collectionName: ['SPACE_ES_SNAPSHOTTING_COLLECTION_NAME', 'space_eventSourcing_snapshots', 'string']
       }
     }
   })
@@ -42,7 +36,6 @@ class Space.eventSourcing extends Space.Module
     @_setupLogging() # if @Configuration.eventSourcing.log.enabled
 
   afterInitialize: ->
-
     @_setupCommitsCollection()
     @_setupSnapshotting() if @Configuration.eventSourcing.snapshotting.enabled
     @commitPublisher = @injector.get('Space.eventSourcing.CommitPublisher')
@@ -65,7 +58,8 @@ class Space.eventSourcing extends Space.Module
     if Space.eventSourcing.commitsCollection?
       CommitsCollection = Space.eventSourcing.commitsCollection
     else
-      CommitsCollection = new @mongo.Collection @Configuration.eventSourcing.commits.collectionName, @_collectionOptions()
+      commitsName = Space.getenv('SPACE_ES_COMMITS_COLLECTION_NAME', 'space_eventSourcing_commits')
+      CommitsCollection = new @mongo.Collection commitsName, @_collectionOptions()
       CommitsCollection._ensureIndex { "sourceId": 1, "version": 1 }, unique: true
       Space.eventSourcing.commitsCollection = CommitsCollection
     @injector.map('Space.eventSourcing.Commits').to CommitsCollection
@@ -74,7 +68,8 @@ class Space.eventSourcing extends Space.Module
     if Space.eventSourcing.snapshotsCollection?
       SnapshotsCollection = Space.eventSourcing.snapshotsCollection
     else
-      SnapshotsCollection = new @mongo.Collection @Configuration.eventSourcing.snapshotting.collectionName, @_collectionOptions()
+      snapshotsName = Space.getenv('SPACE_ES_SNAPSHOTTING_COLLECTION_NAME', 'space_eventSourcing_snapshots')
+      SnapshotsCollection = new @mongo.Collection snapshotsName, @_collectionOptions()
       SnapshotsCollection._ensureIndex { "snapshot.state": 1, "snapshot.version": 1 }, unique: true
       Space.eventSourcing.snapshotsCollection = SnapshotsCollection
     snapshotter = new Space.eventSourcing.Snapshotter {
@@ -88,16 +83,16 @@ class Space.eventSourcing extends Space.Module
   _collectionOptions: ->
     if @_externalMongo()
       if @_externalMongoNeedsOplog()
-        driverOptions = { oplogUrl:  @Configuration.eventSourcing.commits.mongoOplogUrl }
+        driverOptions = { oplogUrl:  Space.getenv('SPACE_ES_COMMITS_MONGO_OPLOG_URL') }
       else
         driverOptions = {}
-      { mongoUrl } = @Configuration.eventSourcing.commits
+      mongoUrl = Space.getenv('SPACE_ES_COMMITS_MONGO_URL')
       return _driver: new @mongoInternals.RemoteCollectionDriver(mongoUrl, driverOptions)
     else
       return {}
 
   _externalMongo: ->
-    true if @Configuration.eventSourcing.commits.mongoUrl?.length > 0
+    true if Space.getenv('SPACE_ES_COMMITS_MONGO_URL', '').length > 0
 
   _externalMongoNeedsOplog: ->
-    true if @Configuration.eventSourcing.commits.mongoOplogUrl?.length > 0
+    true if Space.getenv('SPACE_ES_COMMITS_MONGO_OPLOG_URL', '').length > 0
