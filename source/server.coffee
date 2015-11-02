@@ -92,7 +92,8 @@ class Space.eventSourcing extends Space.Module
         driverOptions = { oplogUrl:  @Configuration.eventSourcing.commits.mongoOplogUrl }
       else
         driverOptions = {}
-      return { _driver: new @mongoInternals.RemoteCollectionDriver  @Configuration.eventSourcing.commits.mongoUrl, driverOptions }
+      { mongoUrl } = @Configuration.eventSourcing.commits
+      return _driver: new @mongoInternals.RemoteCollectionDriver(mongoUrl, driverOptions)        
     else
       return {}
 
