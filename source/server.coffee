@@ -6,25 +6,24 @@ class Space.eventSourcing extends Space.Module
   @commitsCollection: null
   @snapshotsCollection: null
 
-  Configuration: {
+  Configuration: Space.getenv.multi({
     eventSourcing: {
-      logging: {
-        enabled: false
-        writeStream: console
+      log: {
+        enabled: ['SPACE_ES_LOG_ENABLED', true, 'bool']
       }
       commits: {
-        mongoUrl: null
-        mongoOplogUrl: null
-        collectionName: 'space_eventSourcing_commits'
-        processingTimeout: 10000
+        mongoUrl: ['SPACE_ES_COMMITS_MONGO_URL', '', 'string']
+        mongoOplogUrl: ['SPACE_ES_COMMITS_MONGO_OPLOG_URL', '', 'string']
+        collectionName: ['SPACE_ES_COMMITS_COLLECTION_NAME', 'space_eventSourcing_commits', 'string']
+        processingTimeout: ['SPACE_ES_COMMITS_PROCESSING_TIMEOUT', 1000, 'int']
       }
       snapshotting: {
-        enabled: true
-        frequency: 10
-        collectionName: 'space_eventSourcing_snapshots'
+        enabled: ['SPACE_ES_SNAPSHOTTING_ENABLED', true, 'bool']
+        frequency: ['SPACE_ES_SNAPSHOTTING_FREQUENCY', 10, 'int']
+        collectionName: ['SPACE_ES_SNAPSHOTTING_COLLECTION_NAME', 'space_eventSourcing_snapshots', 'string']
       }
     }
-  }
+  })
 
   RequiredModules: ['Space.messaging']
 
@@ -36,57 +35,72 @@ class Space.eventSourcing extends Space.Module
   Singletons: [
     'Space.eventSourcing.CommitPublisher'
     'Space.eventSourcing.Repository'
+    'Space.eventSourcing.Projector'
   ]
 
+  beforeInitialize: ->
+    # Right now logging is not optional, and hard coded to output to console, but the Config API included a switch and writeStream
+    @_setupLogging() # if @Configuration.eventSourcing.log.enabled
+
   afterInitialize: ->
-    commits = @Configuration.eventSourcing.commits
-    snapshotting = @Configuration.eventSourcing.snapshotting
-    logging = @Configuration.eventSourcing.logging
 
-    # Setup distributed commits collection
-    collectionOptions = {}
-    if commits.mongoUrl?
-      isOplogDefined = commits.mongoOplogUrl and commits.mongoOplogUrl.length > 1
-      driverOptions = if isOplogDefined then oplogUrl: commits.mongoOplogUrl else {}
-      collectionOptions = {
-        _driver: new @mongoInternals.RemoteCollectionDriver(
-          commits.mongoUrl, driverOptions
-        )
-      }
-    if Space.eventSourcing.commitsCollection?
-      CommitsCollection = Space.eventSourcing.commitsCollection
-    else
-      CommitsCollection = new @mongo.Collection commits.collectionName, collectionOptions
-      CommitsCollection._ensureIndex { "sourceId": 1, "version": 1 }, unique: true
-      Space.eventSourcing.commitsCollection = CommitsCollection
-
-    # Setup snapshotting
-    if snapshotting.enabled?
-
-      if Space.eventSourcing.snapshotsCollection?
-        SnapshotsCollection = Space.eventSourcing.snapshotsCollection
-      else
-        SnapshotsCollection = new @mongo.Collection(
-          snapshotting.collectionName, collectionOptions
-        )
-        Space.eventSourcing.snapshotsCollection = SnapshotsCollection
-      snapshotter = new Space.eventSourcing.Snapshotter {
-        collection: SnapshotsCollection,
-        versionFrequency: snapshotting.frequency
-      }
-
-    @injector.map('Space.eventSourcing.Commits').to CommitsCollection
-    @injector.map('Space.eventSourcing.Snapshots').to SnapshotsCollection
-    @injector.map('Space.eventSourcing.Projector').asSingleton()
-    @injector.map('Space.eventSourcing.Log').to ->
-      console.log.apply(null, arguments) if logging.enabled
+    @_setupCommitsCollection()
+    @_setupSnapshotting() if @Configuration.eventSourcing.snapshotting.enabled
     @commitPublisher = @injector.get('Space.eventSourcing.CommitPublisher')
-    @injector.get('Space.eventSourcing.Repository').useSnapshotter snapshotter
 
-  onStart: -> @commitPublisher.startPublishing()
+  onStart: ->
+    console.log('onStart')
+    @commitPublisher.startPublishing()
 
   onReset: ->
+    console.log('onReset')
     @injector.get('Space.eventSourcing.Commits').remove {}
     @injector.get('Space.eventSourcing.Snapshots').remove {}
 
-  onStop: -> @commitPublisher.stopPublishing()
+  onStop: ->
+    @commitPublisher.stopPublishing()
+    console.log('onStop')
+
+  _setupLogging: ->
+    @injector.map('Space.eventSourcing.Log').to =>
+      console.log.apply(null, arguments) if @Configuration.eventSourcing.log.enabled
+
+  _setupCommitsCollection: ->
+    if Space.eventSourcing.commitsCollection?
+      CommitsCollection = Space.eventSourcing.commitsCollection
+    else
+      CommitsCollection = new @mongo.Collection @Configuration.eventSourcing.commits.collectionName, @_collectionOptions()
+      CommitsCollection._ensureIndex { "sourceId": 1, "version": 1 }, unique: true
+      Space.eventSourcing.commitsCollection = CommitsCollection
+    @injector.map('Space.eventSourcing.Commits').to CommitsCollection
+
+  _setupSnapshotting: ->
+    if Space.eventSourcing.snapshotsCollection?
+      SnapshotsCollection = Space.eventSourcing.snapshotsCollection
+    else
+      SnapshotsCollection = new @mongo.Collection @Configuration.eventSourcing.snapshotting.collectionName, @_collectionOptions()
+      SnapshotsCollection._ensureIndex { "snapshot.state": 1, "snapshot.version": 1 }, unique: true
+      Space.eventSourcing.snapshotsCollection = SnapshotsCollection
+    snapshotter = new Space.eventSourcing.Snapshotter {
+      collection: SnapshotsCollection,
+      versionFrequency: @Configuration.eventSourcing.snapshotting.frequency
+    }
+    @injector.map('Space.eventSourcing.Snapshots').to SnapshotsCollection
+    @injector.get('Space.eventSourcing.Repository').useSnapshotter snapshotter
+
+
+  _collectionOptions: ->
+    if @_externalMongo()
+      if @_externalMongoNeedsOplog()
+        driverOptions = { oplogUrl:  @Configuration.eventSourcing.commits.mongoOplogUrl }
+      else
+        driverOptions = {}
+      return { _driver: new @mongoInternals.RemoteCollectionDriver  @Configuration.eventSourcing.commits.mongoUrl, driverOptions }
+    else
+      return {}
+
+  _externalMongo: ->
+    true if @Configuration.eventSourcing.commits.mongoUrl?.length > 0
+
+  _externalMongoNeedsOplog: ->
+    true if @Configuration.eventSourcing.commits.mongoOplogUrl?.length > 0
