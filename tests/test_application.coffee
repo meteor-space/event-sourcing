@@ -34,6 +34,7 @@ class @CustomerApp extends Space.Application
   ]
 
   afterInitialize: ->
+    @reset()
     @injector.map('CustomerApp.CustomerRegistrations').to new @mongo.Collection(null)
 
 # -------------- COMMANDS ---------------

@@ -50,7 +50,7 @@ describe 'Space.eventSourcing - messaging', ->
     @app.start()
 
   afterEach ->
-    @app.reset()
+    @app.stop()
     @fakeDates.restore()
 
   it 'handles messages within one app correctly', (test, done) ->

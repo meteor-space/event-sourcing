@@ -69,7 +69,6 @@ describe 'Space.eventSourcing - replaying projections', ->
       @app.start()
 
     afterEach ->
-      @app.reset()
       @app.stop()
 
     it 'updates the collections with the new projection data', ->
