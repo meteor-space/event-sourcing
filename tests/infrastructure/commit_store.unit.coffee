@@ -92,7 +92,7 @@ describe "Space.eventSourcing.CommitStore", ->
       for event in events
         expect(event).to.be.instanceof Event
 
-      expect(events).toMatch [
+      expect(events).to.deep.equal [
         new CreatedEvent sourceId: sourceId, version: 1
         new QuantityChangedEvent sourceId: sourceId, quantity: 1, version: 2
         new TotalChangedEvent sourceId: sourceId, total: 10, version: 2
