@@ -1,8 +1,0 @@
-language: node_js
-sudo: required
-node_js:
-- "0.10"
-env:
-- PACKAGE_DIRS='packages'
-before_install:
-- "curl -L http://git.io/vlgSX | /bin/sh"
