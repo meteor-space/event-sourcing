@@ -17,6 +17,7 @@ class @CustomerApp extends Space.Application
   }
 
   Configuration: {
+    appId: 'CustomerApp'
     eventSourcing: {
       snapshotting: {
         frequency: 2
