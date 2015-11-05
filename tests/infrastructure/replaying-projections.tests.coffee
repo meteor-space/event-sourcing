@@ -47,7 +47,7 @@ describe 'Space.eventSourcing - replaying projections', ->
       appId: 'TestApp'
     }
 
-    onStart: ->
+    afterInitialize: ->
       @reset()
       @injector.map('FirstCollection').to FirstCollection
       @injector.map('SecondCollection').to SecondCollection
@@ -69,7 +69,6 @@ describe 'Space.eventSourcing - replaying projections', ->
       @app.start()
 
     afterEach ->
-      @app.reset()
       @app.stop()
 
     it 'updates the collections with the new projection data', ->

@@ -65,9 +65,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
       throw new Error "Expected entity <#{sourceId}> to be at version
                       #{expectedVersion} but was on #{currentVersion}"
 
-  getEvents: (sourceId, versionOffset) ->
-
-    versionOffset ?= 1
+  getEvents: (sourceId, versionOffset=1) ->
     events = []
     withVersionOffset = {
       sourceId: sourceId.toString()
