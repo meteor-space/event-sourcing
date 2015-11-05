@@ -41,7 +41,7 @@ describe "Space.eventSourcing.CommitStore", ->
 
       sourceId = '123'
       testEvent = new TestEvent sourceId: sourceId
-      testCommand = new TestCommand sourceId: sourceId
+      testCommand = new TestCommand targetId: sourceId
 
       changes = events: [testEvent], commands: [testCommand]
       expectedVersion = 0
