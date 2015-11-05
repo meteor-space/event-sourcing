@@ -6,7 +6,7 @@ via the new configuration api introduced in space:base.
 
 class @CustomerApp extends Space.Application
 
-  @publish -> 'CustomerApp'
+  @publish this, 'CustomerApp'
 
   RequiredModules: ['Space.eventSourcing']
 
