@@ -201,3 +201,30 @@ describe "Space.eventSourcing.Aggregate", ->
       aggregate = new StateAggregate '123'
       aggregate.handle event
       expect(aggregate.hasState(expectedState)).to.be.true
+
+  describe "simplified props copying", ->
+
+    class MyCommand extends Space.messaging.Command
+      @type 'MyCommand'
+      fields: -> _.extend super(), { first: String, second: String }
+
+    class MyEvent extends Space.messaging.Event
+      @type 'MyEvent'
+      fields: -> _.extend super(), { first: String, second: String }
+
+    class MyAggregate extends Space.eventSourcing.Aggregate
+      commandMap: -> {
+        'MyCommand': (command) ->
+          @record new MyEvent(@_eventPropsFromCommand(command))
+      }
+
+    it "reduces boilerplate necessary to copy props from commands to events", ->
+      fakeTimers = sinon.useFakeTimers('Date')
+      props = first: 'first', second: 'second'
+      id = '123'
+      aggregate = new MyAggregate '123'
+      aggregate.handle new MyCommand(_.extend({}, props, targetId: id))
+      expect(aggregate.getEvents()).toMatch [
+        new MyEvent _.extend({}, props, sourceId: id, version: 0)
+      ]
+      fakeTimers.restore()

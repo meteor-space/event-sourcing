@@ -107,3 +107,10 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   _updateToEventVersion: (event) ->
     if event.version? then @_version = event.version
+
+  _eventPropsFromCommand: (command) ->
+    props = {}
+    props[key] = command[key] for key of command.fields() when key != 'targetId'
+    props.sourceId = command.targetId
+    props.version = @getVersion()
+    return props
