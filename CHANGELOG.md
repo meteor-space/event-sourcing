@@ -1,6 +1,27 @@
 Changelog
 =========
 
+### 3.0.0 (Upcoming, unreleased)
+
+#### New Features
+
+**Snapshotting upgrade**
+- Now handled by the module automatically, default to caching the state every 10 versions.
+- Configure using:
+  - `Configuration.eventSourcing.snapshotting.enabled = true` or
+  
+  `SPACE_ES_SNAPSHOTTING_ENABLED='true'`
+  - `Configuration.eventSourcing.snapshotting.frequency = 20`
+  or
+  
+  `SPACE_ES_SNAPSHOTTING_FREQUENCY=20`     
+  - `SPACE_ES_SNAPSHOTTING_COLLECTION_NAME='my_collection'`
+
+#### Breaking Changes
+- Module now manages the commits collection
+  - Instead of passing in a collection, use the Configuration and/or ENVs.
+- Default collection name has been changed from space_cqrs_commitStore
+
 ### 2.1.0
 **CONTINUED BREAKING CHANGES**
 - `Aggregate::handlers` was now split up into `eventMap` and `commandMap`
