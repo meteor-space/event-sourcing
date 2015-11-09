@@ -20,22 +20,22 @@ Package.onUse(function(api) {
     'space:messaging@2.1.0'
   ]);
 
-  api.addFiles(['source/server.coffee'], 'server');
+  api.addFiles(['source/server/module.coffee'], 'server');
 
   // ========= server =========
 
   api.addFiles([
     // INFRASTRUCTURE
-    'source/infrastructure/repository.coffee',
-    'source/infrastructure/snapshotter.coffee',
-    'source/infrastructure/commit_store.coffee',
-    'source/infrastructure/commit_publisher.coffee',
-    'source/infrastructure/projection.coffee',
-    'source/infrastructure/projector.coffee',
-    'source/infrastructure/router.coffee',
+    'source/server/infrastructure/repository.coffee',
+    'source/server/infrastructure/snapshotter.coffee',
+    'source/server/infrastructure/commit_store.coffee',
+    'source/server/infrastructure/commit_publisher.coffee',
+    'source/server/infrastructure/projection.coffee',
+    'source/server/infrastructure/projector.coffee',
+    'source/server/infrastructure/router.coffee',
     // DOMAIN
-    'source/domain/aggregate.coffee',
-    'source/domain/process.coffee',
+    'source/server/domain/aggregate.coffee',
+    'source/server/domain/process.coffee',
   ], 'server');
 
 });
