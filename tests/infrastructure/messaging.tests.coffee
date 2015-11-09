@@ -81,7 +81,7 @@ describe 'Space.eventSourcing - messaging', ->
     Meteor.setTimeout (done =>
       # Remove the event that is only visible to the other app
       # because it is directly published on its event bus!
-      expectedEvents.splice(3,2)
+      expectedEvents.splice(3,1)
       expect(publishedEvents).toMatch expectedEvents
       secondApp.stop()
     ), 100

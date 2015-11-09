@@ -11,8 +11,6 @@ class @CustomerApp extends Space.Application
   RequiredModules: ['Space.eventSourcing']
 
   Dependencies: {
-    commandBus: 'Space.messaging.CommandBus'
-    eventBus: 'Space.messaging.EventBus'
     mongo: 'Mongo'
   }
 
@@ -25,16 +23,21 @@ class @CustomerApp extends Space.Application
     }
   }
 
-  Singletons: [
+  Routers: [
     'CustomerApp.CustomerRegistrationRouter'
     'CustomerApp.CustomerRouter'
     'CustomerApp.EmailRouter'
+  ]
+
+  Projections: [
     'CustomerApp.CustomerRegistrationProjection'
   ]
 
   afterInitialize: ->
-    @reset()
     @injector.map('CustomerApp.CustomerRegistrations').to new @mongo.Collection(null)
+
+  onReset: ->
+    @injector.get('CustomerApp.CustomerRegistrations').remove {}
 
 # -------------- COMMANDS ---------------
 

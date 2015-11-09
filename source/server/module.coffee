@@ -78,7 +78,6 @@ class Space.eventSourcing extends Space.Module
     @injector.map('Space.eventSourcing.Snapshots').to SnapshotsCollection
     @injector.get('Space.eventSourcing.Repository').useSnapshotter snapshotter
 
-
   _collectionOptions: ->
     if @_externalMongo()
       if @_externalMongoNeedsOplog()
