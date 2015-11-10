@@ -9,6 +9,6 @@
   },
   "space:testing": {
     "git":"https://github.com/meteor-space/testing.git",
-    "branch": "develop"
+    "branch": "8ca3596fa4fda111228fdba304580e70391306d4"
   }
 }
