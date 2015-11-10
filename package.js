@@ -20,11 +20,11 @@ Package.onUse(function(api) {
     'space:messaging@2.1.0'
   ]);
 
-  api.addFiles(['source/server/module.coffee'], 'server');
-
   // ========= server =========
 
   api.addFiles([
+    'source/server/module-automation.js',
+    'source/server/module.coffee',
     // INFRASTRUCTURE
     'source/server/infrastructure/repository.coffee',
     'source/server/infrastructure/snapshotter.coffee',
