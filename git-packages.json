@@ -1,7 +1,7 @@
 {
   "space:base": {
     "git":"https://github.com/meteor-space/base.git",
-    "branch": "develop"
+    "branch": "529afaea937a2f16abd5a968c24d26a4ea879369"
   },
   "space:messaging": {
     "git":"https://github.com/meteor-space/messaging.git",
