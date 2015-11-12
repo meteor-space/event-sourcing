@@ -1,27 +1,52 @@
 class Space.eventSourcing.Snapshotter extends Space.Object
 
-  _collection: null
+  @snapshotsCollection: null
+
+  Dependencies: {
+    configuration: 'Configuration'
+    ejson: 'EJSON'
+    injector: 'Injector'
+    mongo: 'Mongo'
+  }
+
+  collection: null
   _versionFrequency: 0
 
-  constructor: (config) ->
-    @_collection = config.collection
-    @_versionFrequency = config.versionFrequency
+  onDependenciesReady: ->
+    @_setupSnapshotting() if @configuration.eventSourcing.snapshotting.enabled
+
+  _setupSnapshotting: ->
+    if Snapshotter.snapshotsCollection?
+      SnapshotsCollection = Snapshotter.snapshotsCollection
+    else
+      collectionNameEnvVar = 'SPACE_ES_SNAPSHOTTING_COLLECTION_NAME'
+      collectionDefaultName = 'space_eventSourcing_snapshots'
+      snapshotsName = Space.getenv collectionNameEnvVar, collectionDefaultName
+      mongoConnection = @configuration.eventSourcing.mongo.connection
+      SnapshotsCollection = new @mongo.Collection snapshotsName, mongoConnection
+      Snapshotter.snapshotsCollection = SnapshotsCollection
+
+    @collection = SnapshotsCollection
+    @_versionFrequency = @configuration.eventSourcing.snapshotting.frequency
+    @injector.map('Space.eventSourcing.Snapshots').to SnapshotsCollection
+    @injector.get('Space.eventSourcing.Repository').useSnapshotter this
 
   makeSnapshotOf: (aggregate) ->
     id = aggregate.getId().toString()
     currentVersion = aggregate.getVersion()
-    data = @_collection.findOne _id: id
-
+    data = @collection.findOne _id: id
+    data?.snapshot = @ejson.parse(data.snapshot)
+    snapshot = aggregate.getSnapshot()
     if data? and data.snapshot.version <= currentVersion - @_versionFrequency
       # Update existing snapshot of this aggregate
-      @_collection.update {_id: id}, $set: snapshot: aggregate.getSnapshot()
+      @collection.update {_id: id}, $set: snapshot: @ejson.stringify(snapshot)
     else if !data?
       # Insert first snapshot of this aggregate
-      @_collection.insert _id: id, snapshot: aggregate.getSnapshot()
+      @collection.insert _id: id, snapshot: @ejson.stringify(snapshot)
 
   getSnapshotOf: (Type, id) ->
-    record = @_collection.findOne(_id: id.toString())
+    record = @collection.findOne(_id: id.toString())
     if record?
-      return Type.createFromSnapshot record.snapshot
+      return Type.createFromSnapshot @ejson.parse(record.snapshot)
     else
       return null

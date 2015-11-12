@@ -48,7 +48,6 @@ describe 'Space.eventSourcing - replaying projections', ->
     }
 
     afterInitialize: ->
-      @reset()
       @injector.map('FirstCollection').to FirstCollection
       @injector.map('SecondCollection').to SecondCollection
       @injector.map('FirstProjection').toSingleton FirstProjection
@@ -65,7 +64,7 @@ describe 'Space.eventSourcing - replaying projections', ->
       SecondCollection.remove {}
       @event = new TestEvent sourceId: 'test123', value: 'test'
       @app = new TestApp()
-      @app.configure { appId: 'TestApp' }
+      @app.reset()
       @app.start()
 
     afterEach ->
