@@ -10,7 +10,7 @@ class Space.eventSourcing.Snapshotter extends Space.Object
   }
 
   collection: null
-  _versionFrequency: 0
+  versionFrequency: 0
 
   onDependenciesReady: ->
     @_setupSnapshotting() if @configuration.eventSourcing.snapshotting.enabled
@@ -27,7 +27,7 @@ class Space.eventSourcing.Snapshotter extends Space.Object
       Snapshotter.snapshotsCollection = SnapshotsCollection
 
     @collection = SnapshotsCollection
-    @_versionFrequency = @configuration.eventSourcing.snapshotting.frequency
+    @versionFrequency = @configuration.eventSourcing.snapshotting.frequency
     @injector.map('Space.eventSourcing.Snapshots').to SnapshotsCollection
     @injector.get('Space.eventSourcing.Repository').useSnapshotter this
 
@@ -37,7 +37,7 @@ class Space.eventSourcing.Snapshotter extends Space.Object
     data = @collection.findOne _id: id
     data?.snapshot = @ejson.parse(data.snapshot)
     snapshot = aggregate.getSnapshot()
-    if data? and data.snapshot.version <= currentVersion - @_versionFrequency
+    if data? and data.snapshot.version <= currentVersion - @versionFrequency
       # Update existing snapshot of this aggregate
       @collection.update {_id: id}, $set: snapshot: @ejson.stringify(snapshot)
     else if !data?

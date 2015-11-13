@@ -63,8 +63,8 @@ Space.messaging.define Space.messaging.Event, 'CustomerApp', {
 
 class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
-  FIELDS: {
-    name: null
+  Fields: {
+    name: String
   }
 
   commandMap: -> {
@@ -83,15 +83,15 @@ class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
 class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
 
-  FIELDS: {
-    customerId: null
-    customerName: null
+  Fields: {
+    customerId: String
+    customerName: String
   }
 
   STATES: {
-    creatingCustomer: 0
-    sendingWelcomeEmail: 1
-    completed: 2
+    creatingCustomer: 'creatingCustomer'
+    sendingWelcomeEmail: 'sendingWelcomeEmail'
+    completed: 'completed'
   }
 
   commandMap: -> {

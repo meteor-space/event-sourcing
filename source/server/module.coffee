@@ -39,6 +39,8 @@ class Space.eventSourcing extends Space.Module
     @_setupLogging()
     @_setupMongoConfiguration()
     @_setupCommitsCollection()
+
+  afterInitialize: ->
     @commitPublisher = @injector.get('Space.eventSourcing.CommitPublisher')
 
   onStart: ->
