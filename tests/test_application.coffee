@@ -79,6 +79,8 @@ class CustomerApp.Customer extends Space.eventSourcing.Aggregate
     'CustomerApp.CustomerCreated': (event) -> @name = event.customerName
   }
 
+CustomerApp.Customer.registerSnapshotType 'CustomerApp.CustomerSnapshot'
+
 # -------------- PROCESSES ---------------
 
 class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
@@ -133,6 +135,8 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
   _onRegistrationInitiated: (event) ->
     { @customerId, @customerName } = event
     @_state = @STATES.creatingCustomer
+
+CustomerApp.CustomerRegistration.registerSnapshotType 'CustomerApp.CustomerRegistrationSnapshot'
 
 # -------------- ROUTERS --------------- #
 
