@@ -13,9 +13,6 @@ class Space.eventSourcing.Snapshotter extends Space.Object
   versionFrequency: 0
 
   onDependenciesReady: ->
-    @_setupSnapshotting() if @configuration.eventSourcing.snapshotting.enabled
-
-  _setupSnapshotting: ->
     if Snapshotter.snapshotsCollection?
       SnapshotsCollection = Snapshotter.snapshotsCollection
     else

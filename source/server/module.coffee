@@ -31,16 +31,17 @@ class Space.eventSourcing extends Space.Module
     'Space.eventSourcing.CommitPublisher'
     'Space.eventSourcing.Repository'
     'Space.eventSourcing.Projector'
-    'Space.eventSourcing.Snapshotter'
   ]
 
   onInitialize: ->
+    @injector.map('Space.eventSourcing.Snapshotter').asSingleton() if @_isSnapshotting()
     # Right now logging is not optional, and hard coded to output to console, but the Config API included a switch and writeStream
     @_setupLogging()
     @_setupMongoConfiguration()
     @_setupCommitsCollection()
 
   afterInitialize: ->
+    @injector.create('Space.eventSourcing.Snapshotter') if @_isSnapshotting()
     @commitPublisher = @injector.get('Space.eventSourcing.CommitPublisher')
 
   onStart: ->
@@ -86,3 +87,5 @@ class Space.eventSourcing extends Space.Module
 
   _externalMongoNeedsOplog: ->
     true if Space.getenv('SPACE_ES_COMMITS_MONGO_OPLOG_URL', '').length > 0
+
+  _isSnapshotting: -> @Configuration.eventSourcing.snapshotting.enabled
