@@ -58,6 +58,9 @@ class Space.eventSourcing extends Space.Module
     @injector.map('Space.eventSourcing.Log').to =>
       console.log.apply(null, arguments) if @Configuration.eventSourcing.log.enabled
 
+  _setupMongoConfiguration: ->
+    @Configuration.eventSourcing.mongo.connection = @_mongoConnection()
+      
   _setupCommitsCollection: ->
     if Space.eventSourcing.commitsCollection?
       CommitsCollection = Space.eventSourcing.commitsCollection
@@ -78,9 +81,6 @@ class Space.eventSourcing extends Space.Module
       return _driver: new @mongoInternals.RemoteCollectionDriver(mongoUrl, driverOptions)
     else
       return {}
-
-  _setupMongoConfiguration: ->
-    @Configuration.eventSourcing.mongo.connection = @_mongoConnection()
 
   _externalMongo: ->
     true if Space.getenv('SPACE_ES_COMMITS_MONGO_URL', '').length > 0
