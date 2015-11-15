@@ -1,11 +1,11 @@
 {
   "space:base": {
     "git":"https://github.com/meteor-space/base.git",
-    "branch": "develop"
+    "branch": "fix/remaining-camel-case-api-changes"
   },
   "space:messaging": {
     "git":"https://github.com/meteor-space/messaging.git",
-    "branch": "develop"
+    "branch": "chore/update-to-camel-case-api"
   },
   "space:testing": {
     "git":"https://github.com/meteor-space/testing.git",
