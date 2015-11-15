@@ -2,8 +2,8 @@ class Space.eventSourcing.Snapshotter extends Space.Object
 
   @snapshotsCollection: null
 
-  Dependencies: {
-    configuration: 'Configuration'
+  dependencies: {
+    configuration: 'configuration'
     ejson: 'EJSON'
     injector: 'Injector'
     mongo: 'Mongo'

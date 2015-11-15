@@ -5,7 +5,7 @@ class Space.eventSourcing extends Space.Module
 
   @commitsCollection: null
 
-  Configuration: Space.getenv.multi({
+  configuration: Space.getenv.multi({
     eventSourcing: {
       log: {
         enabled: ['SPACE_ES_LOG_ENABLED', false, 'bool']
@@ -20,14 +20,14 @@ class Space.eventSourcing extends Space.Module
     }
   })
 
-  RequiredModules: ['Space.messaging']
+  requiredModules: ['Space.messaging']
 
-  Dependencies: {
+  dependencies: {
     mongo: 'Mongo'
     mongoInternals: 'MongoInternals'
   }
 
-  Singletons: [
+  singletons: [
     'Space.eventSourcing.CommitPublisher'
     'Space.eventSourcing.Repository'
     'Space.eventSourcing.Projector'
@@ -56,11 +56,11 @@ class Space.eventSourcing extends Space.Module
 
   _setupLogging: ->
     @injector.map('Space.eventSourcing.Log').to =>
-      console.log.apply(null, arguments) if @Configuration.eventSourcing.log.enabled
+      console.log.apply(null, arguments) if @configuration.eventSourcing.log.enabled
 
   _setupMongoConfiguration: ->
-    @Configuration.eventSourcing.mongo.connection = @_mongoConnection()
-      
+    @configuration.eventSourcing.mongo.connection = @_mongoConnection()
+
   _setupCommitsCollection: ->
     if Space.eventSourcing.commitsCollection?
       CommitsCollection = Space.eventSourcing.commitsCollection
@@ -88,4 +88,4 @@ class Space.eventSourcing extends Space.Module
   _externalMongoNeedsOplog: ->
     true if Space.getenv('SPACE_ES_COMMITS_MONGO_OPLOG_URL', '').length > 0
 
-  _isSnapshotting: -> @Configuration.eventSourcing.snapshotting.enabled
+  _isSnapshotting: -> @configuration.eventSourcing.snapshotting.enabled

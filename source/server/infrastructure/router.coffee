@@ -15,7 +15,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
                  handle #{command.typeName()}"
   }
 
-  Dependencies: {
+  dependencies: {
     repository: 'Space.eventSourcing.Repository'
     commitStore: 'Space.eventSourcing.CommitStore'
     log: 'Space.eventSourcing.Log'

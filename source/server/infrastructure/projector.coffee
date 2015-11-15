@@ -2,7 +2,7 @@ class Space.eventSourcing.Projector extends Space.Object
 
   @type 'Space.eventSourcing.Projector'
 
-  Dependencies: {
+  dependencies: {
     commitStore: 'Space.eventSourcing.CommitStore'
     injector: 'Injector'
     mongo: 'Mongo'

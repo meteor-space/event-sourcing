@@ -3,9 +3,9 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
 
   @type 'Space.eventSourcing.CommitPublisher'
 
-  Dependencies:
+  dependencies:
     commits: 'Space.eventSourcing.Commits'
-    configuration: 'Configuration'
+    configuration: 'configuration'
     eventBus: 'Space.messaging.EventBus'
     commandBus: 'Space.messaging.CommandBus'
     ejson: 'EJSON'

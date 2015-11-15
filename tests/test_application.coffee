@@ -8,13 +8,13 @@ class @CustomerApp extends Space.Application
 
   @publish this, 'CustomerApp'
 
-  RequiredModules: ['Space.eventSourcing']
+  requiredModules: ['Space.eventSourcing']
 
-  Dependencies: {
+  dependencies: {
     mongo: 'Mongo'
   }
 
-  Configuration: {
+  configuration: {
     appId: 'CustomerApp'
     eventSourcing: {
       snapshotting: {
@@ -142,7 +142,7 @@ CustomerApp.CustomerRegistration.registerSnapshotType 'CustomerApp.CustomerRegis
 
 class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.Router
 
-  Dependencies: {
+  dependencies: {
     registrations: 'CustomerApp.CustomerRegistrations'
   }
 
@@ -199,7 +199,7 @@ class CustomerApp.EmailRouter extends Space.Object
 
 class CustomerApp.CustomerRegistrationProjection extends Space.eventSourcing.Projection
 
-  Dependencies: {
+  dependencies: {
     registrations: 'CustomerApp.CustomerRegistrations'
   }
 

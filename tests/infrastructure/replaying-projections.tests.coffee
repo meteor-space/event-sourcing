@@ -42,8 +42,8 @@ describe 'Space.eventSourcing - replaying projections', ->
 
   class TestApp extends Space.Application
 
-    RequiredModules: ['Space.eventSourcing']
-    Configuration: {
+    requiredModules: ['Space.eventSourcing']
+    configuration: {
       appId: 'TestApp'
     }
 
@@ -86,8 +86,8 @@ describe 'Space.eventSourcing - replaying projections', ->
         }
         insertedAt: new Date()
         eventTypes: [TestEvent]
-        sentBy: @app.Configuration.appId
-        receivedBy: [@app.Configuration.appId]
+        sentBy: @app.configuration.appId
+        receivedBy: [@app.configuration.appId]
       }
 
       projector = @app.injector.get 'Space.eventSourcing.Projector'

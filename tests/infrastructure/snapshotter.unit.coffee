@@ -9,8 +9,8 @@ describe 'Space.eventSourcing.Snapshotter', ->
     @registerSnapshotType 'MySnapshotAggregate'
 
   class MySnapshotApp extends Space.Application
-    RequiredModules: ['Space.eventSourcing']
-    Configuration: {
+    requiredModules: ['Space.eventSourcing']
+    configuration: {
       eventSourcing: {
         snapshotting: {
           enabled: true,
@@ -38,7 +38,7 @@ describe 'Space.eventSourcing.Snapshotter', ->
   describe 'making snapshots', ->
 
     it 'saves the current state of the aggregate', ->
-      @aggregate._version = @myApp.Configuration.eventSourcing.snapshotting.frequency
+      @aggregate._version = @myApp.configuration.eventSourcing.snapshotting.frequency
       @snapshotter.makeSnapshotOf @aggregate
       expect(@collection.findOne()).toMatch {
         _id: @aggregateId
