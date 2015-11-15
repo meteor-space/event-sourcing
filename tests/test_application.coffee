@@ -8,13 +8,13 @@ class @CustomerApp extends Space.Application
 
   @publish this, 'CustomerApp'
 
-  RequiredModules: ['Space.eventSourcing']
+  requiredModules: ['Space.eventSourcing']
 
-  Dependencies: {
+  dependencies: {
     mongo: 'Mongo'
   }
 
-  Configuration: {
+  configuration: {
     appId: 'CustomerApp'
     eventSourcing: {
       snapshotting: {
@@ -63,8 +63,8 @@ Space.messaging.define Space.messaging.Event, 'CustomerApp', {
 
 class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
-  FIELDS: {
-    name: null
+  Fields: {
+    name: String
   }
 
   commandMap: -> {
@@ -79,19 +79,21 @@ class CustomerApp.Customer extends Space.eventSourcing.Aggregate
     'CustomerApp.CustomerCreated': (event) -> @name = event.customerName
   }
 
+CustomerApp.Customer.registerSnapshotType 'CustomerApp.CustomerSnapshot'
+
 # -------------- PROCESSES ---------------
 
 class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
 
-  FIELDS: {
-    customerId: null
-    customerName: null
+  Fields: {
+    customerId: String
+    customerName: String
   }
 
   STATES: {
-    creatingCustomer: 0
-    sendingWelcomeEmail: 1
-    completed: 2
+    creatingCustomer: 'creatingCustomer'
+    sendingWelcomeEmail: 'sendingWelcomeEmail'
+    completed: 'completed'
   }
 
   commandMap: -> {
@@ -134,11 +136,13 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
     { @customerId, @customerName } = event
     @_state = @STATES.creatingCustomer
 
+CustomerApp.CustomerRegistration.registerSnapshotType 'CustomerApp.CustomerRegistrationSnapshot'
+
 # -------------- ROUTERS --------------- #
 
 class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.Router
 
-  Dependencies: {
+  dependencies: {
     registrations: 'CustomerApp.CustomerRegistrations'
   }
 
@@ -195,7 +199,7 @@ class CustomerApp.EmailRouter extends Space.Object
 
 class CustomerApp.CustomerRegistrationProjection extends Space.eventSourcing.Projection
 
-  Dependencies: {
+  dependencies: {
     registrations: 'CustomerApp.CustomerRegistrations'
   }
 

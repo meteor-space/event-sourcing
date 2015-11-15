@@ -15,6 +15,7 @@ Package.onUse(function(api) {
     'underscore',
     'check',
     'mongo',
+    'ecmascript',
     'mikowals:batch-insert@1.1.9',
     'space:base@3.1.0',
     'space:messaging@2.1.0'
@@ -27,6 +28,7 @@ Package.onUse(function(api) {
     'source/server/module.coffee',
     // INFRASTRUCTURE
     'source/server/infrastructure/repository.coffee',
+    'source/server/infrastructure/snapshot.js',
     'source/server/infrastructure/snapshotter.coffee',
     'source/server/infrastructure/commit_store.coffee',
     'source/server/infrastructure/commit_publisher.coffee',
@@ -35,7 +37,7 @@ Package.onUse(function(api) {
     'source/server/infrastructure/router.coffee',
     // DOMAIN
     'source/server/domain/aggregate.coffee',
-    'source/server/domain/process.coffee',
+    'source/server/domain/process.coffee'
   ], 'server');
 
 });

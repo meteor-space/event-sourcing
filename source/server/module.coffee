@@ -4,9 +4,8 @@ class Space.eventSourcing extends Space.Module
   @publish this, 'Space.eventSourcing'
 
   @commitsCollection: null
-  @snapshotsCollection: null
 
-  Configuration: Space.getenv.multi({
+  configuration: Space.getenv.multi({
     eventSourcing: {
       log: {
         enabled: ['SPACE_ES_LOG_ENABLED', false, 'bool']
@@ -14,30 +13,35 @@ class Space.eventSourcing extends Space.Module
       snapshotting: {
         enabled: ['SPACE_ES_SNAPSHOTTING_ENABLED', true, 'bool']
         frequency: ['SPACE_ES_SNAPSHOTTING_FREQUENCY', 10, 'int']
+      },
+      mongo: {
+        connection: {}
       }
     }
   })
 
-  RequiredModules: ['Space.messaging']
+  requiredModules: ['Space.messaging']
 
-  Dependencies: {
+  dependencies: {
     mongo: 'Mongo'
     mongoInternals: 'MongoInternals'
   }
 
-  Singletons: [
+  singletons: [
     'Space.eventSourcing.CommitPublisher'
     'Space.eventSourcing.Repository'
     'Space.eventSourcing.Projector'
   ]
 
-  beforeInitialize: ->
+  onInitialize: ->
+    @injector.map('Space.eventSourcing.Snapshotter').asSingleton() if @_isSnapshotting()
     # Right now logging is not optional, and hard coded to output to console, but the Config API included a switch and writeStream
-    @_setupLogging() # if @Configuration.eventSourcing.log.enabled
+    @_setupLogging()
+    @_setupMongoConfiguration()
+    @_setupCommitsCollection()
 
   afterInitialize: ->
-    @_setupCommitsCollection()
-    @_setupSnapshotting() if @Configuration.eventSourcing.snapshotting.enabled
+    @injector.create('Space.eventSourcing.Snapshotter') if @_isSnapshotting()
     @commitPublisher = @injector.get('Space.eventSourcing.CommitPublisher')
 
   onStart: ->
@@ -52,33 +56,22 @@ class Space.eventSourcing extends Space.Module
 
   _setupLogging: ->
     @injector.map('Space.eventSourcing.Log').to =>
-      console.log.apply(null, arguments) if @Configuration.eventSourcing.log.enabled
+      console.log.apply(null, arguments) if @configuration.eventSourcing.log.enabled
+
+  _setupMongoConfiguration: ->
+    @configuration.eventSourcing.mongo.connection = @_mongoConnection()
 
   _setupCommitsCollection: ->
     if Space.eventSourcing.commitsCollection?
       CommitsCollection = Space.eventSourcing.commitsCollection
     else
       commitsName = Space.getenv('SPACE_ES_COMMITS_COLLECTION_NAME', 'space_eventSourcing_commits')
-      CommitsCollection = new @mongo.Collection commitsName, @_collectionOptions()
+      CommitsCollection = new @mongo.Collection commitsName, @_mongoConnection()
       CommitsCollection._ensureIndex { "sourceId": 1, "version": 1 }, unique: true
       Space.eventSourcing.commitsCollection = CommitsCollection
     @injector.map('Space.eventSourcing.Commits').to CommitsCollection
 
-  _setupSnapshotting: ->
-    if Space.eventSourcing.snapshotsCollection?
-      SnapshotsCollection = Space.eventSourcing.snapshotsCollection
-    else
-      snapshotsName = Space.getenv('SPACE_ES_SNAPSHOTTING_COLLECTION_NAME', 'space_eventSourcing_snapshots')
-      SnapshotsCollection = new @mongo.Collection snapshotsName, @_collectionOptions()
-      Space.eventSourcing.snapshotsCollection = SnapshotsCollection
-    snapshotter = new Space.eventSourcing.Snapshotter {
-      collection: SnapshotsCollection,
-      versionFrequency: @Configuration.eventSourcing.snapshotting.frequency
-    }
-    @injector.map('Space.eventSourcing.Snapshots').to SnapshotsCollection
-    @injector.get('Space.eventSourcing.Repository').useSnapshotter snapshotter
-
-  _collectionOptions: ->
+  _mongoConnection: ->
     if @_externalMongo()
       if @_externalMongoNeedsOplog()
         driverOptions = { oplogUrl:  Space.getenv('SPACE_ES_COMMITS_MONGO_OPLOG_URL') }
@@ -94,3 +87,5 @@ class Space.eventSourcing extends Space.Module
 
   _externalMongoNeedsOplog: ->
     true if Space.getenv('SPACE_ES_COMMITS_MONGO_OPLOG_URL', '').length > 0
+
+  _isSnapshotting: -> @configuration.eventSourcing.snapshotting.enabled

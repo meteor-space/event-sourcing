@@ -3,10 +3,10 @@ class Space.eventSourcing.CommitStore extends Space.Object
 
   @type 'Space.eventSourcing.CommitStore'
 
-  Dependencies:
+  dependencies:
     commits: 'Space.eventSourcing.Commits'
     commitPublisher: 'Space.eventSourcing.CommitPublisher'
-    configuration: 'Configuration'
+    configuration: 'configuration'
     log: 'Space.eventSourcing.Log'
 
   add: (changes, sourceId, expectedVersion) ->

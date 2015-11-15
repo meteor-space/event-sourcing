@@ -9,8 +9,8 @@ class Space.eventSourcing.Projection extends Space.Object
   constructor: ->
     super
     @_queuedEvents = []
-    @Dependencies = {}
-    _.extend @Dependencies, @constructor::Dependencies, @Collections
+    @dependencies = {}
+    _.extend @dependencies, @constructor::dependencies, @Collections
 
   on: (event, isReplay=false) ->
     return unless @canHandleEvent(event)
