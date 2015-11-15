@@ -12,7 +12,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
   _handlers: null
 
   # Override to define which custom properties this aggregate has
-  Fields: {}
+  fields: {}
 
   ERRORS: {
     guidRequired: "#{Aggregate}: Aggregate needs an GUID on creation."
@@ -27,7 +27,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   @registerSnapshotType: (id) ->
     fields = {}
-    fields[field] = type for field, type of this::Fields
+    fields[field] = type for field, type of this::fields
     @_snapshotType = Space.eventSourcing.Snapshot.extend {
       fields: ->
         superFields = Space.eventSourcing.Snapshot::fields.call(this)
@@ -61,7 +61,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
     data.id = @_id
     data.state = @_state
     data.version = @_version
-    (data[field] = this[field]) for field of @Fields
+    (data[field] = this[field]) for field of @fields
     return new @constructor._snapshotType(data)
 
   applySnapshot: (snapshot) ->
@@ -69,7 +69,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
     @_id = snapshot.id
     @_state = snapshot.state
     @_version = snapshot.version
-    (this[field] = snapshot[field]) for field of @Fields
+    (this[field] = snapshot[field]) for field of @fields
 
   record: (event) ->
     @_validateEvent event
@@ -122,4 +122,4 @@ class Space.eventSourcing.Aggregate extends Space.Object
     props.version = @getVersion()
     return props
 
-  _assignFields: (event) -> _.extend this, _.pick(event, _.keys(this.Fields))
+  _assignFields: (event) -> _.extend this, _.pick(event, _.keys(this.fields))

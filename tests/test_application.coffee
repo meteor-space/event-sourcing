@@ -63,7 +63,7 @@ Space.messaging.define Space.messaging.Event, 'CustomerApp', {
 
 class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
-  Fields: {
+  fields: {
     name: String
   }
 
@@ -85,7 +85,7 @@ CustomerApp.Customer.registerSnapshotType 'CustomerApp.CustomerSnapshot'
 
 class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
 
-  Fields: {
+  fields: {
     customerId: String
     customerName: String
   }
