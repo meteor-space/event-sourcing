@@ -23,13 +23,13 @@ class @CustomerApp extends Space.Application
     }
   }
 
-  Routers: [
+  routers: [
     'CustomerApp.CustomerRegistrationRouter'
     'CustomerApp.CustomerRouter'
     'CustomerApp.EmailRouter'
   ]
 
-  Projections: [
+  projections: [
     'CustomerApp.CustomerRegistrationProjection'
   ]
 

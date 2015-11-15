@@ -1,7 +1,7 @@
 Space.Module.mixin({
 
-  Routers: [],
-  Projections: [],
+  routers: [],
+  projections: [],
 
   onDependenciesReady: function() {
     this._wrapLifecycleHook('onInitialize', this._onInitializeEventSourcing);
@@ -11,7 +11,7 @@ Space.Module.mixin({
   _onInitializeEventSourcing: function(onInitialize) {
     var module = this;
     onInitialize.call(module);
-    _.each(_.union(module.Routers, module.Projections), function(singleton) {
+    _.each(_.union(module.routers, module.projections), function(singleton) {
       module.injector.map(singleton).asSingleton();
     });
   },
@@ -19,7 +19,7 @@ Space.Module.mixin({
   _onStartEventSourcing: function(onStart) {
     var module = this;
     onStart.call(module);
-    _.each(_.union(module.Routers, module.Projections), function(singleton) {
+    _.each(_.union(module.routers, module.projections), function(singleton) {
       module.injector.create(singleton);
     });
   }
