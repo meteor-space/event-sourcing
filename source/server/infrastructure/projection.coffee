@@ -2,7 +2,7 @@ class Space.eventSourcing.Projection extends Space.Object
 
   @mixin Space.messaging.EventSubscribing
 
-  Collections: {}
+  collections: {}
   _isInReplayMode: false
   _queuedEvents: null
 
@@ -10,7 +10,7 @@ class Space.eventSourcing.Projection extends Space.Object
     super
     @_queuedEvents = []
     @dependencies = {}
-    _.extend @dependencies, @constructor::dependencies, @Collections
+    _.extend @dependencies, @constructor::dependencies, @collections
 
   on: (event, isReplay=false) ->
     return unless @canHandleEvent(event)

@@ -12,7 +12,7 @@ describe 'Space.eventSourcing - replaying projections', ->
 
   class FirstProjection extends Space.eventSourcing.Projection
 
-    Collections: {
+    collections: {
       firstCollection: 'FirstCollection'
     }
 
@@ -27,7 +27,7 @@ describe 'Space.eventSourcing - replaying projections', ->
 
   class SecondProjection extends Space.eventSourcing.Projection
 
-    Collections: {
+    collections: {
       secondCollection: 'SecondCollection'
     }
 
