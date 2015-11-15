@@ -4,10 +4,10 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
 
   @ERRORS: {
 
-    aggregateNotSpecified: 'Please specify a Router::Aggregate class to be
+    aggregateNotSpecified: 'Please specify a Router::aggregate class to be
     managed by the router.'
 
-    missingInitializingCommand: 'Please specify Router::InitializingCommand (a command class)
+    missingInitializingCommand: 'Please specify Router::initializingCommand (a command class)
     that will be used to create new instanes of the managed aggregate.'
 
     noAggregateFoundToHandleCommand: (command) ->
@@ -21,24 +21,24 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     log: 'Space.eventSourcing.Log'
   }
 
-  Aggregate: null
-  InitializingCommand: null
-  RouteCommands: null
+  aggregate: null
+  initializingCommand: null
+  routeCommands: null
 
   constructor: ->
-    if not @Aggregate?
+    if not @aggregate?
       throw new Error Router.ERRORS.aggregateNotSpecified
-    if not @InitializingCommand?
+    if not @initializingCommand?
       throw new Error Router.ERRORS.missingInitializingCommand
-    @RouteCommands ?= []
+    @routeCommands ?= []
     super
 
   onDependenciesReady: ->
     super
-    @commandBus.registerHandler @InitializingCommand, (cmd) =>
-      @log "#{this}: Creating new #{@Aggregate} with command #{cmd.typeName()}\n", cmd
-      @repository.save new @Aggregate(cmd)
-    @_routeCommandToAggregate(commandType) for commandType in @RouteCommands
+    @commandBus.registerHandler @initializingCommand, (cmd) =>
+      @log "#{this}: Creating new #{@aggregate} with command #{cmd.typeName()}\n", cmd
+      @repository.save new @aggregate(cmd)
+    @_routeCommandToAggregate(commandType) for commandType in @routeCommands
 
   _routeCommandToAggregate: (commandType) ->
     @commandBus.registerHandler commandType, @_genericCommandHandler
@@ -46,8 +46,8 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
   _genericCommandHandler: (command) =>
     if not command? then return
     @log "#{this}: Handling command #{command.typeName()} for
-          #{@Aggregate}<#{command.targetId}>\n", command
-    aggregate = @repository.find @Aggregate, command.targetId
+          #{@aggregate}<#{command.targetId}>\n", command
+    aggregate = @repository.find @aggregate, command.targetId
     if not aggregate?
       throw Router.ERRORS.noAggregateFoundToHandleCommand(command)
     aggregate.handle command

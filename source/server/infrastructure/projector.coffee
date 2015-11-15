@@ -51,6 +51,6 @@ class Space.eventSourcing.Projector extends Space.Object
 
   _getCollectionIdsOfProjection: (projection) ->
     collectionIds = []
-    for property, id of projection.Collections
+    for property, id of projection.collections
       collectionIds.push(id) if projection[property]
     return collectionIds

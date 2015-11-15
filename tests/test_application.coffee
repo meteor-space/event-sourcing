@@ -23,13 +23,13 @@ class @CustomerApp extends Space.Application
     }
   }
 
-  Routers: [
+  routers: [
     'CustomerApp.CustomerRegistrationRouter'
     'CustomerApp.CustomerRouter'
     'CustomerApp.EmailRouter'
   ]
 
-  Projections: [
+  projections: [
     'CustomerApp.CustomerRegistrationProjection'
   ]
 
@@ -63,7 +63,7 @@ Space.messaging.define Space.messaging.Event, 'CustomerApp', {
 
 class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
-  Fields: {
+  fields: {
     name: String
   }
 
@@ -85,7 +85,7 @@ CustomerApp.Customer.registerSnapshotType 'CustomerApp.CustomerSnapshot'
 
 class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
 
-  Fields: {
+  fields: {
     customerId: String
     customerName: String
   }
@@ -146,11 +146,11 @@ class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.Router
     registrations: 'CustomerApp.CustomerRegistrations'
   }
 
-  Aggregate: CustomerApp.CustomerRegistration
+  aggregate: CustomerApp.CustomerRegistration
 
-  InitializingCommand: CustomerApp.RegisterCustomer
+  initializingCommand: CustomerApp.RegisterCustomer
 
-  RouteCommands: [
+  routeCommands: [
     CustomerApp.HandleNewCustomer
     CustomerApp.MarkRegistrationAsComplete
   ]
@@ -172,8 +172,8 @@ class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.Router
 
 class CustomerApp.CustomerRouter extends Space.eventSourcing.Router
 
-  Aggregate: CustomerApp.Customer
-  InitializingCommand: CustomerApp.CreateCustomer
+  aggregate: CustomerApp.Customer
+  initializingCommand: CustomerApp.CreateCustomer
 
 class CustomerApp.EmailRouter extends Space.Object
 
