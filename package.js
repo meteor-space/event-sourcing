@@ -63,6 +63,7 @@ Package.onTest(function(api) {
     'tests/domain/process.unit.coffee',
     // INFRASTRUCTURE
     'tests/infrastructure/commit_store.unit.coffee',
+    'tests/infrastructure/commit_publisher.unit.coffee',
     'tests/infrastructure/snapshotter.unit.coffee',
     'tests/infrastructure/projection.unit.coffee',
     'tests/infrastructure/replaying-projections.tests.coffee',
