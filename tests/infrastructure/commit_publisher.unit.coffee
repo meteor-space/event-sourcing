@@ -106,4 +106,3 @@ describe "Space.eventSourcing.CommitPublisher", ->
 #    it 'fails the processing attempt if configurable timout duration is reached', ->
 #
 #    it 'logs when processing was completed', ->
-

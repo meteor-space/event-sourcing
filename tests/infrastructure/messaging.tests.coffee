@@ -41,7 +41,7 @@ describe 'Space.eventSourcing - messaging', ->
     })
   ]
 
-  it 'handles messages within one app correctly', (test, done) ->
+  it 'handles messages within one app correctly', ->
 
     CustomerApp.test(CustomerApp.Customer)
     .given(
@@ -53,37 +53,38 @@ describe 'Space.eventSourcing - messaging', ->
     )
     .expect(generatedEventsForCustomerRegistration())
 
-  '''
   it 'supports distributed messaging via a shared commits collection', (test, done) ->
 
     SecondApp = Space.Application.extend {
       requiredModules: ['Space.eventSourcing']
       configuration: { appId: 'SecondApp' }
-      onStart: ->
+      afterInitialize: ->
         # Aggregate all published events on the second app
         @publishedEvents = []
         @eventBus.onPublish (event) => @publishedEvents.push event
     }
     secondApp = new SecondApp()
+    secondApp.reset()
     secondApp.start()
-    expectedEvents = null
+    try
+      expectedEvents = null
 
-    CustomerApp.test(CustomerApp.Customer)
-    .given(
-      new CustomerApp.RegisterCustomer {
-        targetId: registration.id
-        customerId: customer.id
-        customerName: customer.name
-      }
-    )
-    .expect(->
-      expectedEvents = generatedEventsForCustomerRegistration()
-      return expectedEvents
-    )
+      CustomerApp.test(CustomerApp.Customer)
+      .given(
+        new CustomerApp.RegisterCustomer {
+          targetId: registration.id
+          customerId: customer.id
+          customerName: customer.name
+        }
+      )
+      .expect(->
+        expectedEvents = generatedEventsForCustomerRegistration()
+        return expectedEvents
+      )
 
-    # Remove the event that is only visible to the other app
-    # because it is directly published on its event bus!
-    expectedEvents.splice(3,2)
-    expect(secondApp.publishedEvents).toMatch expectedEvents
-    secondApp.stop()
-  '''
+      # Remove the event that is only visible to the other app
+      # because it is directly published on its event bus!
+      expectedEvents.splice(3,2)
+      expect(secondApp.publishedEvents).toMatch expectedEvents
+    finally
+      secondApp.stop()

@@ -87,7 +87,7 @@ describe 'Space.eventSourcing - replaying projections', ->
         insertedAt: new Date()
         eventTypes: [TestEvent]
         sentBy: @app.configuration.appId
-        receivedBy: [@app.configuration.appId]
+        receivers: [ appId: @app.configuration.appId, receivedAt: new Date()]
       }
 
       projector = @app.injector.get 'Space.eventSourcing.Projector'

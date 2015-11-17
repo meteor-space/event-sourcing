@@ -18,7 +18,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
   startPublishing: ->
     appId = @configuration.appId
     if not appId? then throw new Error "#{this}: You have to specify an appId"
-    notReceivedYet = { receivers: { $elemMatch: { appId: { $ne: appId } } } }
+    notReceivedYet = { 'receivers.appId': { $nin: [appId] }}
     @log.info "#{this}: Start publishing commits for app #{appId}"
     # Save the observe handle for stopping
     @_publishHandle = @commits.find(notReceivedYet).observe {

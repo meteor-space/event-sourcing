@@ -21,7 +21,6 @@ describe 'Space.eventSourcing.Projection', ->
       @projection.on @testEvent
       expect(@handler).to.have.been.called
 
-
   describe 'replay mode', ->
 
     it 'does not handle normal events', ->
