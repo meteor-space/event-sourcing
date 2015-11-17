@@ -2,7 +2,7 @@ Package.describe({
   summary: 'Event Sourcing Infrastructure for Meteor.',
   name: 'space:event-sourcing',
   version: '2.1.0',
-  git: 'https://github.com/meteor-space/event-sourcing.git',
+  git: 'https://github.com/meteor-space/event-sourcing.git'
 });
 
 Package.onUse(function(api) {
@@ -17,6 +17,7 @@ Package.onUse(function(api) {
     'mongo',
     'ecmascript',
     'mikowals:batch-insert@1.1.9',
+    'fongandrew:find-and-modify@0.2.1',
     'space:base@3.1.0',
     'space:messaging@2.1.0'
   ]);
@@ -52,7 +53,7 @@ Package.onTest(function(api) {
     'underscore',
     'space:event-sourcing',
     'space:testing@2.0.0',
-    'practicalmeteor:munit@2.1.5',
+    'practicalmeteor:munit@2.1.5'
   ]);
 
   api.addFiles([
@@ -67,7 +68,7 @@ Package.onTest(function(api) {
     'tests/infrastructure/snapshotter.unit.coffee',
     'tests/infrastructure/projection.unit.coffee',
     'tests/infrastructure/replaying-projections.tests.coffee',
-    'tests/infrastructure/messaging.tests.coffee',
+    'tests/infrastructure/messaging.tests.coffee'
   ], 'server');
 
 });

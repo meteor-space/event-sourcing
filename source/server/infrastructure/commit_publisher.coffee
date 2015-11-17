@@ -17,6 +17,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
 
   startPublishing: ->
     appId = @configuration.appId
+    if not appId? then throw new Error "#{this}: You have to specify an appId"
     notReceivedYet = { receivers: { $elemMatch: { appId: { $ne: appId } } } }
     @log.info "#{this}: Start publishing commits for app #{appId}"
     # Save the observe handle for stopping
@@ -47,13 +48,16 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
       @_markAsProcessed(commit)
     catch error
       @_failCommitProcessingAttempt()
-      throw new Error "while publishing \m:#{commit}\nerror:#{error}"
+      throw new Error "while publishing:\n
+        #{JSON.stringify(commit)}\n
+        error:#{error.message}\n
+        stack:#{error.stack}"
 
 
   _setProcessingTimeout: (commit) ->
-    @_processingTimer = @meteor.setTimeout(->
+    @_processingTimer = @meteor.setTimeout (->
       @_failCommitProcessingAttempt(commit)
-    , @configuration.eventSourcing.commitProcessing.timeout)
+    ), @configuration.eventSourcing.commitProcessing.timeout
 
   _parseCommit: (commit) ->
     events = []
@@ -80,7 +84,6 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
 
   _failCommitProcessingAttempt: (commit) ->
     # Update sub-document failedAt
-
 
   _markAsProcessed: (commit) ->
     @meteor.clearTimeout(@_processingTimer)

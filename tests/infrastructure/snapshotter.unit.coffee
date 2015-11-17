@@ -11,6 +11,7 @@ describe 'Space.eventSourcing.Snapshotter', ->
   class MySnapshotApp extends Space.Application
     requiredModules: ['Space.eventSourcing']
     configuration: {
+      appId: 'MySnapshotApp'
       eventSourcing: {
         snapshotting: {
           enabled: true,
@@ -34,6 +35,9 @@ describe 'Space.eventSourcing.Snapshotter', ->
     @snapshotter = @myApp.snapshotter
     @collection = @myApp.snapshotter.collection
     @collection.remove {}
+
+  afterEach ->
+    @myApp.stop()
 
   describe 'making snapshots', ->
 
