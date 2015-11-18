@@ -8,38 +8,57 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
     configuration: 'configuration'
     eventBus: 'Space.messaging.EventBus'
     commandBus: 'Space.messaging.CommandBus'
+    meteor: 'Meteor'
     ejson: 'EJSON'
-    log: 'Space.eventSourcing.Log'
+    log: 'log'
 
   _publishHandle: null
+  _processingTimer: null
 
   startPublishing: ->
     appId = @configuration.appId
-    notReceivedYet = receivedBy: $nin: [appId]
-    @log "#{this}: Start publishing commits for app #{appId}"
-    # Save the observe handle so that it can be stopped later on
+    if not appId? then throw new Error "#{this}: You have to specify an appId"
+    notReceivedYet = { 'receivers.appId': { $nin: [appId] }}
+    @log.info "#{this}: Start publishing commits for app #{appId}"
+    # Save the observe handle for stopping
     @_publishHandle = @commits.find(notReceivedYet).observe {
       added: (commit) =>
-        # We find and lock the event, so that it never gets read twice per app
+        # Find and lock the event, so only one app instance publishes it
         lockedCommit = @commits.findAndModify({
           query: $and: [_id: commit._id, notReceivedYet]
-          update: $push: { receivedBy: appId }
+          update: $push: { receivers: { appId: appId, receivedAt: new Date() } }
         })
         # Only publish the event if this process was the one that locked it
         @publishCommit(@_parseCommit(lockedCommit)) if lockedCommit?
     }
 
   stopPublishing: ->
-    @log "#{this}: Stop publishing commits for app #{@configuration.appId}"
+    @log.info "#{this}: Stop publishing commits for app #{@configuration.appId}"
     @_publishHandle?.stop()
 
   publishCommit: (commit) =>
-    for event in commit.changes.events
-      @log "#{this}: Publishing event #{event.typeName()}\n", event
-      @eventBus.publish event
-    for command in commit.changes.commands
-      @log "#{this}: Publishing command #{command.typeName()}\n", command
-      @commandBus.send command
+    try
+      @_setProcessingTimeout(commit)
+      for event in commit.changes.events
+        @log.info "#{this}: Publishing event #{event.typeName()}\n", event
+        @eventBus.publish event
+      for command in commit.changes.commands
+        @log.info "#{this}: Publishing command #{command.typeName()}\n", command
+        @commandBus.send command
+      @_markAsProcessed(commit)
+    catch error
+      @_failCommitProcessingAttempt(commit)
+      throw new Error "while publishing:\n
+        #{JSON.stringify(commit)}\n
+        error:#{error.message}\n
+        stack:#{error.stack}"
+
+
+  _setProcessingTimeout: (commit) ->
+    @_processingTimer = @meteor.setTimeout (=>
+      @log.error "#{this}: Commit #{commit._id} processing timed out\n"
+      @_failCommitProcessingAttempt(commit)
+    ), @configuration.eventSourcing.commitProcessing.timeout
 
   _parseCommit: (commit) ->
     events = []
@@ -63,3 +82,19 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
       throw new Error "while parsing \m:#{message}\nerror:#{error}"
 
   _supportsEjsonType: (message) -> @ejson._getTypes()[JSON.parse(message).$type]?
+
+  _failCommitProcessingAttempt: (commit) ->
+    appId = @configuration.appId
+    @commits.update(
+      { _id: commit._id, 'receivers.appId': appId },
+      { $set: { 'receivers.$.failedAt': new Date() } }
+    )
+
+  _markAsProcessed: (commit) ->
+    appId = @configuration.appId
+    @meteor.clearTimeout(@_processingTimer)
+    @commits.update(
+      { _id: commit._id, 'receivers.appId': appId },
+      { $set: { 'receivers.$.processedAt': new Date() } }
+    )
+    @log.info("Processing complete for commit #{commit._id} in app #{@configuration.appId}", commit)

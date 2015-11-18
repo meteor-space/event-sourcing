@@ -27,6 +27,7 @@ class TotalChangedEvent extends Event
 describe "Space.eventSourcing.CommitStore", ->
 
   beforeEach ->
+    @clock = sinon.useFakeTimers(Date.now(), 'Date')
     @appId = 'TestApp'
     @commitStore = new CommitStore {
       commits: new Mongo.Collection(null)
@@ -35,9 +36,12 @@ describe "Space.eventSourcing.CommitStore", ->
       log: ->
     }
 
+  afterEach ->
+    @clock.restore()
+
   describe '#add', ->
 
-    it 'inserts changes as serialized and versioned commit', ->
+    it 'inserts changes as serialized and versioned commit, then publishes within the current app', ->
 
       sourceId = '123'
       testEvent = new TestEvent sourceId: sourceId
@@ -60,7 +64,7 @@ describe "Space.eventSourcing.CommitStore", ->
           commands: [EJSON.stringify(testCommand)]
         insertedAt: sinon.match.date
         sentBy: @appId
-        receivedBy: [@appId]
+        receivers: [{ appId: @appId, receivedAt: new Date() }]
         eventTypes: [TestEvent.toString()]
       }
 

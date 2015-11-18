@@ -47,7 +47,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
         insertedAt: new Date()
         eventTypes: @_getEventTypes(changes.events)
         sentBy: @configuration.appId
-        receivedBy: [@configuration.appId]
+        receivers: [{ appId: @configuration.appId, receivedAt: new Date }]
       }
 
       # insert commit with next version

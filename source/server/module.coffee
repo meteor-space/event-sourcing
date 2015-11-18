@@ -16,6 +16,9 @@ class Space.eventSourcing extends Space.Module
       },
       mongo: {
         connection: {}
+      },
+      commitProcessing: {
+        timeout: ['SPACE_ES_COMMIT_PROCESSING_TIMEOUT', 600000, 'int']
       }
     }
   })
