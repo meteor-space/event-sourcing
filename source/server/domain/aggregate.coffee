@@ -86,7 +86,9 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   replayHistory: (history) -> @replay(event) for event in history
 
-  handle: (message) -> @_getHandler(message).call this, message
+  handle: (message) -> 
+    @_getHandler(message).call this, message
+    return this
 
   hasState: (state) -> if state? then @_state == state else @_state?
 

@@ -10,9 +10,8 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     missingInitializingCommand: 'Please specify Router::initializingCommand (a command class)
     that will be used to create new instanes of the managed aggregate.'
 
-    noAggregateFoundToHandleCommand: (command) ->
-      new Error "No aggregate <#{command.targetId}> found to
-                 handle #{command.typeName()}"
+    noAggregateFoundToHandleMessage: (message, id) ->
+      new Error "No aggregate <#{id}> found to handle #{message.typeName()}"
   }
 
   dependencies: {
@@ -24,6 +23,8 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
   aggregate: null
   initializingCommand: null
   routeCommands: null
+  routeEvents: null
+  eventCorrelationProperty: 'correlationId'
 
   constructor: ->
     if not @aggregate?
@@ -31,24 +32,36 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     if not @initializingCommand?
       throw new Error Router.ERRORS.missingInitializingCommand
     @routeCommands ?= []
+    @routeEvents ?= []
     super
 
   onDependenciesReady: ->
     super
+    @_setupInitializingCommand()
+    @_routeCommandToAggregate(commandType) for commandType in @routeCommands
+    @_routeEventToAggregate(eventType) for eventType in @routeEvents
+
+  _setupInitializingCommand: ->
     @commandBus.registerHandler @initializingCommand, (cmd) =>
       @log "#{this}: Creating new #{@aggregate} with command #{cmd.typeName()}\n", cmd
       @repository.save new @aggregate(cmd)
-    @_routeCommandToAggregate(commandType) for commandType in @routeCommands
 
   _routeCommandToAggregate: (commandType) ->
     @commandBus.registerHandler commandType, @_genericCommandHandler
 
+  _routeEventToAggregate: (eventType) ->
+    @eventBus.subscribeTo eventType, @_genericEventHandler
+
   _genericCommandHandler: (command) =>
-    if not command? then return
     @log "#{this}: Handling command #{command.typeName()} for
           #{@aggregate}<#{command.targetId}>\n", command
     aggregate = @repository.find @aggregate, command.targetId
-    if not aggregate?
-      throw Router.ERRORS.noAggregateFoundToHandleCommand(command)
-    aggregate.handle command
-    @repository.save aggregate
+    throw Router.ERRORS.noAggregateFoundToHandleMessage(event) if !aggregate?
+    @repository.save aggregate.handle(command)
+
+  _genericEventHandler: (event) =>
+    @log "#{this}: Handling command #{event.typeName()} for
+          #{@aggregate}<#{event.sourceId}>\n", event
+    aggregate = @repository.find @aggregate, event[this.eventCorrelationProperty]
+    throw Router.ERRORS.noAggregateFoundToHandleMessage(event) if !aggregate?
+    @repository.save aggregate.handle(event)
