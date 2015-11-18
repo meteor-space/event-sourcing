@@ -48,8 +48,8 @@ describe "Space.eventSourcing.CommitPublisher", ->
       configuration: @configuration
       eventBus: new EventBus { meteor: Meteor }
       commandBus: new CommandBus { meteor: Meteor }
+      meteor: Meteor
       ejson: EJSON
-      commitPublisher: publishCommit: sinon.spy()
       log: new Space.Logger()
     }
     @commitStore = new CommitStore {
@@ -64,23 +64,13 @@ describe "Space.eventSourcing.CommitPublisher", ->
       @commandHandler
     )
 
-  afterEach ->
-    @clock.restore()
-    Commits.remove {}
-    @commitPublisher.stopPublishing()
-
-  it 'publishes externally added commits once in the current app', ->
-    @commitPublisher.publishCommit = sinon.spy()
+    @externalReceiveEntry = { appId: 'someOtherApp', receivedAt: new Date() }
     sourceId = '123'
     testEvent = new CPTestEvent sourceId: sourceId
     testCommand = new CPTestCommand targetId: sourceId
-    changes = events: [testEvent], commands: [testCommand]
     expectedVersion = 0
     newVersion = expectedVersion + 1
-
-    externalReceiveEntry = { appId: 'someOtherApp', receivedAt: new Date() }
-
-    simulatedExternalCommit = {
+    @commitProps = {
       sourceId: sourceId
       version: newVersion
       changes:
@@ -88,21 +78,48 @@ describe "Space.eventSourcing.CommitPublisher", ->
         commands: [EJSON.stringify(testCommand)]
       insertedAt: new Date()
       sentBy: 'someOtherApp'
-      receivers: [externalReceiveEntry]
+      receivers: [@externalReceiveEntry]
       eventTypes: [CPTestEvent.toString()]
     }
 
-    commitId = Commits.insert simulatedExternalCommit
+    @commitId = Commits.insert @commitProps
+
+  afterEach ->
+    @clock.restore()
+    Commits.remove {}
+    @commitPublisher.stopPublishing()
+
+  it 'publishes externally added commits once in the current app, even with multiple app instances running', ->
+    @commitPublisher.publishCommit = sinon.spy()
     @commitPublisher.startPublishing()
-    insertedCommit = Commits.findOne(commitId)
+    insertedCommit = Commits.findOne(@commitId)
     expect(@commitPublisher.publishCommit).to.have.been.called
-    expect(insertedCommit.receivers).to.deep.equal([externalReceiveEntry, {
+    expect(insertedCommit.receivers).to.deep.equal([@externalReceiveEntry, {
       appId: @appId
       receivedAt: new Date()
     }])
 
-#    it 'fails the processing attempt if an error in the publishing occurs', ->
-#
-#    it 'fails the processing attempt if configurable timout duration is reached', ->
-#
-#    it 'logs when processing was completed', ->
+  it 'fails the processing attempt if configurable timeout duration is reached', (test, waitFor) ->
+    fail = @commitPublisher._failCommitProcessingAttempt = sinon.spy()
+    @configuration.eventSourcing.commitProcessing.timeout = 1
+    commit = Commits.findOne(@commitId)
+    @commitPublisher._setProcessingTimeout(commit)
+    timeout = =>
+      try
+        commit = Commits.findOne(@commitId)
+        expect(fail).to.be.calledWith(commit)
+      catch err
+        test.exception err
+    Meteor.setTimeout(waitFor(timeout), 2);
+
+  it 'updates the commit record with the date the processing failed', (test, waitFor) ->
+    @configuration.eventSourcing.commitProcessing.timeout = 1
+    @commitPublisher.startPublishing()
+    timeout = =>
+      try
+        commit = Commits.findOne(@commitId)
+        processedAt = _.findWhere(commit.receivers, {appId: @appId}).processedAt
+        expect(processedAt).to.be.instanceOf(Date)
+      catch err
+        test.exception err
+    Meteor.setTimeout(waitFor(timeout), 1000);

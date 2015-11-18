@@ -47,7 +47,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
         @commandBus.send command
       @_markAsProcessed(commit)
     catch error
-      @_failCommitProcessingAttempt()
+      @_failCommitProcessingAttempt(commit)
       throw new Error "while publishing:\n
         #{JSON.stringify(commit)}\n
         error:#{error.message}\n
@@ -55,7 +55,8 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
 
 
   _setProcessingTimeout: (commit) ->
-    @_processingTimer = @meteor.setTimeout (->
+    @_processingTimer = @meteor.setTimeout (=>
+      @log.error "#{this}: Commit #{commit._id} processing timed out\n"
       @_failCommitProcessingAttempt(commit)
     ), @configuration.eventSourcing.commitProcessing.timeout
 
@@ -83,8 +84,17 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
   _supportsEjsonType: (message) -> @ejson._getTypes()[JSON.parse(message).$type]?
 
   _failCommitProcessingAttempt: (commit) ->
-    # Update sub-document failedAt
+    appId = @configuration.appId
+    @commits.update(
+      { _id: commit._id, 'receivers.appId': appId },
+      { $set: { 'receivers.$.failedAt': new Date() } }
+    )
 
   _markAsProcessed: (commit) ->
+    appId = @configuration.appId
     @meteor.clearTimeout(@_processingTimer)
-    # Update sub-document processedAt
+    @commits.update(
+      { _id: commit._id, 'receivers.appId': appId },
+      { $set: { 'receivers.$.processedAt': new Date() } }
+    )
+    @log.info("Processing complete for commit #{commit._id} in app #{@configuration.appId}", commit)
