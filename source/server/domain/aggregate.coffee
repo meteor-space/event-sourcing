@@ -86,13 +86,9 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   replayHistory: (history) -> @replay(event) for event in history
 
-<<<<<<< Updated upstream
-  handle: (message) -> @_getHandler(message).call this, message
-=======
   handle: (message) ->
     @_getHandler(message).call this, message
     return this
->>>>>>> Stashed changes
 
   hasState: (state) -> if state? then @_state == state else @_state?
 
