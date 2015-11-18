@@ -86,7 +86,13 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   replayHistory: (history) -> @replay(event) for event in history
 
+<<<<<<< Updated upstream
   handle: (message) -> @_getHandler(message).call this, message
+=======
+  handle: (message) ->
+    @_getHandler(message).call this, message
+    return this
+>>>>>>> Stashed changes
 
   hasState: (state) -> if state? then @_state == state else @_state?
 
@@ -117,7 +123,8 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   _eventPropsFromCommand: (command) ->
     props = {}
-    props[key] = command[key] for key of command.fields() when key != 'targetId'
+    for key of command.fields() when key != 'targetId'
+      props[key] = command[key] if command[key] != undefined
     props.sourceId = command.targetId
     props.version = @getVersion()
     return props
