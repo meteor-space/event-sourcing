@@ -18,8 +18,8 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
   startPublishing: ->
     appId = @configuration.appId
     if not appId? then throw new Error "#{this}: You have to specify an appId"
+    @log.info @_wrapLog("started")
     notReceivedYet = { 'receivers.appId': { $nin: [appId] }}
-    @log.info "#{this}: Start publishing commits for app #{appId}"
     # Save the observe handle for stopping
     @_publishHandle = @commits.find(notReceivedYet).observe {
       added: (commit) =>
@@ -33,17 +33,17 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
     }
 
   stopPublishing: ->
-    @log.info "#{this}: Stop publishing commits for app #{@configuration.appId}"
+    @log.info @_wrapLog("stopped")
     @_publishHandle?.stop()
 
   publishCommit: (commit) =>
     try
       @_setProcessingTimeout(commit)
       for event in commit.changes.events
-        @log.info "#{this}: Publishing event #{event.typeName()}\n", event
+        @log.info @_wrapLog("publishing #{event.typeName()}\n"), event
         @eventBus.publish event
       for command in commit.changes.commands
-        @log.info "#{this}: Publishing command #{command.typeName()}\n", command
+        @log.info @_wrapLog("sending #{command.typeName()}\n"), command
         @commandBus.send command
       @_markAsProcessed(commit)
     catch error
@@ -56,7 +56,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
 
   _setProcessingTimeout: (commit) ->
     @_processingTimer = @meteor.setTimeout (=>
-      @log.error "#{this}: Commit #{commit._id} processing timed out\n"
+      @log.error(@_wrapLog("#{commit._id} timed out"), commit)
       @_failCommitProcessingAttempt(commit)
     ), @configuration.eventSourcing.commitProcessing.timeout
 
@@ -89,6 +89,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
       { _id: commit._id, 'receivers.appId': appId },
       { $set: { 'receivers.$.failedAt': new Date() } }
     )
+    @log.error @_wrapLog("#{commit._id} failed\n"), commit
 
   _markAsProcessed: (commit) ->
     appId = @configuration.appId
@@ -97,4 +98,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
       { _id: commit._id, 'receivers.appId': appId },
       { $set: { 'receivers.$.processedAt': new Date() } }
     )
-    @log.info("Processing complete for commit #{commit._id} in app #{@configuration.appId}", commit)
+    @log.info @_wrapLog("#{commit._id} processed\n"), commit
+
+  _wrapLog: (message) ->
+    "#{@configuration.appId}: #{this}: #{message}"
