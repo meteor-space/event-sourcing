@@ -14,6 +14,7 @@ describe 'Space.eventSourcing - messaging', ->
     })
     new CustomerApp.CustomerCreated({
       sourceId: customer.id
+      registrationId: registration.id
       version: 1
       timestamp: new Date()
       customerName: customer.name
@@ -33,6 +34,7 @@ describe 'Space.eventSourcing - messaging', ->
       timestamp: new Date()
       email: "Hello #{customer.name}"
       customerId: customer.id
+      registrationId: registration.id
     })
     new CustomerApp.RegistrationCompleted({
       sourceId: registration.id
