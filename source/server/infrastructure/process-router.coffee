@@ -11,7 +11,7 @@ class Space.eventSourcing.ProcessRouter extends Space.messaging.Controller
     (an event or command class) that will be used to create new instanes of
     the managed process.'
 
-    missingEventCorrelationProperty: 'Please specify Router::eventCorrelationProperty
+    missingEventCorrelationProperty: 'Please specify Process::eventCorrelationProperty
     that will be used to route events to the managed process.'
 
     noProcessFoundToHandleEvent: (event, id) ->
@@ -34,6 +34,7 @@ class Space.eventSourcing.ProcessRouter extends Space.messaging.Controller
       throw new Error ProcessRouter.ERRORS.processNotSpecified
     if not @initializingMessage?
       throw new Error ProcessRouter.ERRORS.missingInitializingMessage
+    @eventCorrelationProperty = @process::eventCorrelationProperty
     if not @eventCorrelationProperty?
       throw new Error ProcessRouter.ERRORS.missingEventCorrelationProperty
     @routeEvents ?= []

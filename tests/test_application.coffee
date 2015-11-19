@@ -47,11 +47,9 @@ Space.messaging.define Space.messaging.Command, 'CustomerApp', {
     customerName: String
   }
   CreateCustomer: {
-    registrationId: String,
     name: String
   }
   SendWelcomeEmail: {
-    registrationId: String,
     customerId: String,
     customerName: String
   }
@@ -65,7 +63,6 @@ Space.messaging.define Space.messaging.Event, 'CustomerApp', {
     customerName: String
   }
   CustomerCreated: {
-    registrationId: String,
     customerName: String
   }
   WelcomeEmailTriggered: {
@@ -73,7 +70,6 @@ Space.messaging.define Space.messaging.Event, 'CustomerApp', {
   }
   WelcomeEmailSent: {
     email: String,
-    registrationId: String,
     customerId: String
   }
   RegistrationCompleted: {}
@@ -91,7 +87,6 @@ class CustomerApp.Customer extends Space.eventSourcing.Aggregate
     'CustomerApp.CreateCustomer': (command) ->
       @record new CustomerApp.CustomerCreated {
         sourceId: @getId()
-        registrationId: command.registrationId
         customerName: command.name
       }
   }
@@ -117,6 +112,8 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
     customerName: String
   }
 
+  eventCorrelationProperty: 'customerRegistrationId'
+
   commandMap: -> {
     'CustomerApp.RegisterCustomer': @_registerCustomer
   }
@@ -134,7 +131,6 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
   _registerCustomer: (command) ->
     @trigger new CustomerApp.CreateCustomer {
       targetId: command.customerId
-      registrationId: @getId()
       name: command.customerName
     }
     @record new CustomerApp.RegistrationInitiated {
@@ -149,7 +145,6 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
     @trigger new CustomerApp.SendWelcomeEmail {
       targetId: @customerId
       customerId: @customerId
-      registrationId: @getId()
       customerName: @customerName
     }
     @record new CustomerApp.WelcomeEmailTriggered {
@@ -174,19 +169,15 @@ CustomerApp.CustomerRegistration.registerSnapshotType 'CustomerApp.CustomerRegis
 
 # -------------- ROUTERS --------------- #
 
-class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.Router
-  dependencies: {
-    registrations: 'CustomerApp.CustomerRegistrations'
-  }
-  aggregate: CustomerApp.CustomerRegistration
-  initializingCommand: CustomerApp.RegisterCustomer
+class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.ProcessRouter
+  process: CustomerApp.CustomerRegistration
+  initializingMessage: CustomerApp.RegisterCustomer
   routeEvents: [
     CustomerApp.CustomerCreated
     CustomerApp.WelcomeEmailSent
   ]
-  eventCorrelationProperty: 'registrationId'
 
-class CustomerApp.CustomerRouter extends Space.eventSourcing.Router
+class CustomerApp.CustomerRouter extends Space.eventSourcing.AggregateRouter
 
   aggregate: CustomerApp.Customer
   initializingCommand: CustomerApp.CreateCustomer
@@ -207,8 +198,8 @@ class CustomerApp.EmailRouter extends Space.Object
         sourceId: '999'
         version: 1
         customerId: command.customerId
-        registrationId: command.registrationId
         email: "Hello #{command.customerName}"
+        meta: command.meta
       }
   ]
 

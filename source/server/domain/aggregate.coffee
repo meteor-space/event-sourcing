@@ -10,6 +10,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
   _events: null
   _state: null
   _handlers: null
+  _metaData: null
 
   # Override to define which custom properties this aggregate has
   fields: {}
@@ -72,6 +73,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
     (this[field] = snapshot[field]) for field of @fields
 
   record: (event) ->
+    event.meta = @_metaData if @_metaData?
     @_validateEvent event
     @_events.push event
     @handle(event) if @hasHandlerFor(event)
@@ -87,6 +89,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
   replayHistory: (history) -> @replay(event) for event in history
 
   handle: (message) ->
+    @_metaData = message.meta ? null
     @_getHandler(message).call this, message
     return this
 

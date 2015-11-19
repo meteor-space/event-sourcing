@@ -2,6 +2,7 @@
 
 class Space.eventSourcing.Process extends Space.eventSourcing.Aggregate
 
+  eventCorrelationProperty: null
   _commands: null
 
   @toString: -> 'Space.eventSourcing.Process'
@@ -23,9 +24,16 @@ class Space.eventSourcing.Process extends Space.eventSourcing.Aggregate
     else @initialize?.apply(this, arguments)
     return this
 
-  trigger: (command) -> @_commands.push command
+  trigger: (command) ->
+    command.meta ?= {}
+    command.meta[this.eventCorrelationProperty] = this.getId()
+    @_commands.push command
 
   getCommands: -> @_commands
+
+  handle: (message) ->
+    @_getHandler(message).call this, message
+    return this
 
   _validateEvent: (event) ->
     throw new Error(@ERRORS.domainEventRequired) unless event instanceof Event
