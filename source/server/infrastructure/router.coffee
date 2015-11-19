@@ -60,8 +60,10 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     @repository.save aggregate.handle(command)
 
   _genericEventHandler: (event) =>
-    @log "#{this}: Handling command #{event.typeName()} for
-          #{@aggregate}<#{event.sourceId}>\n", event
-    aggregate = @repository.find @aggregate, event[this.eventCorrelationProperty]
+    id = event[this.eventCorrelationProperty]
+    return if not id?
+    @log "#{this}: Handling event #{event.typeName()} for
+          #{@aggregate}<#{id}>\n", event
+    aggregate = @repository.find @aggregate, id
     throw Router.ERRORS.noAggregateFoundToHandleMessage(event) if !aggregate?
     @repository.save aggregate.handle(event)
