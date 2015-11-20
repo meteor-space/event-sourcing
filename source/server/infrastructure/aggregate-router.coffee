@@ -1,6 +1,6 @@
-class Space.eventSourcing.Router extends Space.messaging.Controller
+class Space.eventSourcing.AggregateRouter extends Space.messaging.Controller
 
-  @type 'Space.eventSourcing.Router'
+  @type 'Space.eventSourcing.AggregateRouter'
 
   @ERRORS: {
 
@@ -11,8 +11,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     that will be used to create new instanes of the managed aggregate.'
 
     noAggregateFoundToHandleCommand: (command) ->
-      new Error "No aggregate <#{command.targetId}> found to
-                 handle #{command.typeName()}"
+      new Error "No aggregate <#{command.targetId}> found to handle #{command.typeName()}"
   }
 
   dependencies: {
@@ -28,18 +27,21 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
 
   constructor: ->
     if not @aggregate?
-      throw new Error Router.ERRORS.aggregateNotSpecified
+      throw new Error AggregateRouter.ERRORS.aggregateNotSpecified
     if not @initializingCommand?
-      throw new Error Router.ERRORS.missingInitializingCommand
+      throw new Error AggregateRouter.ERRORS.missingInitializingCommand
     @routeCommands ?= []
     super
 
   onDependenciesReady: ->
     super
+    @_setupInitializingCommand()
+    @_routeCommandToAggregate(commandType) for commandType in @routeCommands
+
+  _setupInitializingCommand: ->
     @commandBus.registerHandler @initializingCommand, (cmd) =>
       @log.info(@_logMsg("Creating new #{@aggregate} with command #{cmd.typeName()}"), cmd)
       @repository.save new @aggregate(cmd)
-    @_routeCommandToAggregate(commandType) for commandType in @routeCommands
 
   _routeCommandToAggregate: (commandType) ->
     @commandBus.registerHandler commandType, @_genericCommandHandler

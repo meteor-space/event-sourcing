@@ -17,6 +17,9 @@ describe 'Space.eventSourcing - messaging', ->
       version: 1
       timestamp: new Date()
       customerName: customer.name
+      meta: {
+        customerRegistrationId: registration.id
+      }
     })
     new CustomerApp.WelcomeEmailTriggered({
       sourceId: registration.id
@@ -33,6 +36,9 @@ describe 'Space.eventSourcing - messaging', ->
       timestamp: new Date()
       email: "Hello #{customer.name}"
       customerId: customer.id
+      meta: {
+        customerRegistrationId: registration.id
+      }
     })
     new CustomerApp.RegistrationCompleted({
       sourceId: registration.id
@@ -53,7 +59,8 @@ describe 'Space.eventSourcing - messaging', ->
     )
     .expect(generatedEventsForCustomerRegistration())
 
-    '''
+
+  '''
   it 'supports distributed messaging via a shared commits collection', (test, done) ->
 
     SecondApp = Space.Application.extend {
@@ -89,4 +96,4 @@ describe 'Space.eventSourcing - messaging', ->
       expect(secondApp.publishedEvents).toMatch expectedEvents
     finally
       secondApp.stop()
-     '''
+  '''

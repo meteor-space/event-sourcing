@@ -42,20 +42,36 @@ class @CustomerApp extends Space.Application
 # -------------- COMMANDS ---------------
 
 Space.messaging.define Space.messaging.Command, 'CustomerApp', {
-  RegisterCustomer: { customerId: String, customerName: String }
-  CreateCustomer: { name: String }
-  HandleNewCustomer: { customerId: String }
-  SendWelcomeEmail: { customerId: String, customerName: String }
-  MarkRegistrationAsComplete: {}
+  RegisterCustomer: {
+    customerId: String,
+    customerName: String
+  }
+  CreateCustomer: {
+    name: String
+  }
+  SendWelcomeEmail: {
+    customerId: String,
+    customerName: String
+  }
 }
 
 # --------------- EVENTS ---------------
 
 Space.messaging.define Space.messaging.Event, 'CustomerApp', {
-  RegistrationInitiated: { customerId: String, customerName: String }
-  CustomerCreated: { customerName: String }
-  WelcomeEmailTriggered: { customerId: String }
-  WelcomeEmailSent: { email: String, customerId: String }
+  RegistrationInitiated: {
+    customerId: String,
+    customerName: String
+  }
+  CustomerCreated: {
+    customerName: String
+  }
+  WelcomeEmailTriggered: {
+    customerId: String
+  }
+  WelcomeEmailSent: {
+    email: String,
+    customerId: String
+  }
   RegistrationCompleted: {}
 }
 
@@ -85,28 +101,32 @@ CustomerApp.Customer.registerSnapshotType 'CustomerApp.CustomerSnapshot'
 
 class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
 
-  fields: {
-    customerId: String
-    customerName: String
-  }
-
   STATES: {
     creatingCustomer: 'creatingCustomer'
     sendingWelcomeEmail: 'sendingWelcomeEmail'
     completed: 'completed'
   }
 
+  fields: {
+    customerId: String
+    customerName: String
+  }
+
+  eventCorrelationProperty: 'customerRegistrationId'
+
   commandMap: -> {
     'CustomerApp.RegisterCustomer': @_registerCustomer
-    'CustomerApp.HandleNewCustomer': @_handleNewCustomer
-    'CustomerApp.MarkRegistrationAsComplete': @_markAsComplete
   }
 
   eventMap: -> {
     'CustomerApp.RegistrationInitiated': @_onRegistrationInitiated
-    'CustomerApp.WelcomeEmailTriggered': -> @_state = @STATES.sendingWelcomeEmail
-    'CustomerApp.RegistrationCompleted': -> @_state = @STATES.completed
+    'CustomerApp.CustomerCreated': @_onCustomerCreated
+    'CustomerApp.WelcomeEmailTriggered': @_onWelcomeEmailTriggered
+    'CustomerApp.WelcomeEmailSent': @_onWelcomeEmailSent
+    'CustomerApp.RegistrationCompleted': @_onRegistrationCompleted
   }
+
+  # =========== COMMAND HANDLERS =============
 
   _registerCustomer: (command) ->
     @trigger new CustomerApp.CreateCustomer {
@@ -119,10 +139,12 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
       customerName: command.customerName
     }
 
-  _handleNewCustomer: (command) ->
+  # =========== EXTERNAL EVENT HANDLERS =============
+
+  _onCustomerCreated: (event) ->
     @trigger new CustomerApp.SendWelcomeEmail {
       targetId: @customerId
-      customerId: command.customerId
+      customerId: @customerId
       customerName: @customerName
     }
     @record new CustomerApp.WelcomeEmailTriggered {
@@ -130,47 +152,32 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
       customerId: @customerId
     }
 
-  _markAsComplete: -> @record new CustomerApp.RegistrationCompleted sourceId: @getId()
+  _onWelcomeEmailSent: ->
+    @record new CustomerApp.RegistrationCompleted sourceId: @getId()
+
+  # =========== INTERNAL EVENT HANDLERS =============
 
   _onRegistrationInitiated: (event) ->
-    { @customerId, @customerName } = event
+    @_assignFields(event)
     @_state = @STATES.creatingCustomer
+
+  _onWelcomeEmailTriggered: -> @_state = @STATES.sendingWelcomeEmail
+
+  _onRegistrationCompleted: -> @_state = @STATES.completed
 
 CustomerApp.CustomerRegistration.registerSnapshotType 'CustomerApp.CustomerRegistrationSnapshot'
 
 # -------------- ROUTERS --------------- #
 
-class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.Router
-
-  dependencies: {
-    registrations: 'CustomerApp.CustomerRegistrations'
-  }
-
-  aggregate: CustomerApp.CustomerRegistration
-
-  initializingCommand: CustomerApp.RegisterCustomer
-
-  routeCommands: [
-    CustomerApp.HandleNewCustomer
-    CustomerApp.MarkRegistrationAsComplete
+class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.ProcessRouter
+  process: CustomerApp.CustomerRegistration
+  initializingMessage: CustomerApp.RegisterCustomer
+  routeEvents: [
+    CustomerApp.CustomerCreated
+    CustomerApp.WelcomeEmailSent
   ]
 
-  eventSubscriptions: -> [
-    'CustomerApp.CustomerCreated': (event) ->
-      @send new CustomerApp.HandleNewCustomer {
-        targetId: @_findRegistrationIdByCustomerId event.sourceId
-        customerId: event.sourceId
-      }
-    'CustomerApp.WelcomeEmailSent': (event) ->
-      @send new CustomerApp.MarkRegistrationAsComplete {
-        targetId: @_findRegistrationIdByCustomerId event.customerId
-      }
-  ]
-
-  _findRegistrationIdByCustomerId: (customerId) ->
-    @registrations.findOne(customerId: customerId)._id
-
-class CustomerApp.CustomerRouter extends Space.eventSourcing.Router
+class CustomerApp.CustomerRouter extends Space.eventSourcing.AggregateRouter
 
   aggregate: CustomerApp.Customer
   initializingCommand: CustomerApp.CreateCustomer
@@ -192,6 +199,7 @@ class CustomerApp.EmailRouter extends Space.Object
         version: 1
         customerId: command.customerId
         email: "Hello #{command.customerName}"
+        meta: command.meta
       }
   ]
 
