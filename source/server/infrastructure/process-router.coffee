@@ -21,7 +21,7 @@ class Space.eventSourcing.ProcessRouter extends Space.messaging.Controller
   dependencies: {
     repository: 'Space.eventSourcing.Repository'
     commitStore: 'Space.eventSourcing.CommitStore'
-    log: 'Space.eventSourcing.Log'
+    log: 'log'
   }
 
   process: null
@@ -48,11 +48,11 @@ class Space.eventSourcing.ProcessRouter extends Space.messaging.Controller
   _setupInitializingMessage: ->
     if @initializingMessage.isSubclassOf(Space.messaging.Event)
       @eventBus.subscribeTo @initializingMessage, (event) =>
-        @log "#{this}: Creating new #{@process} with event #{event.typeName()}\n", event
+        @log.info "#{this}: Creating new #{@process} with event #{event.typeName()}\n", event
         @repository.save new @process(event)
     else if @initializingMessage.isSubclassOf(Space.messaging.Command)
       @commandBus.registerHandler @initializingMessage, (cmd) =>
-        @log "#{this}: Creating new #{@process} with command #{cmd.typeName()}\n", cmd
+        @log.info "#{this}: Creating new #{@process} with command #{cmd.typeName()}\n", cmd
         @repository.save new @process(cmd)
 
   _routeEventToProcess: (eventType) ->
@@ -62,7 +62,7 @@ class Space.eventSourcing.ProcessRouter extends Space.messaging.Controller
     # Only route this event if the correlation property exists
     return unless event.meta? and event.meta[this.eventCorrelationProperty]?
     correlationId = event.meta[this.eventCorrelationProperty]
-    @log "#{this}: Handling event #{event.typeName()} for
+    @log.info "#{this}: Handling event #{event.typeName()} for
           #{@aggregate}<#{correlationId}>\n", event
     process = @repository.find @process, correlationId
     throw ProcessRouter.ERRORS.noProcessFoundToHandleEvent(event) if !process?
