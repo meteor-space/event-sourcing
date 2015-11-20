@@ -16,9 +16,10 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
   }
 
   dependencies: {
+    configuration: 'configuration'
     repository: 'Space.eventSourcing.Repository'
     commitStore: 'Space.eventSourcing.CommitStore'
-    log: 'Space.eventSourcing.Log'
+    log: 'log'
   }
 
   aggregate: null
@@ -36,7 +37,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
   onDependenciesReady: ->
     super
     @commandBus.registerHandler @initializingCommand, (cmd) =>
-      @log "#{this}: Creating new #{@aggregate} with command #{cmd.typeName()}\n", cmd
+      @log.info(@_logMsg("Creating new #{@aggregate} with command #{cmd.typeName()}"), cmd)
       @repository.save new @aggregate(cmd)
     @_routeCommandToAggregate(commandType) for commandType in @routeCommands
 
@@ -45,10 +46,13 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
 
   _genericCommandHandler: (command) =>
     if not command? then return
-    @log "#{this}: Handling command #{command.typeName()} for
-          #{@aggregate}<#{command.targetId}>\n", command
+    @log.info(@_logMsg("Handling command #{command.typeName()} for
+          #{@aggregate}<#{command.targetId}>"), command)
     aggregate = @repository.find @aggregate, command.targetId
     if not aggregate?
       throw Router.ERRORS.noAggregateFoundToHandleCommand(command)
     aggregate.handle command
     @repository.save aggregate
+
+  _logMsg: (message) ->
+    "#{@configuration.appId}: #{this}: #{message}"
