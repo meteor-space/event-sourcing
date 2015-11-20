@@ -7,9 +7,6 @@ class Space.eventSourcing extends Space.Module
 
   configuration: Space.getenv.multi({
     eventSourcing: {
-      log: {
-        enabled: ['SPACE_ES_LOG_ENABLED', false, 'bool']
-      }
       snapshotting: {
         enabled: ['SPACE_ES_SNAPSHOTTING_ENABLED', true, 'bool']
         frequency: ['SPACE_ES_SNAPSHOTTING_FREQUENCY', 10, 'int']
@@ -38,8 +35,6 @@ class Space.eventSourcing extends Space.Module
 
   onInitialize: ->
     @injector.map('Space.eventSourcing.Snapshotter').asSingleton() if @_isSnapshotting()
-    # Right now logging is not optional, and hard coded to output to console, but the Config API included a switch and writeStream
-    @_setupLogging()
     @_setupMongoConfiguration()
     @_setupCommitsCollection()
 
@@ -56,10 +51,6 @@ class Space.eventSourcing extends Space.Module
 
   onStop: ->
     @commitPublisher.stopPublishing()
-
-  _setupLogging: ->
-    @injector.map('Space.eventSourcing.Log').to =>
-      console.log.apply(null, arguments) if @configuration.eventSourcing.log.enabled
 
   _setupMongoConfiguration: ->
     @configuration.eventSourcing.mongo.connection = @_mongoConnection()

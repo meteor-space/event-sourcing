@@ -58,7 +58,7 @@ describe "Space.eventSourcing.CommitPublisher", ->
       commits: Commits
       commitPublisher: @commitPublisher
       configuration: @configuration
-      log: ->
+      log: Space.log
     }
     @commandHandler = sinon.spy()
     @commitPublisher.commandBus.registerHandler(
