@@ -7,12 +7,11 @@ class Space.eventSourcing.CommitStore extends Space.Object
     commits: 'Space.eventSourcing.Commits'
     commitPublisher: 'Space.eventSourcing.CommitPublisher'
     configuration: 'configuration'
-    log: 'Space.eventSourcing.Log'
+    log: 'log'
 
   add: (changes, sourceId, expectedVersion) ->
-
-    @log "#{this}: Adding commit for #{changes.aggregateType}<#{sourceId}>
-          expected at version #{expectedVersion}"
+    @log.info(@_logMsg("Adding commit for #{changes.aggregateType}<#{sourceId}>
+          expected at version #{expectedVersion}"))
 
     # only continue if there actually ARE changes to be added
     if !changes? or !changes.events or changes.events.length is 0 then return
@@ -51,7 +50,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
       }
 
       # insert commit with next version
-      @log "#{this}: Inserting commit\n", commit
+      @log.info(@_logMsg("Inserting commit"), commit)
       @commits.insert commit
 
       @commitPublisher.publishCommit changes: {
@@ -91,3 +90,6 @@ class Space.eventSourcing.CommitStore extends Space.Object
   _setEventVersion: (event, version) -> event.version = version
 
   _getEventTypes: (events) -> events.map (event) -> event.typeName()
+
+  _logMsg: (message) ->
+    "#{@configuration.appId}: #{this}: #{message}"

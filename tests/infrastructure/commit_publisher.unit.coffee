@@ -50,13 +50,15 @@ describe "Space.eventSourcing.CommitPublisher", ->
       commandBus: new CommandBus { meteor: Meteor }
       meteor: Meteor
       ejson: EJSON
-      log: new Space.Logger()
+      log: Space.log
     }
+#    Un-comment this to log test cases
+#    @commitPublisher.log.start()
     @commitStore = new CommitStore {
       commits: Commits
       commitPublisher: @commitPublisher
       configuration: @configuration
-      log: ->
+      log: Space.log
     }
     @commandHandler = sinon.spy()
     @commitPublisher.commandBus.registerHandler(

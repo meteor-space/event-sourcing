@@ -33,7 +33,7 @@ describe "Space.eventSourcing.CommitStore", ->
       commits: new Mongo.Collection(null)
       commitPublisher: publishCommit: sinon.spy()
       configuration: { appId: @appId }
-      log: ->
+      log: Space.log
     }
 
   afterEach ->

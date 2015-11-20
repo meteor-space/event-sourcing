@@ -59,6 +59,7 @@ describe 'Space.eventSourcing - messaging', ->
     )
     .expect(generatedEventsForCustomerRegistration())
 
+
   '''
   it 'supports distributed messaging via a shared commits collection', (test, done) ->
 
