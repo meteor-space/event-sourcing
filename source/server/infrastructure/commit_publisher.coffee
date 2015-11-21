@@ -23,7 +23,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
     # Save the observe handle for stopping
     @_publishHandle = @commits.find(notReceivedYet).observe {
       added: (commit) =>
-# Find and lock the event, so only one app instance publishes it
+        # Find and lock the event, so only one app instance publishes it
         lockedCommit = @commits.findAndModify({
           query: $and: [_id: commit._id, notReceivedYet]
           update: $push: { receivers: { appId: appId, receivedAt: new Date() } }

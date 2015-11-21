@@ -23,10 +23,10 @@ class Space.eventSourcing.CommitStore extends Space.Object
       { sort: [['version', 'desc']], fields: { version: 1 } } # options
     )
     if lastCommit?
-# take version of last existing commit
+      # take version of last existing commit
       currentVersion = lastCommit.version
     else
-# the entity didnt exist before
+      # the entity didnt exist before
       currentVersion = 0
 
     if currentVersion is expectedVersion
@@ -62,7 +62,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
 
     else
 
-# concurrency exception
+      # concurrency exception
       throw new Error "Expected entity <#{sourceId}> to be at version
                       #{expectedVersion} but was on #{currentVersion}"
 
