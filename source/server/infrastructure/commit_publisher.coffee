@@ -23,7 +23,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
     # Save the observe handle for stopping
     @_publishHandle = @commits.find(notReceivedYet).observe {
       added: (commit) =>
-        # Find and lock the event, so only one app instance publishes it
+# Find and lock the event, so only one app instance publishes it
         lockedCommit = @commits.findAndModify({
           query: $and: [_id: commit._id, notReceivedYet]
           update: $push: { receivers: { appId: appId, receivedAt: new Date() } }
@@ -40,10 +40,10 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
     try
       @_setProcessingTimeout(commit)
       for event in commit.changes.events
-        @log.info @_logMsg("publishing #{event.typeName()}\n"), event
+        @log.info @_logMsg("publishing #{event.typeName()}"), event
         @eventBus.publish event
       for command in commit.changes.commands
-        @log.info @_logMsg("sending #{command.typeName()}\n"), command
+        @log.info @_logMsg("sending #{command.typeName()}"), command
         @commandBus.send command
       @_markAsProcessed(commit)
     catch error
@@ -89,7 +89,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
       { _id: commit._id, 'receivers.appId': appId },
       { $set: { 'receivers.$.failedAt': new Date() } }
     )
-    @log.error @_logMsg("#{commit._id} failed\n"), commit
+    @log.error @_logMsg("#{commit._id} failed"), commit
 
   _markAsProcessed: (commit) ->
     appId = @configuration.appId
@@ -98,7 +98,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
       { _id: commit._id, 'receivers.appId': appId },
       { $set: { 'receivers.$.processedAt': new Date() } }
     )
-    @log.info @_logMsg("#{commit._id} processed\n"), commit
+    @log.info @_logMsg("#{commit._id} processed"), commit
 
   _logMsg: (message) ->
     "#{@configuration.appId}: #{this}: #{message}"
