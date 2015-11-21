@@ -51,12 +51,14 @@ class Space.eventSourcing.CommitStore extends Space.Object
 
       # insert commit with next version
       @log.info(@_logMsg("Inserting commit"), commit)
-      @commits.insert commit
+      commitId = @commits.insert commit
 
-      @commitPublisher.publishCommit changes: {
-        events: changes.events
-        commands: changes.commands
-      }
+      @commitPublisher.publishCommit
+        _id: commitId,
+        changes: {
+          events: changes.events
+          commands: changes.commands
+        }
 
     else
 
