@@ -31,9 +31,5 @@ class Space.eventSourcing.Process extends Space.eventSourcing.Aggregate
 
   getCommands: -> @_commands
 
-  handle: (message) ->
-    @_getHandler(message).call this, message
-    return this
-
   _validateEvent: (event) ->
     throw new Error(@ERRORS.domainEventRequired) unless event instanceof Event

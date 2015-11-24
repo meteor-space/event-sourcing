@@ -42,6 +42,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
     @_id = if (id instanceof Command) then id.targetId else id
     @_events = []
     @_handlers = {}
+    @fields.meta = Match.Optional(Object)
     # Setup event and command handlers
     @_setupHandlers()
     # Bootstrap the aggregate
@@ -62,7 +63,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
     data.id = @_id
     data.state = @_state
     data.version = @_version
-    (data[field] = this[field]) for field of @fields
+    (data[field] = this[field]) for field of @fields when this[field] != undefined
     return new @constructor._snapshotType(data)
 
   applySnapshot: (snapshot) ->
@@ -70,10 +71,11 @@ class Space.eventSourcing.Aggregate extends Space.Object
     @_id = snapshot.id
     @_state = snapshot.state
     @_version = snapshot.version
-    (this[field] = snapshot[field]) for field of @fields
+    (this[field] = snapshot[field]) for field of @fields when snapshot[field] != undefined
 
   record: (event) ->
-    event.meta = @_metaData if @_metaData?
+    event.meta ?= {}
+    _.extend(event.meta, this.meta ? {}, @_metaData ? {})
     @_validateEvent event
     @_events.push event
     @handle(event) if @hasHandlerFor(event)
