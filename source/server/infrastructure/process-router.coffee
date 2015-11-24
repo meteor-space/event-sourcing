@@ -14,11 +14,12 @@ class Space.eventSourcing.ProcessRouter extends Space.messaging.Controller
     missingEventCorrelationProperty: 'Please specify Process::eventCorrelationProperty
     that will be used to route events to the managed process.'
 
-    noProcessFoundToHandleEvent: (event, id) ->
-      new Error "No process <#{id}> found to handle #{event.typeName()}"
+    noProcessFoundToHandleMessage: (message, id) ->
+      new Error "No process <#{id}> found to handle #{message.typeName()}"
   }
 
   dependencies: {
+    configuration: 'configuration'
     repository: 'Space.eventSourcing.Repository'
     commitStore: 'Space.eventSourcing.CommitStore'
     log: 'log'
@@ -27,6 +28,7 @@ class Space.eventSourcing.ProcessRouter extends Space.messaging.Controller
   process: null
   initializingMessage: null
   routeEvents: null
+  routeCommands: null
   eventCorrelationProperty: null
 
   constructor: ->
@@ -38,12 +40,14 @@ class Space.eventSourcing.ProcessRouter extends Space.messaging.Controller
     if not @eventCorrelationProperty?
       throw new Error ProcessRouter.ERRORS.missingEventCorrelationProperty
     @routeEvents ?= []
+    @routeCommands ?= []
     super
 
   onDependenciesReady: ->
     super
     @_setupInitializingMessage()
     @_routeEventToProcess(eventType) for eventType in @routeEvents
+    @_routeCommandToProcess(commandType) for commandType in @routeCommands
 
   _setupInitializingMessage: ->
     if @initializingMessage.isSubclassOf(Space.messaging.Event)
@@ -58,12 +62,23 @@ class Space.eventSourcing.ProcessRouter extends Space.messaging.Controller
   _routeEventToProcess: (eventType) ->
     @eventBus.subscribeTo eventType, @_genericEventHandler
 
+  _routeCommandToProcess: (commandType) ->
+    @commandBus.registerHandler commandType, @_genericCommandHandler
+
   _genericEventHandler: (event) =>
     # Only route this event if the correlation property exists
     return unless event.meta? and event.meta[this.eventCorrelationProperty]?
     correlationId = event.meta[this.eventCorrelationProperty]
-    @log.info "#{this}: Handling event #{event.typeName()} for
-          #{@aggregate}<#{correlationId}>\n", event
+    @log.info(@_logMsg("Handling event #{event.typeName()} for #{@process}<#{correlationId}>\n"), event)
     process = @repository.find @process, correlationId
-    throw ProcessRouter.ERRORS.noProcessFoundToHandleEvent(event) if !process?
+    throw ProcessRouter.ERRORS.noProcessFoundToHandleMessage(event) if !process?
     @repository.save process.handle(event)
+
+  _genericCommandHandler: (command) =>
+    if not command? then return
+    @log.info(@_logMsg("Handling command #{command.typeName()} for #{@process}<#{command.targetId}>"), command)
+    process = @repository.find @process, command.targetId
+    throw ProcessRouter.ERRORS.noProcessFoundToHandleMessage(command) if !process?
+    @repository.save process.handle(command)
+
+  _logMsg: (message) -> "#{@configuration.appId}: #{this}: #{message}"

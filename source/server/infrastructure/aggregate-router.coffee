@@ -56,5 +56,4 @@ class Space.eventSourcing.AggregateRouter extends Space.messaging.Controller
     aggregate.handle command
     @repository.save aggregate
 
-  _logMsg: (message) ->
-    "#{@configuration.appId}: #{this}: #{message}"
+  _logMsg: (message) -> "#{@configuration.appId}: #{this}: #{message}"

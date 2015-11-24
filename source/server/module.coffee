@@ -29,6 +29,7 @@ class Space.eventSourcing extends Space.Module
 
   singletons: [
     'Space.eventSourcing.CommitPublisher'
+    'Space.eventSourcing.CommitStore'
     'Space.eventSourcing.Repository'
     'Space.eventSourcing.Projector'
   ]
