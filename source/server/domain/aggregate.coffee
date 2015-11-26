@@ -74,8 +74,9 @@ class Space.eventSourcing.Aggregate extends Space.Object
     (this[field] = snapshot[field]) for field of @fields when snapshot[field] != undefined
 
   record: (event) ->
-    event.meta ?= {}
-    _.extend(event.meta, this.meta ? {}, @_metaData ? {})
+    if this.meta? or @_metaData?
+      event.meta ?= {}
+      _.extend(event.meta, this.meta ? {}, @_metaData ? {})
     @_validateEvent event
     @_events.push event
     @handle(event) if @hasHandlerFor(event)
