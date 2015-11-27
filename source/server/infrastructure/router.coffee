@@ -46,8 +46,8 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
   onDependenciesReady: ->
     super
     @_setupInitializingMessage()
-    @_routeEventToEventSourcable(eventType) for eventType in @routeEvents
-    @_routeCommandToEventSourcable(commandType) for commandType in @routeCommands
+    @_routeEventToEventSourceable(eventType) for eventType in @routeEvents
+    @_routeCommandToEventSourceable(commandType) for commandType in @routeCommands
 
   _setupInitializingMessage: ->
     if @initializingMessage.isSubclassOf(Space.messaging.Event)
@@ -61,7 +61,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
                   #{cmd.typeName()}\n", cmd)
         @_handleDomainErrors -> @repository.save new @eventSourceable(cmd)
 
-  _routeEventToEventSourcable: (eventType) ->
+  _routeEventToEventSourceable: (eventType) ->
     @eventBus.subscribeTo eventType, @_genericEventHandler
 
   _routeCommandToEventSourceable: (commandType) ->
