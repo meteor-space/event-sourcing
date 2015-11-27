@@ -75,6 +75,14 @@ Space.messaging.define Space.messaging.Event, 'CustomerApp', {
   RegistrationCompleted: {}
 }
 
+# --------------- EXCEPTIONS ---------------
+
+Space.Error.extend CustomerApp, 'InvalidCustomerName', {
+  Constructor: (name) ->
+    Space.Error.call(this, "Invalid customer name <#{name}>")
+    this.stack = null # Make it easier to test this
+}
+
 # -------------- AGGREGATES ---------------
 
 class CustomerApp.Customer extends Space.eventSourcing.Aggregate
@@ -100,6 +108,8 @@ CustomerApp.Customer.registerSnapshotType 'CustomerApp.CustomerSnapshot'
 # -------------- PROCESSES ---------------
 
 class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
+
+  @type 'CustomerApp.CustomerRegistration'
 
   STATES: {
     creatingCustomer: 'creatingCustomer'
@@ -129,6 +139,9 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
   # =========== COMMAND HANDLERS =============
 
   _registerCustomer: (command) ->
+    if command.customerName == 'MyStrangeCustomerName'
+      throw new CustomerApp.InvalidCustomerName(command.customerName)
+
     @trigger new CustomerApp.CreateCustomer {
       targetId: command.customerId
       name: command.customerName
@@ -169,18 +182,18 @@ CustomerApp.CustomerRegistration.registerSnapshotType 'CustomerApp.CustomerRegis
 
 # -------------- ROUTERS --------------- #
 
-class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.ProcessRouter
-  process: CustomerApp.CustomerRegistration
+class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.Router
+  eventSourcable: CustomerApp.CustomerRegistration
   initializingMessage: CustomerApp.RegisterCustomer
   routeEvents: [
     CustomerApp.CustomerCreated
     CustomerApp.WelcomeEmailSent
   ]
 
-class CustomerApp.CustomerRouter extends Space.eventSourcing.AggregateRouter
+class CustomerApp.CustomerRouter extends Space.eventSourcing.Router
 
-  aggregate: CustomerApp.Customer
-  initializingCommand: CustomerApp.CreateCustomer
+  eventSourcable: CustomerApp.Customer
+  initializingMessage: CustomerApp.CreateCustomer
 
 class CustomerApp.EmailRouter extends Space.Object
 

@@ -19,7 +19,8 @@ Package.onUse(function(api) {
     'mikowals:batch-insert@1.1.9',
     'fongandrew:find-and-modify@0.2.1',
     'space:base@3.1.0',
-    'space:messaging@2.1.0'
+    'space:messaging@2.1.0',
+    'space:domain@0.1.0'
   ]);
 
   // ========= server =========
@@ -35,8 +36,7 @@ Package.onUse(function(api) {
     'source/server/infrastructure/commit_publisher.coffee',
     'source/server/infrastructure/projection.coffee',
     'source/server/infrastructure/projector.coffee',
-    'source/server/infrastructure/aggregate-router.coffee',
-    'source/server/infrastructure/process-router.coffee',
+    'source/server/infrastructure/router.coffee',
     // DOMAIN
     'source/server/domain/aggregate.coffee',
     'source/server/domain/process.coffee'
@@ -52,6 +52,7 @@ Package.onTest(function(api) {
     'ejson',
     'mongo',
     'underscore',
+    'ecmascript',
     'space:event-sourcing',
     'space:testing@2.0.0',
     'practicalmeteor:munit@2.1.5'
@@ -69,7 +70,8 @@ Package.onTest(function(api) {
     'tests/infrastructure/snapshotter.unit.coffee',
     'tests/infrastructure/projection.unit.coffee',
     'tests/infrastructure/replaying-projections.tests.coffee',
-    'tests/infrastructure/messaging.tests.coffee'
+    'tests/infrastructure/messaging.tests.coffee',
+    'tests/infrastructure/handling-domain-errors.tests.js'
   ], 'server');
 
 });
