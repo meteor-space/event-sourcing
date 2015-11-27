@@ -26,6 +26,9 @@ describe 'Space.eventSourcing - messaging', ->
       version: 2
       timestamp: new Date()
       customerId: customer.id
+      meta: {
+        customerRegistrationId: registration.id
+      }
     })
     # This is just visible in the app that runs the code
     # since it is directly published via the event store
@@ -44,6 +47,9 @@ describe 'Space.eventSourcing - messaging', ->
       sourceId: registration.id
       version: 3
       timestamp: new Date()
+      meta: {
+        customerRegistrationId: registration.id
+      }
     })
   ]
 

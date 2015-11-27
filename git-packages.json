@@ -7,6 +7,10 @@
     "git":"https://github.com/meteor-space/messaging.git",
     "branch": "develop"
   },
+  "space:domain": {
+    "git":"https://github.com/meteor-space/domain.git",
+    "branch": "develop"
+  },
   "space:testing": {
     "git":"https://github.com/meteor-space/testing.git",
     "branch": "develop"
