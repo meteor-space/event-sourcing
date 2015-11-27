@@ -183,7 +183,7 @@ CustomerApp.CustomerRegistration.registerSnapshotType 'CustomerApp.CustomerRegis
 # -------------- ROUTERS --------------- #
 
 class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.Router
-  eventSourcable: CustomerApp.CustomerRegistration
+  eventSourceable: CustomerApp.CustomerRegistration
   initializingMessage: CustomerApp.RegisterCustomer
   routeEvents: [
     CustomerApp.CustomerCreated
@@ -192,7 +192,7 @@ class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.Router
 
 class CustomerApp.CustomerRouter extends Space.eventSourcing.Router
 
-  eventSourcable: CustomerApp.Customer
+  eventSourceable: CustomerApp.Customer
   initializingMessage: CustomerApp.CreateCustomer
 
 class CustomerApp.EmailRouter extends Space.Object
