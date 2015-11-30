@@ -95,8 +95,11 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     try
       return fn.call(this)
     catch error
-      this.publish(new Space.domain.Exception({
-        thrower: @eventSourceable.toString(),
-        error: error
-      }))
-      return null
+      if error instanceof Space.Error
+        this.publish(new Space.domain.Exception({
+          thrower: @eventSourceable.toString(),
+          error: error
+        }))
+        return null
+      else
+        throw error
