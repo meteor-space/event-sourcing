@@ -48,7 +48,7 @@ class Space.eventSourcing extends Space.Module
 
   onReset: ->
     @injector.get('Space.eventSourcing.Commits')?.remove {}
-    @injector.get('Space.eventSourcing.Snapshots')?.remove {}
+    @injector.get('Space.eventSourcing.Snapshots')?.remove {} if @_isSnapshotting()
 
   onStop: ->
     @commitPublisher.stopPublishing()
