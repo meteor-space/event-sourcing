@@ -1,18 +1,18 @@
 {
   "space:base": {
     "git":"https://github.com/meteor-space/base.git",
-    "branch": "fix/app-config-bug"
+    "version": "8b51727cced10d6da5d85c92d0052a768e21cf0e"
   },
   "space:messaging": {
     "git":"https://github.com/meteor-space/messaging.git",
-    "branch": "develop"
+    "version": "2ec04c0d3004df3fa3f95ebaecff51917676f9ce"
   },
   "space:domain": {
     "git":"https://github.com/meteor-space/domain.git",
-    "branch": "develop"
+    "version": "a66e76a9b9e3617a686348f805d3dc3a9ec029ac"
   },
   "space:testing": {
     "git":"https://github.com/meteor-space/testing.git",
-    "branch": "develop"
+    "version": "7382d37f06a553664255f4ec82b4e8bea6fb890d"
   }
 }
