@@ -9,9 +9,10 @@ class Space.eventSourcing.Process extends Space.eventSourcing.Aggregate
 
   constructor: (id, data, isSnapshot) ->
     # This process is created from an event -> create new Guid
-    @_id = if (id instanceof Event) then new Guid() else id
+    if (id instanceof Event) then @_id = new Guid()
     # This aggregate is created from a command -> assign targetId
-    @_id = if (id instanceof Command) then id.targetId else id
+    else if (id instanceof Command) then @_id = id.targetId
+    else @_id = id
     @_events = []
     @_commands = []
     @_handlers = {}
