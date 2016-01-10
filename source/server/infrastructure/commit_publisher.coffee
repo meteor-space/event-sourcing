@@ -65,23 +65,20 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
     commands = []
     # Only parse events that can be handled by this app
     for event in commit.changes.events
-      events.push(@_parseMessage(event)) if @_supportsEjsonType event
+      if @_supportsEjsonType event.type
+        EventType = Space.Struct.resolve(event.type)
+        events.push EventType.fromData(event.data)
     # Only parse commands that can be handled by this app
     for command in commit.changes.commands
-      type = JSON.parse(command).$type
-      commands.push(@_parseMessage(command)) if @commandBus.hasHandlerFor type
+      if @_supportsEjsonType(command.type) and @commandBus.hasHandlerFor(command.type)
+        CommandType = Space.Struct.resolve(command.type)
+        commands.push CommandType.fromData(command.data)
 
     commit.changes.events = events
     commit.changes.commands = commands
     return commit
 
-  _parseMessage: (message) ->
-    try
-      return @ejson.parse(message)
-    catch error
-      throw new Error "while parsing \m:#{message}\nerror:#{error}"
-
-  _supportsEjsonType: (message) -> @ejson._getTypes()[JSON.parse(message).$type]?
+  _supportsEjsonType: (type) -> @ejson._getTypes()[type]?
 
   _failCommitProcessingAttempt: (commit) ->
     appId = @configuration.appId
