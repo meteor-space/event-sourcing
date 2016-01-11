@@ -81,7 +81,7 @@ describe 'Space.eventSourcing - replaying projections', ->
         sourceId: @event.sourceId
         version: 1
         changes: {
-          events: [EJSON.stringify(@event)]
+          events: [type: @event.typeName(), data: @event.toData()]
           commands: []
         }
         insertedAt: new Date()

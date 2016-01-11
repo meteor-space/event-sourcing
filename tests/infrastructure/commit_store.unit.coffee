@@ -60,8 +60,8 @@ describe "Space.eventSourcing.CommitStore", ->
         sourceId: sourceId
         version: newVersion
         changes:
-          events: [EJSON.stringify(testEvent)]
-          commands: [EJSON.stringify(testCommand)]
+          events: [type: testEvent.typeName(), data: testEvent.toData()]
+          commands: [type: testCommand.typeName(), data: testCommand.toData()]
         insertedAt: sinon.match.date
         sentBy: @appId
         receivers: [{ appId: @appId, receivedAt: new Date() }]

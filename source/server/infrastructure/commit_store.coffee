@@ -36,13 +36,16 @@ class Space.eventSourcing.CommitStore extends Space.Object
       @_setEventVersion(event, newVersion) for event in changes.events
       # serialize events and commands
       serializedChanges = events: [], commands: []
-      serializedChanges.events.push(EJSON.stringify(event)) for event in changes.events
-      serializedChanges.commands.push(EJSON.stringify(command)) for command in changes.commands
+      for event in changes.events
+        serializedChanges.events.push type: event.typeName(), data: event.toData()
+
+      for command in changes.commands
+        serializedChanges.commands.push type: command.typeName(), data: command.toData()
 
       commit = {
         sourceId: sourceId.toString()
         version: newVersion
-        changes: serializedChanges # insert EJSON serialized changes
+        changes: serializedChanges
         insertedAt: new Date()
         eventTypes: @_getEventTypes(changes.events)
         sentBy: @configuration.appId
@@ -83,7 +86,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
     commits.forEach (commit) =>
       for event in commit.changes.events
         try
-          event = EJSON.parse(event)
+          event = Space.messaging.Serializable.resolve(event.type).fromData(event.data)
         catch error
           throw new Error "while parsing commit\nevent:#{event}\nerror:#{error}"
         events.push event
