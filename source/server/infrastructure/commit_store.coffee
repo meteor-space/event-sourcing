@@ -86,7 +86,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
     commits.forEach (commit) =>
       for event in commit.changes.events
         try
-          event = Space.Struct.resolve(event.type).fromData(event.data)
+          event = Space.messaging.Serializable.resolve(event.type).fromData(event.data)
         catch error
           throw new Error "while parsing commit\nevent:#{event}\nerror:#{error}"
         events.push event

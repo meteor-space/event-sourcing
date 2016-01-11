@@ -1,11 +1,11 @@
 {
   "space:base": {
     "git":"https://github.com/meteor-space/base.git",
-    "branch": "feature/serializing-structs"
+    "version": "c6b32c392ef3e2e79173cc8bb9f82229032af893"
   },
   "space:messaging": {
     "git":"https://github.com/meteor-space/messaging.git",
-    "branch": "feature/struct-serialization"
+    "version": "6aae8398809cfa68a90acf4c631efbdca50139b4"
   },
   "space:domain": {
     "git":"https://github.com/meteor-space/domain.git",
