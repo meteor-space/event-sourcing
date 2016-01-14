@@ -5,7 +5,7 @@ class Space.eventSourcing.Process extends Space.eventSourcing.Aggregate
   eventCorrelationProperty: null
   _commands: null
 
-  @toString: -> 'Space.eventSourcing.Process'
+  @type 'Space.eventSourcing.Process'
 
   constructor: (id, data, isSnapshot) ->
     # This process is created from an event -> create new Guid

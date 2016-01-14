@@ -66,12 +66,12 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
     # Only parse events that can be handled by this app
     for event in commit.changes.events
       if @_supportsEjsonType event.type
-        EventType = Space.messaging.Serializable.resolve(event.type)
+        EventType = Space.resolvePath(event.type)
         events.push EventType.fromData(event.data)
     # Only parse commands that can be handled by this app
     for command in commit.changes.commands
       if @_supportsEjsonType(command.type) and @commandBus.hasHandlerFor(command.type)
-        CommandType = Space.messaging.Serializable.resolve(command.type)
+        CommandType = Space.resolvePath(command.type)
         commands.push CommandType.fromData(command.data)
 
     commit.changes.events = events
