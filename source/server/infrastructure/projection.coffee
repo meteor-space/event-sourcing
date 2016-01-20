@@ -20,9 +20,14 @@ class Space.eventSourcing.Projection extends Space.Object
     else
       @_queuedEvents.push event
 
-  enterRebuildMode: -> @_state = 'rebuilding'
+  enterRebuildMode: ->
+    if @_is('rebuilding')
+      throw new Error "Invalid state: Cannot enterRebuildMode as #{@constructor.toString()} is already rebuilding"
+    @_state = 'rebuilding'
 
   exitRebuildMode: ->
+    if !@_is('rebuilding')
+      throw new Error "Invalid state: Cannot exitRebuildMode as #{@constructor.toString()} is not rebuilding"
     @_state = 'projecting'
     @on(event) for event in @_queuedEvents
 
