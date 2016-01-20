@@ -14,7 +14,7 @@ class Space.eventSourcing.ProjectionRebuilder extends Space.Object
       throw new Error 'You have to provide an array of projection qualifiers.'
 
     realCollectionsBackups = {}
-    projectionsToRebuild = []
+    queue = []
 
     # Loop over all projections that should be rebuilt
     for projectionId in options.projections
@@ -27,11 +27,11 @@ class Space.eventSourcing.ProjectionRebuilder extends Space.Object
 
       # Tell the projection that it will be rebuilt now
       projection.enterRebuildMode()
-      projectionsToRebuild.push projection
+      queue.push projection
 
     # Loop through all events and hand them individually to all projections
     for event in @commitStore.getAllEvents()
-      projection.on(event, true) for projection in projectionsToRebuild
+      projection.on(event, true) for projection in queue
 
     # Update the real collection data with the in-memory versions
     # for the specified projections only.
@@ -42,11 +42,11 @@ class Space.eventSourcing.ProjectionRebuilder extends Space.Object
       if inMemoryData.length
         realCollection.batchInsert inMemoryData
       else
-        throw new Error "No data to insert after replaying projection for #{collectionId}"
+        throw new Error "No data to insert after replaying events for #{collectionId}"
       # Restore original collections
       @injector.override(collectionId).to realCollection
 
-    for projection in projectionsToRebuild
+    for projection in queue
       projection.exitRebuildMode()
 
   _getCollectionIdsOfProjection: (projection) ->
