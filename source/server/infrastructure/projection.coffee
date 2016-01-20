@@ -3,7 +3,6 @@ class Space.eventSourcing.Projection extends Space.Object
   @mixin Space.messaging.EventSubscribing
 
   collections: {}
-  _isInReplayMode: false
   _state: null
   _queuedEvents: null
 
