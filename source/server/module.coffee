@@ -31,7 +31,7 @@ class Space.eventSourcing extends Space.Module
     'Space.eventSourcing.CommitPublisher'
     'Space.eventSourcing.CommitStore'
     'Space.eventSourcing.Repository'
-    'Space.eventSourcing.Projector'
+    'Space.eventSourcing.ProjectionRebuilder'
   ]
 
   onInitialize: ->

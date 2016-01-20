@@ -35,7 +35,7 @@ Package.onUse(function(api) {
     'source/server/infrastructure/commit_store.coffee',
     'source/server/infrastructure/commit_publisher.coffee',
     'source/server/infrastructure/projection.coffee',
-    'source/server/infrastructure/projector.coffee',
+    'source/server/infrastructure/projection-rebuilder.coffee',
     'source/server/infrastructure/router.coffee',
     // DOMAIN
     'source/server/domain/aggregate.coffee',
@@ -55,8 +55,9 @@ Package.onTest(function(api) {
     'ecmascript',
     'space:event-sourcing',
     'space:testing@2.0.0',
+    'space:testing-event-sourcing@0.1.0',
     'practicalmeteor:munit@2.1.5'
-  ]);
+  ], 'server');
 
   api.addFiles([
     // HELPERS
@@ -70,7 +71,7 @@ Package.onTest(function(api) {
     'tests/infrastructure/snapshotter.unit.coffee',
     'tests/infrastructure/snapshotting.tests.js',
     'tests/infrastructure/projection.unit.coffee',
-    'tests/infrastructure/replaying-projections.tests.coffee',
+    'tests/infrastructure/projection-rebuilder.tests.coffee',
     'tests/infrastructure/messaging.tests.coffee',
     'tests/infrastructure/handling-domain-errors.tests.js'
   ], 'server');

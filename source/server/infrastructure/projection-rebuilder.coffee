@@ -1,6 +1,6 @@
-class Space.eventSourcing.Projector extends Space.Object
+class Space.eventSourcing.ProjectionRebuilder extends Space.Object
 
-  @type 'Space.eventSourcing.Projector'
+  @type 'Space.eventSourcing.ProjectionRebuilder'
 
   dependencies: {
     commitStore: 'Space.eventSourcing.CommitStore'
@@ -8,16 +8,16 @@ class Space.eventSourcing.Projector extends Space.Object
     mongo: 'Mongo'
   }
 
-  replay: (options) ->
+  rebuild: (projections, options) ->
 
-    unless options.projections?
+    unless projections?
       throw new Error 'You have to provide an array of projection qualifiers.'
 
     realCollectionsBackups = {}
-    projectionsToRebuild = []
+    queue = []
 
     # Loop over all projections that should be rebuilt
-    for projectionId in options.projections
+    for projectionId in projections
       projection = @injector.get projectionId
       # Save backups of the real collections to restore them later and
       # override the real collections with in-memory pendants
@@ -25,13 +25,13 @@ class Space.eventSourcing.Projector extends Space.Object
         realCollectionsBackups[collectionId] = @injector.get collectionId
         @injector.override(collectionId).to new @mongo.Collection(null)
 
-      # Tell the projection that it will be replayed now
-      projection.enterReplayMode()
-      projectionsToRebuild.push projection
+      # Tell the projection that it will be rebuilt now
+      projection.enterRebuildMode()
+      queue.push projection
 
-    # Loop through all events and hand them indiviually to all projections
+    # Loop through all events and hand them individually to all projections
     for event in @commitStore.getAllEvents()
-      projection.on(event, true) for projection in projectionsToRebuild
+      projection.on(event, true) for projection in queue
 
     # Update the real collection data with the in-memory versions
     # for the specified projections only.
@@ -42,12 +42,12 @@ class Space.eventSourcing.Projector extends Space.Object
       if inMemoryData.length
         realCollection.batchInsert inMemoryData
       else
-        throw new Error "No data to insert after replaying projection for #{collectionId}"
+        throw new Error "No data to insert after replaying events for #{collectionId}"
       # Restore original collections
       @injector.override(collectionId).to realCollection
 
-    for projection in projectionsToRebuild
-      projection.exitReplayMode()
+    for projection in queue
+      projection.exitRebuildMode()
 
   _getCollectionIdsOfProjection: (projection) ->
     collectionIds = []
