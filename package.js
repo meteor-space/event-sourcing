@@ -55,8 +55,9 @@ Package.onTest(function(api) {
     'ecmascript',
     'space:event-sourcing',
     'space:testing@2.0.0',
+    'space:testing-event-sourcing@0.1.0',
     'practicalmeteor:munit@2.1.5'
-  ]);
+  ], 'server');
 
   api.addFiles([
     // HELPERS
