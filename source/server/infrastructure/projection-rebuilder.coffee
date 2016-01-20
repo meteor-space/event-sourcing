@@ -1,6 +1,6 @@
-class Space.eventSourcing.Projector extends Space.Object
+class Space.eventSourcing.ProjectionRebuilder extends Space.Object
 
-  @type 'Space.eventSourcing.Projector'
+  @type 'Space.eventSourcing.ProjectionRebuilder'
 
   dependencies: {
     commitStore: 'Space.eventSourcing.CommitStore'
@@ -8,7 +8,7 @@ class Space.eventSourcing.Projector extends Space.Object
     mongo: 'Mongo'
   }
 
-  replay: (options) ->
+  rebuild: (options) ->
 
     unless options.projections?
       throw new Error 'You have to provide an array of projection qualifiers.'
@@ -25,11 +25,11 @@ class Space.eventSourcing.Projector extends Space.Object
         realCollectionsBackups[collectionId] = @injector.get collectionId
         @injector.override(collectionId).to new @mongo.Collection(null)
 
-      # Tell the projection that it will be replayed now
-      projection.enterReplayMode()
+      # Tell the projection that it will be rebuilt now
+      projection.enterRebuildMode()
       projectionsToRebuild.push projection
 
-    # Loop through all events and hand them indiviually to all projections
+    # Loop through all events and hand them individually to all projections
     for event in @commitStore.getAllEvents()
       projection.on(event, true) for projection in projectionsToRebuild
 
@@ -47,7 +47,7 @@ class Space.eventSourcing.Projector extends Space.Object
       @injector.override(collectionId).to realCollection
 
     for projection in projectionsToRebuild
-      projection.exitReplayMode()
+      projection.exitRebuildMode()
 
   _getCollectionIdsOfProjection: (projection) ->
     collectionIds = []

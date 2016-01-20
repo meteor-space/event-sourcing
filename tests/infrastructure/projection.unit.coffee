@@ -15,26 +15,26 @@ describe 'Space.eventSourcing.Projection', ->
     @projection.subscribe TestEvent, @handler
     @testEvent = new TestEvent()
 
-  describe 'default mode', ->
+  describe 'projection state', ->
 
     it 'handles events by default', ->
       @projection.on @testEvent
       expect(@handler).to.have.been.called
 
-  describe 'replay mode', ->
+  describe 'rebuild mode', ->
 
-    it 'does not handle normal events', ->
-      @projection.enterReplayMode()
+    it 'does not handle non-rebuild in real-time', ->
+      @projection.enterRebuildMode()
       @projection.on @testEvent
       expect(@handler).not.to.have.been.called
 
-    it 'handles replayed events', ->
-      @projection.enterReplayMode()
-      @projection.on @testEvent, true # replay=true
+    it 'handles rebuild events', ->
+      @projection.enterRebuildMode()
+      @projection.on @testEvent, true # isRebuildEvent=true
       expect(@handler).to.have.been.calledWithExactly @testEvent
 
-    it 'handles queued events when exiting replay mode', ->
-      @projection.enterReplayMode()
+    it 'handles queued events when exiting rebuild mode', ->
+      @projection.enterRebuildMode()
       @projection.on @testEvent
-      @projection.exitReplayMode()
+      @projection.exitRebuildMode()
       expect(@handler).to.have.been.calledWithExactly @testEvent

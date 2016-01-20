@@ -4,23 +4,28 @@ class Space.eventSourcing.Projection extends Space.Object
 
   collections: {}
   _isInReplayMode: false
+  _state: null
   _queuedEvents: null
 
   constructor: ->
     super
+    @_state = 'projecting'
     @_queuedEvents = []
     @dependencies = {}
     _.extend @dependencies, @constructor::dependencies, @collections
 
-  on: (event, isReplay=false) ->
+  on: (event, isRebuildEvent=false) ->
     return unless @canHandleEvent(event)
-    if !@_isInReplayMode or (@_isInReplayMode and isReplay)
+    if @_is('projecting') or (@_is('rebuilding') and isRebuildEvent)
       Space.messaging.EventSubscribing.on.call this, event
     else
       @_queuedEvents.push event
 
-  enterReplayMode: -> @_isInReplayMode = true
+  enterRebuildMode: -> @_state = 'rebuilding'
 
-  exitReplayMode: ->
-    @_isInReplayMode = false
+  exitRebuildMode: ->
+    @_state = 'projecting'
     @on(event) for event in @_queuedEvents
+
+  _is: (expectedState) ->
+    true if expectedState is @_state

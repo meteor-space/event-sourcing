@@ -35,7 +35,7 @@ Package.onUse(function(api) {
     'source/server/infrastructure/commit_store.coffee',
     'source/server/infrastructure/commit_publisher.coffee',
     'source/server/infrastructure/projection.coffee',
-    'source/server/infrastructure/projector.coffee',
+    'source/server/infrastructure/projection-rebuilder.coffee',
     'source/server/infrastructure/router.coffee',
     // DOMAIN
     'source/server/domain/aggregate.coffee',
