@@ -8,16 +8,16 @@ class Space.eventSourcing.ProjectionRebuilder extends Space.Object
     mongo: 'Mongo'
   }
 
-  rebuild: (options) ->
+  rebuild: (projections, options) ->
 
-    unless options.projections?
+    unless projections?
       throw new Error 'You have to provide an array of projection qualifiers.'
 
     realCollectionsBackups = {}
     queue = []
 
     # Loop over all projections that should be rebuilt
-    for projectionId in options.projections
+    for projectionId in projections
       projection = @injector.get projectionId
       # Save backups of the real collections to restore them later and
       # override the real collections with in-memory pendants
