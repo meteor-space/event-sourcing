@@ -11,7 +11,7 @@ describe 'Space.eventSourcing - rebuilding projections', ->
     }
 
   class FirstProjection extends Space.eventSourcing.Projection
-
+    @type 'Space.eventSourcing.FirstTestProjection'
     collections: {
       firstCollection: 'FirstCollection'
     }
@@ -26,7 +26,7 @@ describe 'Space.eventSourcing - rebuilding projections', ->
     ]
 
   class SecondProjection extends Space.eventSourcing.Projection
-
+    @type 'Space.eventSourcing.SecondProjection'
     collections: {
       secondCollection: 'SecondCollection'
     }

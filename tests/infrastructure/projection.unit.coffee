@@ -2,7 +2,9 @@
 describe 'Space.eventSourcing.Projection', ->
 
   class TestEvent extends Space.messaging.Event
+    @type 'Space.messaging.TestEvent'
   class TestProjection extends Space.eventSourcing.Projection
+    @type 'Space.eventSourcing.TestProjection'
 
   beforeEach ->
     @handler = sinon.spy()
