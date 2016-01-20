@@ -1,4 +1,4 @@
-describe 'Space.eventSourcing - rebuilding projections', ->
+describe 'Space.eventSourcing.ProjectionRebuilder', ->
 
   FirstCollection = new Mongo.Collection 'space_eventsourcing_firstCollection'
   SecondCollection = new Mongo.Collection 'space_eventsourcing_secondCollection'
@@ -87,10 +87,10 @@ describe 'Space.eventSourcing - rebuilding projections', ->
   afterEach ->
     @app.stop()
 
-  it 'replaces the collections with the new projection data', ->
+  it 'rebuilds the collections of nominated projections using historical events', ->
 
     rebuilder = @app.injector.get 'Space.eventSourcing.ProjectionRebuilder'
-    rebuilder.rebuild projections: ['FirstProjection']
+    rebuilder.rebuild ['FirstProjection']
 
     # It should have updated the first collection
     expect(FirstCollection.find().fetch()).toMatch [

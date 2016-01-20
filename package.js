@@ -71,7 +71,7 @@ Package.onTest(function(api) {
     'tests/infrastructure/snapshotter.unit.coffee',
     'tests/infrastructure/snapshotting.tests.js',
     'tests/infrastructure/projection.unit.coffee',
-    'tests/infrastructure/replaying-projections.tests.coffee',
+    'tests/infrastructure/projection-rebuilder.tests.coffee',
     'tests/infrastructure/messaging.tests.coffee',
     'tests/infrastructure/handling-domain-errors.tests.js'
   ], 'server');
