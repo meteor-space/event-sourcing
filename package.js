@@ -7,7 +7,7 @@ Package.describe({
 
 Package.onUse(function(api) {
 
-  api.versionsFrom("METEOR@1.0");
+  api.versionsFrom('1.2.0.1');
 
   api.use([
     'coffeescript',
@@ -18,8 +18,8 @@ Package.onUse(function(api) {
     'ecmascript',
     'mikowals:batch-insert@1.1.9',
     'fongandrew:find-and-modify@0.2.1',
-    'space:base@3.1.0',
-    'space:messaging@2.1.0',
+    'space:base@4.0.0',
+    'space:messaging@3.0.0',
     'space:domain@0.1.0'
   ]);
 
@@ -54,8 +54,8 @@ Package.onTest(function(api) {
     'underscore',
     'ecmascript',
     'space:event-sourcing',
-    'space:testing@2.0.0',
-    'space:testing-event-sourcing@0.1.0',
+    'space:testing@3.0.1',
+    'space:testing-event-sourcing@3.0.0',
     'practicalmeteor:munit@2.1.5'
   ], 'server');
 

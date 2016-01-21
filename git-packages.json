@@ -17,6 +17,6 @@
   },
   "space:testing-event-sourcing": {
     "git":"https://github.com/meteor-space/testing-event-sourcing.git",
-    "version": "564629e234df55ba27617d1cfe69830725a1d74f"
+    "version": "5927fde42717fe5ec7b6b16190820a48bd52c440"
   }
 }
