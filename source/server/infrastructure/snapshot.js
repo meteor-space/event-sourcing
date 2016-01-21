@@ -1,4 +1,9 @@
-Space.messaging.Serializable.extend(Space.eventSourcing, 'Snapshot', {
+Space.Struct.extend(Space.eventSourcing, 'Snapshot', {
+
+  mixin: [
+    Space.messaging.Ejsonable
+  ],
+
   fields() {
     return {
       id: Match.OneOf(String, Guid),
