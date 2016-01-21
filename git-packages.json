@@ -15,6 +15,10 @@
     "git":"https://github.com/meteor-space/testing.git",
     "version": "f964632b5ff87a72fe83a75d6c65ad967dbaeed4"
   },
+  "space:testing-messaging": {
+    "git":"https://github.com/meteor-space/testing-messaging.git",
+    "version": "48d486509b0bec2eaeef4bac0c8a5519c107aab1"
+  },
   "space:testing-event-sourcing": {
     "git":"https://github.com/meteor-space/testing-event-sourcing.git",
     "version": "3a2a3c9d226e5a14fc49b1c05ca6803153bb1890"

@@ -55,6 +55,7 @@ Package.onTest(function(api) {
     'ecmascript',
     'space:event-sourcing',
     'space:testing@3.0.1',
+    'space:testing-messaging@3.0.0',
     'space:testing-event-sourcing@3.0.0',
     'practicalmeteor:munit@2.1.5'
   ], 'server');
