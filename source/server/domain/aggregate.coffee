@@ -29,12 +29,11 @@ class Space.eventSourcing.Aggregate extends Space.Object
   @registerSnapshotType: (id) ->
     fields = {}
     fields[field] = type for field, type of this::fields
-    @_snapshotType = Space.eventSourcing.Snapshot.extend {
+    @_snapshotType = Space.eventSourcing.Snapshot.extend id, {
       fields: ->
-        superFields = Space.eventSourcing.Snapshot::fields.call(this)
+        superFields = Space.eventSourcing.Snapshot::fields()
         return _.extend(superFields, fields)
     }
-    @_snapshotType.type id
 
   constructor: (id, data, isSnapshot) ->
     unless id? then throw new Error Aggregate::ERRORS.guidRequired
