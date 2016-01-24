@@ -1,4 +1,4 @@
-Space.Struct.extend(Space.eventSourcing, 'Snapshot', {
+Space.Struct.extend('Space.eventSourcing.Snapshot', {
 
   mixin: [
     Space.messaging.Ejsonable
