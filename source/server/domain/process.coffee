@@ -1,4 +1,4 @@
-{Event, Command} = Space.messaging
+{Event, Command} = Space.domain
 
 class Space.eventSourcing.Process extends Space.eventSourcing.Aggregate
 

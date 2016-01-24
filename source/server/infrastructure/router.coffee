@@ -50,13 +50,13 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     @_routeCommandToEventSourceable(commandType) for commandType in @routeCommands
 
   _setupInitializingMessage: ->
-    if @initializingMessage.isSubclassOf(Space.messaging.Event)
+    if @initializingMessage.isSubclassOf(Space.domain.Event)
       @eventBus.subscribeTo @initializingMessage, (event) =>
         @log.info("#{this}: Creating new #{@eventSourceable} with event
                   #{event.typeName()}\n", event)
         eventSourceable = @_handleDomainErrors(-> new @eventSourceable event)
         @repository.save(eventSourceable) if eventSourceable?
-    else if @initializingMessage.isSubclassOf(Space.messaging.Command)
+    else if @initializingMessage.isSubclassOf(Space.domain.Command)
       @commandBus.registerHandler @initializingMessage, (cmd) =>
         @log.info("#{this}: Creating new #{@eventSourceable} with command
                   #{cmd.typeName()}\n", cmd)

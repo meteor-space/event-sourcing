@@ -41,7 +41,7 @@ class @CustomerApp extends Space.Application
 
 # -------------- COMMANDS ---------------
 
-Space.messaging.define Space.messaging.Command, 'CustomerApp', {
+Space.messaging.define Space.domain.Command, 'CustomerApp', {
   RegisterCustomer: {
     customerId: String,
     customerName: String
@@ -57,7 +57,7 @@ Space.messaging.define Space.messaging.Command, 'CustomerApp', {
 
 # --------------- EVENTS ---------------
 
-Space.messaging.define Space.messaging.Event, 'CustomerApp', {
+Space.messaging.define Space.domain.Event, 'CustomerApp', {
   RegistrationInitiated: {
     customerId: String,
     customerName: String
