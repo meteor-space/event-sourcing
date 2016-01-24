@@ -1,26 +1,26 @@
 {
   "space:base": {
     "git":"https://github.com/meteor-space/base.git",
-    "version": "cc23eb17c6742697d3f6c5e4886a5617daadce8c"
+    "version": "1d99a64fe51904569742aee13e94b3cae29abdb4"
   },
   "space:messaging": {
     "git":"https://github.com/meteor-space/messaging.git",
-    "version": "7be58d67c15b94033c7af698caec0a85b7841660"
+    "version": "bbaf57c511f7230c662d2ea4473b056148c82787"
   },
   "space:domain": {
     "git":"https://github.com/meteor-space/domain.git",
-    "version": "10a85b3a554652bc565ecfa1b4788abfc501051c"
+    "version": "c3915404196c201b3db69effb844b16bc1ceb74a"
   },
   "space:testing": {
     "git":"https://github.com/meteor-space/testing.git",
-    "version": "f964632b5ff87a72fe83a75d6c65ad967dbaeed4"
+    "version": "53f24417c325500e1b836b88d5f03a17b2d97585"
   },
   "space:testing-messaging": {
     "git":"https://github.com/meteor-space/testing-messaging.git",
-    "version": "48d486509b0bec2eaeef4bac0c8a5519c107aab1"
+    "version": "81aee53c36b724818f1581572c1206c19d776ae9"
   },
   "space:testing-event-sourcing": {
     "git":"https://github.com/meteor-space/testing-event-sourcing.git",
-    "version": "3a2a3c9d226e5a14fc49b1c05ca6803153bb1890"
+    "version": "c5fc222da14f3fe25796da3e23925d89f51e8813"
   }
 }
