@@ -63,7 +63,7 @@ describe "Space.eventSourcing.Repository", ->
         changes:
           events: [type: @createdEvent.typeName(), data: @createdEvent.toData()]
           commands: []
-        insertedAt: new Date()
+        insertedAt: sinon.match.date
         sentBy: @appId
         receivers: [{ appId: @appId, receivedAt: new Date() }]
         eventTypes: [@createdEvent.toString()]
