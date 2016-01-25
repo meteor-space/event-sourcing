@@ -1,19 +1,26 @@
 Repository = Space.eventSourcing.Repository
 CommitStore = Space.eventSourcing.CommitStore
 Aggregate = Space.eventSourcing.Aggregate
+Process = Space.eventSourcing.Process
 Event = Space.domain.Event
 Command = Space.domain.Command
 
 # =========== TEST DATA ========== #
 
 class MyAggregate extends Aggregate
-  @type 'Space.eventSourcing.CommitStore.TestEvent'
+  @type 'Space.eventSourcing.Repository.TestAggregate'
 
-class InitiatingCommand extends Command
-  @type 'Space.eventSourcing.Repository.InitiatingCommand'
+class MyProcess extends Process
+  @type 'Space.eventSourcing.Repository.TestProcess'
 
-class CreatedEvent extends Event
-  @type 'Space.eventSourcing.Repository.CreatedEvent', ->
+class MyInitiatingCommand extends Command
+  @type 'Space.eventSourcing.Repository.MyInitiatingCommand'
+
+class MyTriggeredCommand extends Command
+  @type 'Space.eventSourcing.Repository.MyTriggeredCommand'
+
+class MyCreatedEvent extends Event
+  @type 'Space.eventSourcing.Repository.MyCreatedEvent', ->
 
 # =========== SPECS ============= #
 
@@ -23,17 +30,20 @@ describe "Space.eventSourcing.Repository", ->
     @clock = sinon.useFakeTimers(Date.now(), 'Date')
     @appId = 'TestApp'
     @aggregateId = new Guid()
-    @initiatingCommand = new InitiatingCommand({
+    @targetId = new Guid()
+    @myInitiatingCommand = new MyInitiatingCommand({
       targetId: @aggregateId
       timestamp: new Date()
     })
-    @createdEvent = new CreatedEvent({
+    @myTriggeredCommand = new MyTriggeredCommand({
+      targetId: @targetId
+      timestamp: new Date()
+    })
+    @myCreatedEvent = new MyCreatedEvent({
       sourceId: @aggregateId
       version: 0
       timestamp: new Date()
     })
-    @myAggregate = new Aggregate(@aggregateId, @initiatingCommand)
-    @myAggregate.record(@createdEvent)
     @commitStore = new CommitStore {
       commits: new Mongo.Collection(null)
       commitPublisher: { publishCommit: -> }
@@ -50,10 +60,13 @@ describe "Space.eventSourcing.Repository", ->
 
   describe '#save', ->
 
-    it 'saves changes from the provided aggregate instance as a serialized and versioned commit', ->
+    it 'persists events from the provided aggregate instance as a serialized and versioned commit', ->
+
+      myAggregate = new MyAggregate(@aggregateId, @initiatingCommand)
+      myAggregate.record(@myCreatedEvent)
 
       expectedVersion = 1
-      @repository.save @myAggregate
+      @repository.save myAggregate
       insertedCommits = @commitStore.commits.find().fetch()
 
       expectedCommit = {
@@ -61,12 +74,37 @@ describe "Space.eventSourcing.Repository", ->
         sourceId: @aggregateId.toString()
         version: expectedVersion
         changes:
-          events: [type: @createdEvent.typeName(), data: @createdEvent.toData()]
+          events: [type: @myCreatedEvent.typeName(), data: @myCreatedEvent.toData()]
           commands: []
         insertedAt: sinon.match.date
         sentBy: @appId
         receivers: [{ appId: @appId, receivedAt: new Date() }]
-        eventTypes: [@createdEvent.toString()]
+        eventTypes: [@myCreatedEvent.toString()]
+      }
+
+      expect(insertedCommits).toMatch [expectedCommit]
+
+    it 'persistst events and commands from the provided Process instance as a serialized and versioned commit', ->
+
+      myProcess = new MyProcess(@aggregateId, @myInitiatingCommand)
+      myProcess.trigger(@myTriggeredCommand)
+      myProcess.record(@myCreatedEvent)
+
+      expectedVersion = 1
+      @repository.save myProcess
+      insertedCommits = @commitStore.commits.find().fetch()
+
+      expectedCommit = {
+        _id: insertedCommits[0]._id
+        sourceId: @aggregateId.toString()
+        version: expectedVersion
+        changes:
+          events: [type: @myCreatedEvent.typeName(), data: @myCreatedEvent.toData()]
+          commands: [type: @myTriggeredCommand.typeName(), data: @myTriggeredCommand.toData()]
+        insertedAt: sinon.match.date
+        sentBy: @appId
+        receivers: [{ appId: @appId, receivedAt: new Date() }]
+        eventTypes: [@myCreatedEvent.toString()]
       }
 
       expect(insertedCommits).toMatch [expectedCommit]
