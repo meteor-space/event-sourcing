@@ -52,21 +52,21 @@ describe "Space.eventSourcing.Repository", ->
 
     it 'saves changes from the provided aggregate instance as a serialized and versioned commit', ->
 
-      expectedVersion = 0
+      expectedVersion = 1
       @repository.save @myAggregate
       insertedCommits = @commitStore.commits.find().fetch()
 
-      serializedCommit = {
+      expectedCommit = {
         _id: insertedCommits[0]._id
-        sourceId: @aggregateId
+        sourceId: @aggregateId.toString()
         version: expectedVersion
         changes:
           events: [type: @createdEvent.typeName(), data: @createdEvent.toData()]
-          commands: [type: @initiatingCommand.typeName(), data: @initiatingCommand.toData()]
-        insertedAt: sinon.match.date
+          commands: []
+        insertedAt: new Date()
         sentBy: @appId
         receivers: [{ appId: @appId, receivedAt: new Date() }]
         eventTypes: [@createdEvent.toString()]
       }
 
-      expect(insertedCommits).toMatch [serializedCommit]
+      expect(insertedCommits).toMatch [expectedCommit]
