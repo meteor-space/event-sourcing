@@ -1,7 +1,7 @@
 Changelog
 =========
 
-## 3.0.0 (Upcoming, unreleased)
+## 3.0.0
 
 ### New Features
 
@@ -17,10 +17,83 @@ Changelog
   `SPACE_ES_SNAPSHOTTING_FREQUENCY=20`     
   - `SPACE_ES_SNAPSHOTTING_COLLECTION_NAME='my_collection'`
 
+#### New helpers
+- `Aggregate::_eventPropsFromCommand(command)` is an internal helper function
+ eliminating the boilerplate of mapping `targetId` from the command to `sourceId`
+ and manually setting the `version` prop.
+ 
+#### Module
+- This package now mixes in specific interfaces `Routers` and `Projections`
+for better clarity in your modules/application that depends on Space.eventSourcing.
+
+#### Router
+Events can be automatically routed to processes and aggregates based on a correlation
+ property, negating the need for lookup collections:
+
+```javascript
+Space.eventSourcing.Router.extend(Space.accounts, 'RegistrationsRouter', {
+
+  aggregate: Space.accounts.Registration,
+  initializingCommand: Space.accounts.Register,
+
+  routeEvents: [
+    Space.accounts.UserCreated,
+    Space.accounts.UserCreationFailed,
+    Space.accounts.AccountCreated
+  ],
+
+  eventCorrelationProperty: 'registrationId'
+
+});
+```
+
+#### Commit Publisher
+The state of any Commit Publish action is now being managed, with any errors
+ thrown while processing are caught and used to fail the attempt.
+ There's also a timeout option to autofail the attempt in the case where a 
+ problem occurs without an error being thrown. This defaults to 60 seconds
+ but can be configured using the ENV or Module Config APIs
+ 
+ - `SPACE_ES_COMMIT_PROCESSING_TIMEOUT=2000` or 
+ `Configuration.eventSourcing.commitProcessing.timeout = 2000`
+ 
+#### Domain Error handling
+Now when domain exceptions are thrown in an aggregate, the router publishes a
+ special event `Space.domain.Exception` that can be subscribed to and used for
+  process integration. The event has two custom properties `thrower` and `error`.
+
 ### Breaking Changes
+- Must be running Meteor 1.2.0.1 or later.
+
+#### Dependencies forcing API changes
+- This version uses space:base 4.x which includes breaking changes. 
+Please see the [changelog](https://github.com/meteor-space/base/blob/master/CHANGELOG.md).
+- This version uses space:messaging 3.x which includes breaking changes. 
+Please see the [changelog](https://github.com/meteor-space/messaging/blob/master/CHANGELOG.md).
+
+#### Commits Collection
 - Module now manages the commits collection
-  - Instead of passing in a collection, use the Configuration and/or ENVs.
+- Instead of passing in a collection, use the Configuration and/or ENVs.
 - Default collection name has been changed from space_cqrs_commitStore
+- Events are now persisted in a query-friendly format! Prior to this the data was
+stored in a JSON string which was optimal for persistence, but you would have to
+maintain a projection in order to query the historical data. Moving from 2.x to
+ 3.x will require data migration, but we feel this was necessary and will be
+  worthwhile for the huge gain in querying capability.
+
+#### `Projector` and `Projection` API changes 
+- `Projector` => `ProjectionRebuilder`
+- `ProjectionRebuilder::replay(options)` => `rebuild(projections, options)`
+- `Projection::enterReplayMode()` => `enterRebuildMode()`
+- `Projection::exitReplayMode()` => `exitRebuildMode()`
+
+*Thanks to all the new people on the team who made this awesome release possible:*
+
+- [Rhys Bartels-Waller](https://github.com/rhyslbw)
+- [Darko Mijić](https://github.com/darko-mijic)
+- [Adam Desivi](https://github.com/qejk)
+
+:clap:
 
 ## 2.1.0
 **CONTINUED BREAKING CHANGES**
