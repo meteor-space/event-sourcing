@@ -8,10 +8,10 @@ Command = Space.domain.Command
 # =========== TEST DATA ========== #
 
 class MyAggregate extends Aggregate
-  @type 'Space.eventSourcing.Repository.TestAggregate'
+  @type 'Space.eventSourcing.Repository.MyAggregate'
 
 class MyProcess extends Process
-  @type 'Space.eventSourcing.Repository.TestProcess'
+  @type 'Space.eventSourcing.Repository.MyProcess'
 
 class MyInitiatingCommand extends Command
   @type 'Space.eventSourcing.Repository.MyInitiatingCommand'
@@ -108,3 +108,21 @@ describe "Space.eventSourcing.Repository", ->
       }
 
       expect(insertedCommits).toMatch [expectedCommit]
+
+  describe '#find', ->
+
+    it 'returns a re-hydrated instance of the expected version by type and id', ->
+      # Version 1
+      myAggregate = new MyAggregate(@aggregateId, @initiatingCommand)
+      myAggregate.record(@myCreatedEvent)
+      @repository.save(myAggregate)
+      myAggregate._events = []
+      # Version 2
+      myAggregate.record(@myCreatedEvent)
+      @repository.save(myAggregate)
+      myAggregate._events = []
+      rehydratedInstance = @repository.find(MyAggregate, @aggregateId)
+      expect(rehydratedInstance).toMatch(myAggregate)
+      expect(rehydratedInstance._version).to.equal(2)
+
+
