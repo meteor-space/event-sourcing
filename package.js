@@ -18,9 +18,9 @@ Package.onUse(function(api) {
     'ecmascript',
     'mikowals:batch-insert@1.1.9',
     'fongandrew:find-and-modify@0.2.1',
-    'space:base@4.0.0',
-    'space:messaging@3.0.0',
-    'space:domain@0.1.0'
+    'space:base@4.0.1',
+    'space:messaging@3.0.1',
+    'space:domain@0.2.1'
   ]);
 
   // ========= server =========
@@ -67,6 +67,7 @@ Package.onTest(function(api) {
     'tests/domain/aggregate.unit.coffee',
     'tests/domain/process.unit.coffee',
     // INFRASTRUCTURE
+    'tests/infrastructure/repository.unit.coffee',
     'tests/infrastructure/commit_store.unit.coffee',
     'tests/infrastructure/commit_publisher.unit.coffee',
     'tests/infrastructure/snapshotter.unit.coffee',

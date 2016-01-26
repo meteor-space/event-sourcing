@@ -1,9 +1,9 @@
 
 { CommitStore, CommitPublisher } = Space.eventSourcing
 
-Event = Space.messaging.Event
+Event = Space.domain.Event
 EventBus = Space.messaging.EventBus
-Command = Space.messaging.Command
+Command = Space.domain.Command
 CommandBus = Space.messaging.CommandBus
 
 # =========== TEST DATA ========== #

@@ -3,7 +3,7 @@ describe 'Space.eventSourcing.ProjectionRebuilder', ->
   FirstCollection = new Mongo.Collection 'space_eventsourcing_firstCollection'
   SecondCollection = new Mongo.Collection 'space_eventsourcing_secondCollection'
 
-  class TestEvent extends Space.messaging.Event
+  class TestEvent extends Space.domain.Event
     @type 'Space.eventSourcing.RebuildTestEvent'
     @fields: {
       sourceId: String

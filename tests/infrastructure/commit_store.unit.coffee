@@ -1,7 +1,7 @@
 
 CommitStore = Space.eventSourcing.CommitStore
-Event = Space.messaging.Event
-Command = Space.messaging.Command
+Event = Space.domain.Event
+Command = Space.domain.Command
 
 # =========== TEST DATA ========== #
 

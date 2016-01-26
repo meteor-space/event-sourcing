@@ -1,5 +1,5 @@
 
-{Event, Command} = Space.messaging
+{Event, Command} = Space.domain
 
 class Space.eventSourcing.Aggregate extends Space.Object
 
@@ -17,7 +17,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   ERRORS: {
     guidRequired: "#{Aggregate}: Aggregate needs an GUID on creation."
-    domainEventRequired: "#{Aggregate}: Event must inherit from Space.messaging.Event"
+    domainEventRequired: "#{Aggregate}: Event must inherit from Space.domain.Event"
     cannotHandleMessage: "#{Aggregate}: Cannot handle: "
     invalidEventSourceId: "#{Aggregate}: The given event has an invalid source id."
   }
@@ -29,12 +29,11 @@ class Space.eventSourcing.Aggregate extends Space.Object
   @registerSnapshotType: (id) ->
     fields = {}
     fields[field] = type for field, type of this::fields
-    @_snapshotType = Space.eventSourcing.Snapshot.extend {
+    @_snapshotType = Space.eventSourcing.Snapshot.extend id, {
       fields: ->
-        superFields = Space.eventSourcing.Snapshot::fields.call(this)
+        superFields = Space.eventSourcing.Snapshot::fields()
         return _.extend(superFields, fields)
     }
-    @_snapshotType.type id
 
   constructor: (id, data, isSnapshot) ->
     unless id? then throw new Error Aggregate::ERRORS.guidRequired
