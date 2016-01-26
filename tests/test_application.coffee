@@ -32,12 +32,25 @@ class @CustomerApp extends Space.Application
   projections: [
     'CustomerApp.CustomerRegistrationProjection'
   ]
+  onInitialize: ->
+    @injector.map('myCommandDependency').toStaticValue(
+      CustomerApp.myCommandDependency
+    )
+    @injector.map('myEventDependency').toStaticValue(
+      CustomerApp.myEventDependency
+    )
 
   afterInitialize: ->
     @injector.map('CustomerApp.CustomerRegistrations').to new @mongo.Collection(null)
 
   onReset: ->
     @injector.get('CustomerApp.CustomerRegistrations').remove {}
+
+# -------------- DEPENDENCIES ---------------
+
+CustomerApp.myCommandDependency = sinon.spy()
+CustomerApp.myEventDependency = sinon.spy()
+
 
 # -------------- COMMANDS ---------------
 
@@ -47,6 +60,9 @@ Space.messaging.define Space.domain.Command, 'CustomerApp', {
     customerName: String
   }
   CreateCustomer: {
+    name: String
+  }
+  ChangeCustomerName: {
     name: String
   }
   SendWelcomeEmail: {
@@ -63,6 +79,9 @@ Space.messaging.define Space.domain.Event, 'CustomerApp', {
     customerName: String
   }
   CustomerCreated: {
+    customerName: String
+  }
+  CustomerNameChanged: {
     customerName: String
   }
   WelcomeEmailTriggered: {
@@ -87,20 +106,42 @@ Space.Error.extend CustomerApp, 'InvalidCustomerName', {
 
 class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
+  dependencies: {
+    myCommandDependency: 'myCommandDependency'
+    myEventDependency: 'myEventDependency'
+  }
+
   fields: {
     name: String
   }
 
   commandMap: -> {
     'CustomerApp.CreateCustomer': (command) ->
+      @myCommandDependency()
+
       @record new CustomerApp.CustomerCreated {
+        sourceId: @getId()
+        customerName: command.name
+      }
+
+    'CustomerApp.ChangeCustomerName': (command) ->
+      @myCommandDependency()
+
+      @record new CustomerApp.CustomerNameChanged {
         sourceId: @getId()
         customerName: command.name
       }
   }
 
   eventMap: -> {
-    'CustomerApp.CustomerCreated': (event) -> @name = event.customerName
+    'CustomerApp.CustomerCreated': (event) ->
+      @myEventDependency()
+
+      @name = event.customerName
+    'CustomerApp.CustomerNameChanged': (event) ->
+      @myEventDependency()
+
+      @name = event.customerName
   }
 
 CustomerApp.Customer.registerSnapshotType 'CustomerApp.CustomerSnapshot'
@@ -110,6 +151,11 @@ CustomerApp.Customer.registerSnapshotType 'CustomerApp.CustomerSnapshot'
 class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
 
   @type 'CustomerApp.CustomerRegistration'
+
+  dependencies: {
+    myCommandDependency: 'myCommandDependency'
+    myEventDependency: 'myEventDependency'
+  }
 
   STATES: {
     creatingCustomer: 'creatingCustomer'
@@ -139,6 +185,8 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
   # =========== COMMAND HANDLERS =============
 
   _registerCustomer: (command) ->
+    @myCommandDependency()
+
     if command.customerName == 'MyStrangeCustomerName'
       throw new CustomerApp.InvalidCustomerName(command.customerName)
 
@@ -155,6 +203,8 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
   # =========== EXTERNAL EVENT HANDLERS =============
 
   _onCustomerCreated: (event) ->
+    @myEventDependency()
+
     @trigger new CustomerApp.SendWelcomeEmail {
       targetId: @customerId
       customerId: @customerId
@@ -171,6 +221,8 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
   # =========== INTERNAL EVENT HANDLERS =============
 
   _onRegistrationInitiated: (event) ->
+    @myEventDependency()
+
     @_assignFields(event)
     @_state = @STATES.creatingCustomer
 
@@ -194,6 +246,10 @@ class CustomerApp.CustomerRouter extends Space.eventSourcing.Router
 
   eventSourceable: CustomerApp.Customer
   initializingMessage: CustomerApp.CreateCustomer
+
+  routeCommands: [
+    CustomerApp.ChangeCustomerName
+  ]
 
 class CustomerApp.EmailRouter extends Space.Object
 
