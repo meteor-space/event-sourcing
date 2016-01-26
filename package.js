@@ -77,7 +77,7 @@ Package.onTest(function(api) {
     'tests/infrastructure/messaging.tests.coffee',
     'tests/infrastructure/handling-domain-errors.tests.js',
     // INTEGRATION
-    'tests/integration/aggregate_dependency_injection.coffee'
+    'tests/integration/event-sourceable_dependency_injection.js'
   ], 'server');
 
 });
