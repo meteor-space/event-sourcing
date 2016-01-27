@@ -4,13 +4,13 @@ describe("Space.eventSourcing - snapshotting", function() {
     this.registrationId = 'registration123';
     this.customerId = 'customer543';
     this.customerName = 'TestName';
-    this.app = new CustomerApp();
+    this.app = new Test.App();
     this.app.reset();
   });
 
   it("generates correct snapshots", function() {
     this.app.start();
-    this.app.send(new CustomerApp.RegisterCustomer({
+    this.app.send(new Test.RegisterCustomer({
       targetId: this.registrationId,
       customerId: this.customerId,
       customerName: this.customerName
