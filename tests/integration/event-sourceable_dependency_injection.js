@@ -16,7 +16,7 @@ describe("Space.eventSourcing.Aggregate - dependency injection", function() {
     this.app.start();
     this.app.commandBus.send(command);
 
-    expect(CustomerApp.myAggregateDependency).to.have.been.calledTwice;
+    expect(CustomerApp.myAggregateDependency).to.have.been.calledOnce;
   });
 
   it("injects dependency into existing aggregate", function() {
@@ -34,7 +34,7 @@ describe("Space.eventSourcing.Aggregate - dependency injection", function() {
     this.app.commandBus.send(createCommand);
     this.app.commandBus.send(changeCommand);
 
-    expect(CustomerApp.myAggregateDependency).to.have.been.callCount(4);
+    expect(CustomerApp.myAggregateDependency).to.have.been.callCount(2);
   });
 });
 
@@ -63,6 +63,6 @@ describe("Space.eventSourcing.Process - dependency injection", function() {
     this.app.commandBus.send(command);
 
     expect(CustomerApp.myProcessDependency).to.have.been.calledThrice;
-    expect(CustomerApp.myAggregateDependency).to.have.been.calledTwice;
+    expect(CustomerApp.myAggregateDependency).to.have.been.calledOnce;
   });
 });

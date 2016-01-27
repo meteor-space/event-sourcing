@@ -133,14 +133,9 @@ class CustomerApp.Customer extends Space.eventSourcing.Aggregate
   }
 
   eventMap: -> {
-    'CustomerApp.CustomerCreated': (event) ->
-      @myAggregateDependency()
+    'CustomerApp.CustomerCreated': (event) -> @name = event.customerName
 
-      @name = event.customerName
-    'CustomerApp.CustomerNameChanged': (event) ->
-      @myAggregateDependency()
-
-      @name = event.customerName
+    'CustomerApp.CustomerNameChanged': (event) -> @name = event.customerName
   }
 
 CustomerApp.Customer.registerSnapshotType 'CustomerApp.CustomerSnapshot'
