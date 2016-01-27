@@ -13,9 +13,8 @@ describe("Space.eventSourcing.Aggregate - dependency injection", function() {
       name: 'MyStrangeCustomerName'
     });
 
-    let app = new CustomerApp();
-    app.start();
-    app.commandBus.send(command);
+    this.app.start();
+    this.app.commandBus.send(command);
 
     expect(CustomerApp.myAggregateDependency).to.have.been.calledTwice;
   });
@@ -31,10 +30,9 @@ describe("Space.eventSourcing.Aggregate - dependency injection", function() {
       name: 'MyEvenStrangerCustomerName'
     });
 
-    let app = new CustomerApp();
-    app.start();
-    app.commandBus.send(createCommand);
-    app.commandBus.send(changeCommand);
+    this.app.start();
+    this.app.commandBus.send(createCommand);
+    this.app.commandBus.send(changeCommand);
 
     expect(CustomerApp.myAggregateDependency).to.have.been.callCount(4);
   });
@@ -61,9 +59,8 @@ describe("Space.eventSourcing.Process - dependency injection", function() {
       customerName: this.customerName
     });
 
-    let app = new CustomerApp();
-    app.start();
-    app.commandBus.send(command);
+    this.app.start();
+    this.app.commandBus.send(command);
 
     expect(CustomerApp.myProcessDependency).to.have.been.calledThrice;
     expect(CustomerApp.myAggregateDependency).to.have.been.calledTwice;
