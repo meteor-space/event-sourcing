@@ -58,9 +58,10 @@ describe("Space.eventSourcing.Process - dependency injection", function() {
   });
 
   it("injects dependency into process", function() {
-    let command = new CustomerApp.CreateCustomer({
-      targetId: new Guid(),
-      name: 'MyStrangeCustomerName'
+    let command = new CustomerApp.RegisterCustomer({
+      targetId: this.registrationId,
+      customerId: this.customerId,
+      customerName: this.customerName
     });
 
     let app = new CustomerApp();
