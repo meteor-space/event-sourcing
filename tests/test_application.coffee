@@ -216,13 +216,13 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
     }
 
   _onWelcomeEmailSent: ->
+    @myEventDependency()
+
     @record new CustomerApp.RegistrationCompleted sourceId: @getId()
 
   # =========== INTERNAL EVENT HANDLERS =============
 
   _onRegistrationInitiated: (event) ->
-    @myEventDependency()
-
     @_assignFields(event)
     @_state = @STATES.creatingCustomer
 
