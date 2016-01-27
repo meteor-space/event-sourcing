@@ -33,11 +33,11 @@ class @CustomerApp extends Space.Application
     'CustomerApp.CustomerRegistrationProjection'
   ]
   onInitialize: ->
-    @injector.map('myCommandDependency').toStaticValue(
-      CustomerApp.myCommandDependency
+    @injector.map('myAggregateDependency').toStaticValue(
+      CustomerApp.myAggregateDependency
     )
-    @injector.map('myEventDependency').toStaticValue(
-      CustomerApp.myEventDependency
+    @injector.map('myProcessDependency').toStaticValue(
+      CustomerApp.myProcessDependency
     )
 
   afterInitialize: ->
@@ -48,8 +48,8 @@ class @CustomerApp extends Space.Application
 
 # -------------- DEPENDENCIES ---------------
 
-CustomerApp.myCommandDependency = sinon.spy()
-CustomerApp.myEventDependency = sinon.spy()
+CustomerApp.myAggregateDependency = sinon.spy()
+CustomerApp.myProcessDependency = sinon.spy()
 
 
 # -------------- COMMANDS ---------------
@@ -107,8 +107,7 @@ Space.Error.extend CustomerApp, 'InvalidCustomerName', {
 class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
   dependencies: {
-    myCommandDependency: 'myCommandDependency'
-    myEventDependency: 'myEventDependency'
+    myAggregateDependency: 'myAggregateDependency'
   }
 
   fields: {
@@ -117,7 +116,7 @@ class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
   commandMap: -> {
     'CustomerApp.CreateCustomer': (command) ->
-      @myCommandDependency()
+      @myAggregateDependency()
 
       @record new CustomerApp.CustomerCreated {
         sourceId: @getId()
@@ -125,7 +124,7 @@ class CustomerApp.Customer extends Space.eventSourcing.Aggregate
       }
 
     'CustomerApp.ChangeCustomerName': (command) ->
-      @myCommandDependency()
+      @myAggregateDependency()
 
       @record new CustomerApp.CustomerNameChanged {
         sourceId: @getId()
@@ -135,11 +134,11 @@ class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
   eventMap: -> {
     'CustomerApp.CustomerCreated': (event) ->
-      @myEventDependency()
+      @myAggregateDependency()
 
       @name = event.customerName
     'CustomerApp.CustomerNameChanged': (event) ->
-      @myEventDependency()
+      @myAggregateDependency()
 
       @name = event.customerName
   }
@@ -153,8 +152,7 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
   @type 'CustomerApp.CustomerRegistration'
 
   dependencies: {
-    myCommandDependency: 'myCommandDependency'
-    myEventDependency: 'myEventDependency'
+    myProcessDependency: 'myProcessDependency'
   }
 
   STATES: {
@@ -185,7 +183,7 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
   # =========== COMMAND HANDLERS =============
 
   _registerCustomer: (command) ->
-    @myCommandDependency()
+    @myProcessDependency()
 
     if command.customerName == 'MyStrangeCustomerName'
       throw new CustomerApp.InvalidCustomerName(command.customerName)
@@ -203,7 +201,7 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
   # =========== EXTERNAL EVENT HANDLERS =============
 
   _onCustomerCreated: (event) ->
-    @myEventDependency()
+    @myProcessDependency()
 
     @trigger new CustomerApp.SendWelcomeEmail {
       targetId: @customerId
@@ -216,7 +214,7 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
     }
 
   _onWelcomeEmailSent: ->
-    @myEventDependency()
+    @myProcessDependency()
 
     @record new CustomerApp.RegistrationCompleted sourceId: @getId()
 

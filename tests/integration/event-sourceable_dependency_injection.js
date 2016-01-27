@@ -1,8 +1,7 @@
 describe("Space.eventSourcing.Aggregate - dependency injection", function() {
 
   beforeEach(function (){
-    CustomerApp.myCommandDependency = sinon.spy();
-    CustomerApp.myEventDependency = sinon.spy();
+    CustomerApp.myAggregateDependency = sinon.spy();
 
     this.app = new CustomerApp();
     this.app.reset();
@@ -18,8 +17,7 @@ describe("Space.eventSourcing.Aggregate - dependency injection", function() {
     app.start();
     app.commandBus.send(command);
 
-    expect(CustomerApp.myCommandDependency).to.have.been.calledOnce;
-    expect(CustomerApp.myEventDependency).to.have.been.calledOnce;
+    expect(CustomerApp.myAggregateDependency).to.have.been.calledTwice;
   });
 
   it("injects dependency into existing aggregate", function() {
@@ -38,16 +36,15 @@ describe("Space.eventSourcing.Aggregate - dependency injection", function() {
     app.commandBus.send(createCommand);
     app.commandBus.send(changeCommand);
 
-    expect(CustomerApp.myCommandDependency).to.have.been.calledTwice;
-    expect(CustomerApp.myEventDependency).to.have.been.calledTwice;
+    expect(CustomerApp.myAggregateDependency).to.have.been.callCount(4);
   });
 });
 
 describe("Space.eventSourcing.Process - dependency injection", function() {
 
   beforeEach(function (){
-    CustomerApp.myCommandDependency = sinon.spy();
-    CustomerApp.myEventDependency = sinon.spy();
+    CustomerApp.myProcessDependency = sinon.spy();
+    CustomerApp.myAggregateDependency = sinon.spy();
 
     this.registrationId = 'registration123';
     this.customerId = 'customer543';
@@ -68,7 +65,7 @@ describe("Space.eventSourcing.Process - dependency injection", function() {
     app.start();
     app.commandBus.send(command);
 
-    expect(CustomerApp.myCommandDependency).to.have.been.calledOnce;
-    expect(CustomerApp.myEventDependency).to.have.been.called;
+    expect(CustomerApp.myProcessDependency).to.have.been.calledThrice;
+    expect(CustomerApp.myAggregateDependency).to.have.been.calledTwice;
   });
 });
