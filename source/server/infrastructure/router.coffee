@@ -57,7 +57,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
                   #{event.typeName()}\n", event)
         eventSourceable = @_handleDomainErrors(->
           instance = new @eventSourceable(event.sourceId)
-          @_injectDependencies(instance)
+          @injector.injectInto(instance)
           instance.handle(event)
           return instance
         )
@@ -68,7 +68,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
                   #{cmd.typeName()}\n", cmd)
         eventSourceable = @_handleDomainErrors(->
           instance = new @eventSourceable(cmd.targetId)
-          @_injectDependencies(instance)
+          @injector.injectInto(instance)
           instance.handle(cmd)
           return instance
         )
@@ -87,7 +87,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     @log.info(@_logMsg("Handling event #{event.typeName()} for
                        #{@eventSourceable}<#{correlationId}>\n"), event)
     eventSourceable = @repository.find @eventSourceable, correlationId
-    @_injectDependencies(eventSourceable)
+    @injector.injectInto(eventSourceable)
     throw Router.ERRORS.cannotHandleMessage(event) if !eventSourceable?
     eventSourceable = @_handleDomainErrors(-> eventSourceable.handle event)
     @repository.save(eventSourceable) if eventSourceable?
@@ -97,13 +97,10 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     @log.info(@_logMsg("Handling command #{command.typeName()} for
                        #{@eventSourceable}<#{command.targetId}>"), command)
     eventSourceable = @repository.find @eventSourceable, command.targetId
-    @_injectDependencies(eventSourceable)
+    @injector.injectInto(eventSourceable)
     throw Router.ERRORS.cannotHandleMessage(command) if !eventSourceable?
     eventSourceable = @_handleDomainErrors(-> eventSourceable.handle command)
     @repository.save(eventSourceable) if eventSourceable?
-
-  _injectDependencies: (eventSourceable) ->
-    @injector.injectInto(eventSourceable)
 
   _logMsg: (message) -> "#{@configuration.appId}: #{this}: #{message}"
 
