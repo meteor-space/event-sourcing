@@ -1,7 +1,7 @@
 Package.describe({
   summary: 'Event Sourcing Infrastructure for Meteor.',
   name: 'space:event-sourcing',
-  version: '2.1.0',
+  version: '3.0.0',
   git: 'https://github.com/meteor-space/event-sourcing.git'
 });
 
@@ -18,8 +18,8 @@ Package.onUse(function(api) {
     'ecmascript',
     'mikowals:batch-insert@1.1.9',
     'fongandrew:find-and-modify@0.2.1',
-    'space:base@4.0.1',
-    'space:messaging@3.0.1',
+    'space:base@4.1.1',
+    'space:messaging@3.1.0',
     'space:domain@0.2.1'
   ]);
 
