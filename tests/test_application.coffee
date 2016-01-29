@@ -6,65 +6,89 @@ via the new configuration api introduced in space:base.
 
 class @CustomerApp extends Space.Application
 
-  RequiredModules: ['Space.eventSourcing']
+  @publish this, 'CustomerApp'
 
-  Dependencies: {
-    commandBus: 'Space.messaging.CommandBus'
-    eventBus: 'Space.messaging.EventBus'
-    Mongo: 'Mongo'
+  requiredModules: ['Space.eventSourcing']
+
+  dependencies: {
+    mongo: 'Mongo'
   }
 
-  Configuration: {
-    useSnapshotting: true
+  configuration: {
+    appId: 'CustomerApp'
+    eventSourcing: {
+      snapshotting: {
+        frequency: 2
+      }
+    }
   }
 
-  Singletons: [
+  routers: [
     'CustomerApp.CustomerRegistrationRouter'
     'CustomerApp.CustomerRouter'
     'CustomerApp.EmailRouter'
+  ]
+
+  projections: [
     'CustomerApp.CustomerRegistrationProjection'
   ]
 
-  beforeStart: ->
-    @injector.map('CustomerApp.CustomerRegistrations').to new @Mongo.Collection(null)
-    if @Configuration.useSnapshotting
-      @snapshots = new @Mongo.Collection(null)
-      @snapshotter = new Space.eventSourcing.Snapshotter {
-        collection: @snapshots
-        versionFrequency: 2
-      }
+  afterInitialize: ->
+    @injector.map('CustomerApp.CustomerRegistrations').to new @mongo.Collection(null)
 
-  afterStart: ->
-    @reset()
-    if @Configuration.useSnapshotting
-      @injector.get('Space.eventSourcing.Repository').useSnapshotter @snapshotter
+  onReset: ->
+    @injector.get('CustomerApp.CustomerRegistrations').remove {}
 
 # -------------- COMMANDS ---------------
 
-Space.messaging.define Space.messaging.Command, 'CustomerApp', {
-  RegisterCustomer: { customerId: String, customerName: String }
-  CreateCustomer: { name: String }
-  HandleNewCustomer: { customerId: String }
-  SendWelcomeEmail: { customerId: String, customerName: String }
-  MarkRegistrationAsComplete: {}
+Space.messaging.define Space.domain.Command, 'CustomerApp', {
+  RegisterCustomer: {
+    customerId: String,
+    customerName: String
+  }
+  CreateCustomer: {
+    name: String
+  }
+  SendWelcomeEmail: {
+    customerId: String,
+    customerName: String
+  }
 }
 
 # --------------- EVENTS ---------------
 
-Space.messaging.define Space.messaging.Event, 'CustomerApp', {
-  RegistrationInitiated: { customerId: String, customerName: String }
-  CustomerCreated: { customerName: String }
-  WelcomeEmailTriggered: { customerId: String }
-  WelcomeEmailSent: { email: String, customerId: String }
+Space.messaging.define Space.domain.Event, 'CustomerApp', {
+  RegistrationInitiated: {
+    customerId: String,
+    customerName: String
+  }
+  CustomerCreated: {
+    customerName: String
+  }
+  WelcomeEmailTriggered: {
+    customerId: String
+  }
+  WelcomeEmailSent: {
+    email: String,
+    customerId: String
+  }
   RegistrationCompleted: {}
+}
+
+# --------------- EXCEPTIONS ---------------
+
+Space.Error.extend CustomerApp, 'InvalidCustomerName', {
+  Constructor: (name) ->
+    Space.Error.call(this, "Invalid customer name <#{name}>")
+    this.stack = null # Make it easier to test this
 }
 
 # -------------- AGGREGATES ---------------
 
 class CustomerApp.Customer extends Space.eventSourcing.Aggregate
 
-  FIELDS: {
-    name: null
+  fields: {
+    name: String
   }
 
   commandMap: -> {
@@ -79,34 +103,45 @@ class CustomerApp.Customer extends Space.eventSourcing.Aggregate
     'CustomerApp.CustomerCreated': (event) -> @name = event.customerName
   }
 
+CustomerApp.Customer.registerSnapshotType 'CustomerApp.CustomerSnapshot'
+
 # -------------- PROCESSES ---------------
 
 class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
 
-  FIELDS: {
-    customerId: null
-    customerName: null
-  }
+  @type 'CustomerApp.CustomerRegistration'
 
   STATES: {
-    creatingCustomer: 0
-    sendingWelcomeEmail: 1
-    completed: 2
+    creatingCustomer: 'creatingCustomer'
+    sendingWelcomeEmail: 'sendingWelcomeEmail'
+    completed: 'completed'
   }
+
+  fields: {
+    customerId: String
+    customerName: String
+  }
+
+  eventCorrelationProperty: 'customerRegistrationId'
 
   commandMap: -> {
     'CustomerApp.RegisterCustomer': @_registerCustomer
-    'CustomerApp.HandleNewCustomer': @_handleNewCustomer
-    'CustomerApp.MarkRegistrationAsComplete': @_markAsComplete
   }
 
   eventMap: -> {
     'CustomerApp.RegistrationInitiated': @_onRegistrationInitiated
-    'CustomerApp.WelcomeEmailTriggered': -> @_state = @STATES.sendingWelcomeEmail
-    'CustomerApp.RegistrationCompleted': -> @_state = @STATES.completed
+    'CustomerApp.CustomerCreated': @_onCustomerCreated
+    'CustomerApp.WelcomeEmailTriggered': @_onWelcomeEmailTriggered
+    'CustomerApp.WelcomeEmailSent': @_onWelcomeEmailSent
+    'CustomerApp.RegistrationCompleted': @_onRegistrationCompleted
   }
 
+  # =========== COMMAND HANDLERS =============
+
   _registerCustomer: (command) ->
+    if command.customerName == 'MyStrangeCustomerName'
+      throw new CustomerApp.InvalidCustomerName(command.customerName)
+
     @trigger new CustomerApp.CreateCustomer {
       targetId: command.customerId
       name: command.customerName
@@ -117,10 +152,12 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
       customerName: command.customerName
     }
 
-  _handleNewCustomer: (command) ->
+  # =========== EXTERNAL EVENT HANDLERS =============
+
+  _onCustomerCreated: (event) ->
     @trigger new CustomerApp.SendWelcomeEmail {
       targetId: @customerId
-      customerId: command.customerId
+      customerId: @customerId
       customerName: @customerName
     }
     @record new CustomerApp.WelcomeEmailTriggered {
@@ -128,48 +165,35 @@ class CustomerApp.CustomerRegistration extends Space.eventSourcing.Process
       customerId: @customerId
     }
 
-  _markAsComplete: -> @record new CustomerApp.RegistrationCompleted sourceId: @getId()
+  _onWelcomeEmailSent: ->
+    @record new CustomerApp.RegistrationCompleted sourceId: @getId()
+
+  # =========== INTERNAL EVENT HANDLERS =============
 
   _onRegistrationInitiated: (event) ->
-    { @customerId, @customerName } = event
+    @_assignFields(event)
     @_state = @STATES.creatingCustomer
+
+  _onWelcomeEmailTriggered: -> @_state = @STATES.sendingWelcomeEmail
+
+  _onRegistrationCompleted: -> @_state = @STATES.completed
+
+CustomerApp.CustomerRegistration.registerSnapshotType 'CustomerApp.CustomerRegistrationSnapshot'
 
 # -------------- ROUTERS --------------- #
 
 class CustomerApp.CustomerRegistrationRouter extends Space.eventSourcing.Router
-
-  Dependencies: {
-    registrations: 'CustomerApp.CustomerRegistrations'
-  }
-
-  Aggregate: CustomerApp.CustomerRegistration
-
-  InitializingCommand: CustomerApp.RegisterCustomer
-
-  RouteCommands: [
-    CustomerApp.HandleNewCustomer
-    CustomerApp.MarkRegistrationAsComplete
+  eventSourceable: CustomerApp.CustomerRegistration
+  initializingMessage: CustomerApp.RegisterCustomer
+  routeEvents: [
+    CustomerApp.CustomerCreated
+    CustomerApp.WelcomeEmailSent
   ]
-
-  eventSubscriptions: -> [
-    'CustomerApp.CustomerCreated': (event) ->
-      @send new CustomerApp.HandleNewCustomer {
-        targetId: @_findRegistrationIdByCustomerId event.sourceId
-        customerId: event.sourceId
-      }
-    'CustomerApp.WelcomeEmailSent': (event) ->
-      @send new CustomerApp.MarkRegistrationAsComplete {
-        targetId: @_findRegistrationIdByCustomerId event.customerId
-      }
-  ]
-
-  _findRegistrationIdByCustomerId: (customerId) ->
-    @registrations.findOne(customerId: customerId)._id
 
 class CustomerApp.CustomerRouter extends Space.eventSourcing.Router
 
-  Aggregate: CustomerApp.Customer
-  InitializingCommand: CustomerApp.CreateCustomer
+  eventSourceable: CustomerApp.Customer
+  initializingMessage: CustomerApp.CreateCustomer
 
 class CustomerApp.EmailRouter extends Space.Object
 
@@ -188,6 +212,7 @@ class CustomerApp.EmailRouter extends Space.Object
         version: 1
         customerId: command.customerId
         email: "Hello #{command.customerName}"
+        meta: command.meta
       }
   ]
 
@@ -195,7 +220,7 @@ class CustomerApp.EmailRouter extends Space.Object
 
 class CustomerApp.CustomerRegistrationProjection extends Space.eventSourcing.Projection
 
-  Dependencies: {
+  dependencies: {
     registrations: 'CustomerApp.CustomerRegistrations'
   }
 

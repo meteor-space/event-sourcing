@@ -3,16 +3,15 @@ class Space.eventSourcing.CommitStore extends Space.Object
 
   @type 'Space.eventSourcing.CommitStore'
 
-  Dependencies:
+  dependencies:
     commits: 'Space.eventSourcing.Commits'
     commitPublisher: 'Space.eventSourcing.CommitPublisher'
-    configuration: 'Configuration'
-    log: 'Space.eventSourcing.Log'
+    configuration: 'configuration'
+    log: 'log'
 
   add: (changes, sourceId, expectedVersion) ->
-
-    @log "#{this}: Adding commit for #{changes.aggregateType}<#{sourceId}>
-          expected at version #{expectedVersion}"
+    @log.info(@_logMsg("Adding commit for #{changes.aggregateType}<#{sourceId}>
+          expected at version #{expectedVersion}"))
 
     # only continue if there actually ARE changes to be added
     if !changes? or !changes.events or changes.events.length is 0 then return
@@ -37,27 +36,32 @@ class Space.eventSourcing.CommitStore extends Space.Object
       @_setEventVersion(event, newVersion) for event in changes.events
       # serialize events and commands
       serializedChanges = events: [], commands: []
-      serializedChanges.events.push(EJSON.stringify(event)) for event in changes.events
-      serializedChanges.commands.push(EJSON.stringify(command)) for command in changes.commands
+      for event in changes.events
+        serializedChanges.events.push type: event.typeName(), data: event.toData()
+
+      for command in changes.commands
+        serializedChanges.commands.push type: command.typeName(), data: command.toData()
 
       commit = {
         sourceId: sourceId.toString()
         version: newVersion
-        changes: serializedChanges # insert EJSON serialized changes
+        changes: serializedChanges
         insertedAt: new Date()
         eventTypes: @_getEventTypes(changes.events)
         sentBy: @configuration.appId
-        receivedBy: [@configuration.appId]
+        receivers: [{ appId: @configuration.appId, receivedAt: new Date }]
       }
 
       # insert commit with next version
-      @log "#{this}: Inserting commit\n", commit
-      @commits.insert commit
+      @log.info(@_logMsg("Inserting commit"), commit)
+      commitId = @commits.insert commit
 
-      @commitPublisher.publishCommit changes: {
-        events: changes.events
-        commands: changes.commands
-      }
+      @commitPublisher.publishCommit
+        _id: commitId,
+        changes: {
+          events: changes.events
+          commands: changes.commands
+        }
 
     else
 
@@ -65,9 +69,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
       throw new Error "Expected entity <#{sourceId}> to be at version
                       #{expectedVersion} but was on #{currentVersion}"
 
-  getEvents: (sourceId, versionOffset) ->
-
-    versionOffset ?= 1
+  getEvents: (sourceId, versionOffset=1) ->
     events = []
     withVersionOffset = {
       sourceId: sourceId.toString()
@@ -84,7 +86,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
     commits.forEach (commit) =>
       for event in commit.changes.events
         try
-          event = EJSON.parse(event)
+          event = Space.resolvePath(event.type).fromData(event.data)
         catch error
           throw new Error "while parsing commit\nevent:#{event}\nerror:#{error}"
         events.push event
@@ -93,3 +95,6 @@ class Space.eventSourcing.CommitStore extends Space.Object
   _setEventVersion: (event, version) -> event.version = version
 
   _getEventTypes: (events) -> events.map (event) -> event.typeName()
+
+  _logMsg: (message) ->
+    "#{@configuration.appId}: #{this}: #{message}"

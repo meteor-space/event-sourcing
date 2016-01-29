@@ -1,6 +1,6 @@
 
 {Aggregate} = Space.eventSourcing
-{Event, Command} = Space.messaging
+{Event, Command} = Space.domain
 
 describe "Space.eventSourcing.Aggregate", ->
 
@@ -21,7 +21,7 @@ describe "Space.eventSourcing.Aggregate", ->
     @eventHandler = eventHandler = sinon.spy()
     @commandHandler = commandHandler = sinon.spy()
     TestAggregate::eventMap = -> {
-      'Space.messaging.Event': ->
+      'Space.domain.Event': ->
       TestEvent: eventHandler
     }
     TestAggregate::commandMap = -> {
@@ -184,7 +184,7 @@ describe "Space.eventSourcing.Aggregate", ->
 
   describe 'working with state', ->
 
-    class StateChangingEvent extends Space.messaging.Event
+    class StateChangingEvent extends Space.domain.Event
       @toString: -> 'StateChangingEvent'
       typeName: -> 'StateChangingEvent'
 
@@ -201,3 +201,30 @@ describe "Space.eventSourcing.Aggregate", ->
       aggregate = new StateAggregate '123'
       aggregate.handle event
       expect(aggregate.hasState(expectedState)).to.be.true
+
+  describe "simplified props copying", ->
+
+    class MyCommand extends Space.domain.Command
+      @type 'MyCommand'
+      fields: -> _.extend super(), { first: String, second: String }
+
+    class MyEvent extends Space.domain.Event
+      @type 'MyEvent'
+      fields: -> _.extend super(), { first: String, second: String }
+
+    class MyAggregate extends Space.eventSourcing.Aggregate
+      commandMap: -> {
+        'MyCommand': (command) ->
+          @record new MyEvent(@_eventPropsFromCommand(command))
+      }
+
+    it "reduces boilerplate necessary to copy props from commands to events", ->
+      fakeTimers = sinon.useFakeTimers('Date')
+      props = first: 'first', second: 'second'
+      id = '123'
+      aggregate = new MyAggregate '123'
+      aggregate.handle new MyCommand(_.extend({}, props, targetId: id))
+      expect(aggregate.getEvents()).toMatch [
+        new MyEvent _.extend({}, props, sourceId: id, version: 0)
+      ]
+      fakeTimers.restore()

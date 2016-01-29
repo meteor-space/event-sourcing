@@ -1,5 +1,5 @@
 
-{Event, Command} = Space.messaging
+{Event, Command} = Space.domain
 
 class Space.eventSourcing.Aggregate extends Space.Object
 
@@ -10,13 +10,14 @@ class Space.eventSourcing.Aggregate extends Space.Object
   _events: null
   _state: null
   _handlers: null
+  _metaData: null
 
   # Override to define which custom properties this aggregate has
-  FIELDS: {}
+  fields: {}
 
   ERRORS: {
     guidRequired: "#{Aggregate}: Aggregate needs an GUID on creation."
-    domainEventRequired: "#{Aggregate}: Event must inherit from Space.messaging.Event"
+    domainEventRequired: "#{Aggregate}: Event must inherit from Space.domain.Event"
     cannotHandleMessage: "#{Aggregate}: Cannot handle: "
     invalidEventSourceId: "#{Aggregate}: The given event has an invalid source id."
   }
@@ -25,15 +26,22 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   @createFromSnapshot: (snapshot) -> new this(snapshot.id, snapshot, true)
 
+  @registerSnapshotType: (id) ->
+    fields = {}
+    fields[field] = type for field, type of this::fields
+    @_snapshotType = Space.eventSourcing.Snapshot.extend id, {
+      fields: ->
+        superFields = Space.eventSourcing.Snapshot::fields()
+        return _.extend(superFields, fields)
+    }
+
   constructor: (id, data, isSnapshot) ->
     unless id? then throw new Error Aggregate::ERRORS.guidRequired
-    # Initialize properties
+    # This aggregate is created from a command -> assign targetId
     @_id = if (id instanceof Command) then id.targetId else id
     @_events = []
     @_handlers = {}
-    # Apply default values for fields
-    fields = @FIELDS
-    (this[field] = fields[field]) for field of fields
+    @fields.meta = Match.Optional(Object)
     # Setup event and command handlers
     @_setupHandlers()
     # Bootstrap the aggregate
@@ -50,21 +58,24 @@ class Space.eventSourcing.Aggregate extends Space.Object
   getEvents: -> @_events
 
   getSnapshot: ->
-    snapshot = {}
-    snapshot.id = @_id
-    snapshot.state = @_state
-    snapshot.version = @_version
-    (snapshot[field] = this[field]) for field of @FIELDS
-    return snapshot
+    data = {}
+    data.id = @_id
+    data.state = @_state
+    data.version = @_version
+    (data[field] = this[field]) for field of @fields when this[field] != undefined
+    return new @constructor._snapshotType(data)
 
   applySnapshot: (snapshot) ->
     if not snapshot? then throw new Error "Invalid snapshot: #{snapshot}"
     @_id = snapshot.id
     @_state = snapshot.state
     @_version = snapshot.version
-    (this[field] = snapshot[field]) for field of @FIELDS
+    (this[field] = snapshot[field]) for field of @fields when snapshot[field] != undefined
 
   record: (event) ->
+    if this.meta? or @_metaData?
+      event.meta ?= {}
+      _.extend(event.meta, this.meta ? {}, @_metaData ? {})
     @_validateEvent event
     @_events.push event
     @handle(event) if @hasHandlerFor(event)
@@ -79,7 +90,10 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   replayHistory: (history) -> @replay(event) for event in history
 
-  handle: (message) -> @_getHandler(message).call this, message
+  handle: (message) ->
+    @_metaData = message.meta ? null
+    @_getHandler(message).call this, message
+    return this
 
   hasState: (state) -> if state? then @_state == state else @_state?
 
@@ -107,3 +121,13 @@ class Space.eventSourcing.Aggregate extends Space.Object
 
   _updateToEventVersion: (event) ->
     if event.version? then @_version = event.version
+
+  _eventPropsFromCommand: (command) ->
+    props = {}
+    for key of command.fields() when key != 'targetId'
+      props[key] = command[key] if command[key] != undefined
+    props.sourceId = command.targetId
+    props.version = @getVersion()
+    return props
+
+  _assignFields: (event) -> _.extend this, _.pick(event, _.keys(this.fields))

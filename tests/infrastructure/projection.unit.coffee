@@ -1,8 +1,10 @@
 
 describe 'Space.eventSourcing.Projection', ->
 
-  class TestEvent extends Space.messaging.Event
+  class TestEvent extends Space.domain.Event
+    @type 'Space.messaging.TestEvent'
   class TestProjection extends Space.eventSourcing.Projection
+    @type 'Space.eventSourcing.TestProjection'
 
   beforeEach ->
     @handler = sinon.spy()
@@ -15,20 +17,26 @@ describe 'Space.eventSourcing.Projection', ->
     @projection.subscribe TestEvent, @handler
     @testEvent = new TestEvent()
 
-  describe 'replay mode', ->
+  describe 'projection state', ->
 
-    it 'does not handle normal events', ->
-      @projection.enterReplayMode()
+    it 'handles events by default', ->
+      @projection.on @testEvent
+      expect(@handler).to.have.been.called
+
+  describe 'rebuild mode', ->
+
+    it 'does not handle non-rebuild in real-time', ->
+      @projection.enterRebuildMode()
       @projection.on @testEvent
       expect(@handler).not.to.have.been.called
 
-    it 'handles replayed events', ->
-      @projection.enterReplayMode()
-      @projection.on @testEvent, true # replay=true
+    it 'handles rebuild events', ->
+      @projection.enterRebuildMode()
+      @projection.on @testEvent, true # isRebuildEvent=true
       expect(@handler).to.have.been.calledWithExactly @testEvent
 
-    it 'handles queued events when exiting replay mode', ->
-      @projection.enterReplayMode()
+    it 'handles queued events when exiting rebuild mode', ->
+      @projection.enterRebuildMode()
       @projection.on @testEvent
-      @projection.exitReplayMode()
+      @projection.exitRebuildMode()
       expect(@handler).to.have.been.calledWithExactly @testEvent

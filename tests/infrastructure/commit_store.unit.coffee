@@ -1,7 +1,7 @@
 
 CommitStore = Space.eventSourcing.CommitStore
-Event = Space.messaging.Event
-Command = Space.messaging.Command
+Event = Space.domain.Event
+Command = Space.domain.Command
 
 # =========== TEST DATA ========== #
 
@@ -27,21 +27,25 @@ class TotalChangedEvent extends Event
 describe "Space.eventSourcing.CommitStore", ->
 
   beforeEach ->
+    @clock = sinon.useFakeTimers(Date.now(), 'Date')
     @appId = 'TestApp'
     @commitStore = new CommitStore {
       commits: new Mongo.Collection(null)
       commitPublisher: publishCommit: sinon.spy()
       configuration: { appId: @appId }
-      log: ->
+      log: Space.log
     }
+
+  afterEach ->
+    @clock.restore()
 
   describe '#add', ->
 
-    it 'inserts changes as serialized and versioned commit', ->
+    it 'inserts changes as serialized and versioned commit, then publishes within the current app', ->
 
       sourceId = '123'
       testEvent = new TestEvent sourceId: sourceId
-      testCommand = new TestCommand sourceId: sourceId
+      testCommand = new TestCommand targetId: sourceId
 
       changes = events: [testEvent], commands: [testCommand]
       expectedVersion = 0
@@ -56,11 +60,11 @@ describe "Space.eventSourcing.CommitStore", ->
         sourceId: sourceId
         version: newVersion
         changes:
-          events: [EJSON.stringify(testEvent)]
-          commands: [EJSON.stringify(testCommand)]
+          events: [type: testEvent.typeName(), data: testEvent.toData()]
+          commands: [type: testCommand.typeName(), data: testCommand.toData()]
         insertedAt: sinon.match.date
         sentBy: @appId
-        receivedBy: [@appId]
+        receivers: [{ appId: @appId, receivedAt: new Date() }]
         eventTypes: [TestEvent.toString()]
       }
 
@@ -75,40 +79,35 @@ describe "Space.eventSourcing.CommitStore", ->
 
     it 'returns all events versioned by batch for given aggregate', ->
 
-      fakeTimers = sinon.useFakeTimers('Date')
       sourceId = '123'
-      firstChanges = events: [new CreatedEvent sourceId: sourceId]
+      firstEvent = new CreatedEvent sourceId: sourceId
+      secondEvent = new QuantityChangedEvent sourceId: sourceId, quantity: 1
+      thirdEvent = new TotalChangedEvent sourceId: sourceId, total: 10
 
-      secondChanges = events: [
-        new QuantityChangedEvent sourceId: sourceId, quantity: 1
-        new TotalChangedEvent sourceId: sourceId, total: 10
-      ]
-
-      @commitStore.add firstChanges, sourceId, 0
-      @commitStore.add secondChanges, sourceId, 1
+      @commitStore.add { events: [firstEvent] }, sourceId, 0
+      @commitStore.add { events: [secondEvent, thirdEvent] }, sourceId, 1
 
       events = @commitStore.getEvents sourceId
 
-      for event in events
-        expect(event).to.be.instanceof Event
+      expect(event).to.be.instanceof(Event) for event in events
 
-      expect(events).toMatch [
-        new CreatedEvent sourceId: sourceId, version: 1
-        new QuantityChangedEvent sourceId: sourceId, quantity: 1, version: 2
-        new TotalChangedEvent sourceId: sourceId, total: 10, version: 2
-      ]
-      fakeTimers.restore()
+      # Set expected versions of the events
+      firstEvent.version = 1
+      secondEvent.version = thirdEvent.version = 2
+      expect(events).toMatch [firstEvent, secondEvent, thirdEvent]
 
     it 'skips events if a version offset is given', ->
 
       sourceId = '123'
       versionOffset = 2
-      @commitStore.add {events: [new CreatedEvent sourceId: sourceId]}, sourceId, 0
-      @commitStore.add {events: [new QuantityChangedEvent sourceId: sourceId, quantity: 1]}, sourceId, 1
-      @commitStore.add {events: [new TotalChangedEvent sourceId: sourceId, total: 10]}, sourceId, 2
+      firstEvent = new CreatedEvent sourceId: sourceId
+      secondEvent = new QuantityChangedEvent sourceId: sourceId, quantity: 1
+      thirdEvent = new TotalChangedEvent sourceId: sourceId, total: 10
+      @commitStore.add {events: [firstEvent]}, sourceId, 0
+      @commitStore.add {events: [secondEvent]}, sourceId, 1
+      @commitStore.add {events: [thirdEvent]}, sourceId, 2
 
       events = @commitStore.getEvents sourceId, versionOffset
-      expect(events).toMatch [
-        new QuantityChangedEvent sourceId: sourceId, quantity: 1, version: 2
-        new TotalChangedEvent sourceId: sourceId, total: 10, version: 3
-      ]
+      secondEvent.version = 2
+      thirdEvent.version = 3
+      expect(events).toMatch [secondEvent, thirdEvent]

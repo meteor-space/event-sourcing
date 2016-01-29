@@ -1,6 +1,6 @@
 
 Process = Space.eventSourcing.Process
-Event = Space.messaging.Event
+Event = Space.domain.Event
 
 describe "Space.eventSourcing.Process", ->
 
@@ -11,7 +11,7 @@ describe "Space.eventSourcing.Process", ->
     @handler = handler = sinon.spy()
 
     class TestProcess extends Process
-      handlers: -> 'Space.messaging.Event': handler
+      handlers: -> 'Space.domain.Event': handler
 
     @processManager = new TestProcess '123'
 
