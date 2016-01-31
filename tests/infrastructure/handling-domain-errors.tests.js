@@ -1,7 +1,7 @@
 describe("Space.eventSourcing - Handling domain errors", function() {
 
   it("publishes them as exception event", function() {
-    let registrationId = 'reg123';
+    const registrationId = 'reg123';
     Test.App.test(Test.Customer)
     .given(
       new Test.RegisterCustomer({

@@ -15,9 +15,9 @@ describe("Space.eventSourcing - snapshotting", function() {
       customerId: this.customerId,
       customerName: this.customerName
     }));
-    let snapshots = this.app.injector.get('Space.eventSourcing.Snapshots').find().fetch();
-    let customerRegSnapshot = EJSON.parse(snapshots[0].snapshot);
-    let customerSnapshot = EJSON.parse(snapshots[1].snapshot);
+    const snapshots = this.app.injector.get('Space.eventSourcing.Snapshots').find().fetch();
+    const customerRegSnapshot = EJSON.parse(snapshots[0].snapshot);
+    const customerSnapshot = EJSON.parse(snapshots[1].snapshot);
     expect(customerRegSnapshot).toMatch({ id: 'registration123',
       version: 3,
       state: 'completed',
