@@ -132,15 +132,19 @@ in his great book [Domain-Driven Design: Tackling Complexity in the Heart of Sof
 
 *More and better documentation is coming soon …*
 
-`meteor-space/event-sourcing` is a very simple implementation of a (non-distributed) version of the DDD + CQRS + Event Sourcing patterns. It provides a base class for event-sourced [Aggregates](http://martinfowler.com/bliki/DDD_Aggregate.html) and [ProcessManagers](https://msdn.microsoft.com/en-us/library/jj591569.aspx) as well as serializable [ValueObjects](http://martinfowler.com/bliki/ValueObject.html) to model your business domain.
+`meteor:event-sourcing` provides distributed Event Sourcing infrastructure,
+with CQRS and DDD patterns in mind. It provides a base class for event-sourced [Aggregates](http://martinfowler.com/bliki/DDD_Aggregate.html)
+and [ProcessManagers](https://msdn.microsoft.com/en-us/library/jj591569.aspx), and pairs nicely with `space:domain` to model
+your business domain with Entities,
+[ValueObjects](http://martinfowler.com/bliki/ValueObject.html), and Domain Events.
 
-It also provides a (currently) extremely basic implementation of a MongoDB based [EventStore](https://msdn.microsoft.com/en-us/library/jj591559.aspx) which works
-a little bit different than "normal" event store implementations because MongoDB
-doesn't support transactions. To circumvent this downside of MongoDB this package
-uses the concept of a `commit` which bundles multiple `events` and `commands`
-together into one "transaction" commit. [Here is a short blog article](http://blingcode.blogspot.co.at/2010/12/cqrs-building-transactional-event-store.html) talking about the basic concept.
+It also provides a MongoDB based distributed EventStore which works a little bit different
+than "normal" event store implementations because MongoDB doesn't support transactions.
+To circumvent this, the concept of a commit is used, which bundles multiple events and
+commands together into one "transaction" commit. [Here is a short blog article](http://blingcode.blogspot.co.at/2010/12/cqrs-building-transactional-event-store.html)
+talking about the basic concept.
 
-It heavily uses the `space-messaging` package for Meter `EJSON` and
+It heavily uses the `space-messaging` package for Metoer `EJSON` and
 runtime-`check`ed domain events and commands that are automatically serialized
 into the MongoDB and restored for you. So you don't have to deal with
 serialization concerns anywhere but within your value objects.
