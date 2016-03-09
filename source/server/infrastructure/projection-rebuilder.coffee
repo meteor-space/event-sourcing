@@ -4,8 +4,10 @@ class Space.eventSourcing.ProjectionRebuilder extends Space.Object
 
   dependencies: {
     commitStore: 'Space.eventSourcing.CommitStore'
+    configuration: 'configuration'
     injector: 'Injector'
     mongo: 'Mongo'
+    log: 'log'
   }
 
   rebuild: (projections, options) ->
@@ -42,7 +44,7 @@ class Space.eventSourcing.ProjectionRebuilder extends Space.Object
       if inMemoryData.length
         realCollection.batchInsert inMemoryData
       else
-        throw new Error "No data to insert after replaying events for #{collectionId}"
+        @log.info(@_logMsg("No data to insert after replaying events for #{collectionId}"))
       # Restore original collections
       @injector.override(collectionId).to realCollection
 
@@ -54,3 +56,6 @@ class Space.eventSourcing.ProjectionRebuilder extends Space.Object
     for property, id of projection.collections
       collectionIds.push(id) if projection[property]
     return collectionIds
+
+  _logMsg: (message) ->
+    "#{@configuration.appId}: #{this}: #{message}"
