@@ -44,7 +44,7 @@ class Space.eventSourcing.ProjectionRebuilder extends Space.Object
       if inMemoryData.length
         realCollection.batchInsert inMemoryData
       else
-        @log.warning(@_logMsg("No data to insert after replaying events for #{collectionId}"))
+        @log.info(@_logMsg("No data to insert after replaying events for #{collectionId}"))
       # Restore original collections
       @injector.override(collectionId).to realCollection
 

@@ -3,7 +3,7 @@ Changelog
 
 ## newVersion
 ### Changes to projection rebuilder
-- `Space.eventSourcing.ProjectionRebuilder ` is no longer throwing an error if there is no data to insert into collection after rebuilding is done. Warning message is now logged instead. 
+- `Space.eventSourcing.ProjectionRebuilder ` is no longer throwing an error if there is no data to insert into collection after rebuilding is done. Info message is now logged instead. 
 
 ## 3.0.0
 
