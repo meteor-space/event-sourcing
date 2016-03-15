@@ -59,7 +59,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
   getEvents: -> @_events
 
   getSnapshot: ->
-#    unless @constructor._snapshotType? then throw new Error Aggregate::ERRORS.undefinedSnapshotTpe
+    unless @constructor._snapshotType? then throw new Error Aggregate::ERRORS.undefinedSnapshotTpe
     data = {}
     data.id = @_id
     data.state = @_state
