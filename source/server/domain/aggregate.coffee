@@ -37,7 +37,7 @@ class Space.eventSourcing.Aggregate extends Space.Object
     }
 
   constructor: (id, data, isSnapshot) ->
-#    unless id? then throw new Error Aggregate::ERRORS.guidRequired
+    unless id? then throw new Error Aggregate::ERRORS.guidRequired
     # This aggregate is created from a command -> assign targetId
     @_id = if (id instanceof Command) then id.targetId else id
     @_events = []
