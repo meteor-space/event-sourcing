@@ -114,14 +114,16 @@ describe "Space.eventSourcing.CommitPublisher", ->
         test.exception err
     Meteor.setTimeout(waitFor(timeout), 2);
 
-  it 'updates the commit record with the date the processing failed', (test, waitFor) ->
+  it 'updates the commit record with the date when the processing is failed', (test, waitFor) ->
     @configuration.eventSourcing.commitProcessing.timeout = 1
+    commit = Commits.findOne(@commitId)
     @commitPublisher.startPublishing()
+    @commitPublisher._failCommitProcessingAttempt(commit)
     timeout = =>
       try
         commit = Commits.findOne(@commitId)
-        processedAt = _.findWhere(commit.receivers, {appId: @appId}).processedAt
-        expect(processedAt).to.be.instanceOf(Date)
+        failedAt = _.findWhere(commit.receivers, {appId: @appId}).failedAt
+        expect(failedAt).to.be.instanceOf(Date)
       catch err
         test.exception err
     Meteor.setTimeout(waitFor(timeout), 1000);
