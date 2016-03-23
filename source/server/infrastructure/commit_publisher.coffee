@@ -13,7 +13,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
     log: 'log'
 
   _publishHandle: null
-  _processingTimer: null
+  _inProgress: {}
 
   startPublishing: ->
     appId = @configuration.appId
@@ -53,9 +53,8 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
         error:#{error.message}\n
         stack:#{error.stack}"
 
-
   _setProcessingTimeout: (commit) ->
-    @_processingTimer = @meteor.setTimeout (=>
+    @_inProgress[commit._id] = @meteor.setTimeout (=>
       @log.error(@_logMsg("#{commit._id} timed out"), commit)
       @_failCommitProcessingAttempt(commit)
     ), @configuration.eventSourcing.commitProcessing.timeout
@@ -87,15 +86,21 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
       { $set: { 'receivers.$.failedAt': new Date() } }
     )
     @log.error @_logMsg("#{commit._id} failed"), commit
+    @_cleanupTimeout(commit._id)
+
 
   _markAsProcessed: (commit) ->
     appId = @configuration.appId
-    @meteor.clearTimeout(@_processingTimer)
+    @meteor.clearTimeout(@_inProgress[commit._id])
+    @_cleanupTimeout(commit._id)
     @commits.update(
       { _id: commit._id, 'receivers.appId': appId },
       { $set: { 'receivers.$.processedAt': new Date() } }
     )
     @log.info @_logMsg("#{commit._id} processed"), commit
+
+  _cleanupTimeout: (commitId) ->
+    delete @_inProgress[commitId]
 
   _logMsg: (message) ->
     "#{@configuration.appId}: #{this}: #{message}"

@@ -125,3 +125,22 @@ describe "Space.eventSourcing.CommitPublisher", ->
       catch err
         test.exception err
     Meteor.setTimeout(waitFor(timeout), 1000);
+
+  it "stores each commit's publishing timeout using the id as a the key", ->
+    commit = Commits.findOne(@commitId)
+    @commitPublisher._setProcessingTimeout(commit)
+    expect(@commitPublisher._inProgress).to.have.property(@commitId);
+
+  it "tracks each commit's publishing timeout when publishing", ->
+    mockPublisher = sinon.mock(@commitPublisher)
+    commit = Commits.findOne(@commitId)
+    mockPublisher.expects("_setProcessingTimeout").once().withExactArgs(commit)
+    @commitPublisher.publishCommit(@commitPublisher._parseCommit(commit))
+    mockPublisher.verify()
+
+  it "cleans up after the commit is processed, by deleting the object key", ->
+    mockPublisher = sinon.mock(@commitPublisher)
+    mockPublisher.expects("_cleanupTimeout").once().withExactArgs(@commitId)
+    @commitPublisher.startPublishing()
+    expect(@commitPublisher._inProgress[@commitId]).to.equal.undefined
+    mockPublisher.verify()
