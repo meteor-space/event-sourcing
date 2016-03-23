@@ -130,6 +130,7 @@ describe "Space.eventSourcing.CommitPublisher", ->
     commit = Commits.findOne(@commitId)
     @commitPublisher._setProcessingTimeout(commit)
     expect(@commitPublisher._inProgress).to.have.property(@commitId);
+    expect(@commitPublisher._inProgress[@commitId]).to.respondTo('_onTimeout');
 
   it "tracks each commit's publishing timeout when publishing", ->
     mockPublisher = sinon.mock(@commitPublisher)
