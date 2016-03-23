@@ -47,7 +47,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
         @commandBus.send command
       @_markAsProcessed(commit)
     catch error
-      @_failCommitProcessingAttempt(commit)
+      @_failCommitProcessingAttempt(commit._id)
       throw new Error "while publishing:\n
         #{JSON.stringify(commit)}\n
         error:#{error.message}\n
@@ -56,7 +56,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
   _setProcessingTimeout: (commit) ->
     @_inProgress[commit._id] = @meteor.setTimeout (=>
       @log.error(@_logMsg("#{commit._id} timed out"), commit)
-      @_failCommitProcessingAttempt(commit)
+      @_failCommitProcessingAttempt(commit._id)
     ), @configuration.eventSourcing.commitProcessing.timeout
 
   _parseCommit: (commit) ->
@@ -79,14 +79,18 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
 
   _supportsEjsonType: (type) -> @ejson._getTypes()[type]?
 
-  _failCommitProcessingAttempt: (commit) ->
+  _failCommitProcessingAttempt: (commitId) ->
     appId = @configuration.appId
+    commit = @commits.findOne(commitId)
+    # Protect against race condition
+    if(_.findWhere(commit.receivers, {appId: appId}).processedAt)
+      return @log.warning @_logMsg("#{commitId} has already been failed. Potential race condition met, no action required."), commit
     @commits.update(
-      { _id: commit._id, 'receivers.appId': appId },
+      { _id: commitId, 'receivers.appId': appId },
       { $set: { 'receivers.$.failedAt': new Date() } }
     )
-    @log.error @_logMsg("#{commit._id} failed"), commit
-    @_cleanupTimeout(commit._id)
+    @log.error @_logMsg("#{commitId} failed"), commit
+    @_cleanupTimeout(commitId)
 
 
   _markAsProcessed: (commit) ->

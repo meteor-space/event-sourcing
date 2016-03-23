@@ -109,24 +109,40 @@ describe "Space.eventSourcing.CommitPublisher", ->
     timeout = =>
       try
         commit = Commits.findOne(@commitId)
-        expect(fail).to.be.calledWith(commit)
+        expect(fail).to.be.calledWith(@commitId)
       catch err
         test.exception err
     Meteor.setTimeout(waitFor(timeout), 2);
 
-  it 'updates the commit record with the date when the processing is failed', (test, waitFor) ->
-    @configuration.eventSourcing.commitProcessing.timeout = 1
+  it 'updates the commit record with the date when the processing is failed', ->
+    lockedCommit = Commits.findAndModify({
+      query: $and: [_id: @commitId, { 'receivers.appId': { $nin: [@appId] }}]
+      update: $push: { receivers: { appId: @appId, receivedAt: new Date() } }
+    })
+
+    @commitPublisher.publishCommit(@commitPublisher._parseCommit(lockedCommit))
+    @commitPublisher._failCommitProcessingAttempt(@commitId)
+
     commit = Commits.findOne(@commitId)
-    @commitPublisher.startPublishing()
-    @commitPublisher._failCommitProcessingAttempt(commit)
-    timeout = =>
-      try
-        commit = Commits.findOne(@commitId)
-        failedAt = _.findWhere(commit.receivers, {appId: @appId}).failedAt
-        expect(failedAt).to.be.instanceOf(Date)
-      catch err
-        test.exception err
-    Meteor.setTimeout(waitFor(timeout), 1000);
+    failedAt = _.findWhere(commit.receivers, {appId: @appId}).failedAt
+    expect(failedAt).to.be.instanceOf(Date)
+
+  it 'ignores calls to fail successful processing attempt to protects the commit record from race conditions with timeouts', ->
+    @configuration.eventSourcing.commitProcessing.timeout = 1
+    Commits.findAndModify({
+      query: $and: [_id: @commitId, { 'receivers.appId': { $nin: [@appId] }}]
+      update: $push: { receivers: { appId: @appId, receivedAt: new Date() } }
+    })
+    Commits.update(
+      { _id: @commitId, 'receivers.appId': @appId },
+      {
+        $set: { 'receivers.$.processedAt': new Date() }
+      }
+    )
+    @commitPublisher._failCommitProcessingAttempt(@commitId)
+    commit = Commits.findOne(@commitId)
+    failedAt = _.findWhere(commit.receivers, {appId: @appId}).failedAt
+    expect(failedAt).to.equal.undefined
 
   it "stores each commit's publishing timeout using the id as a the key", ->
     commit = Commits.findOne(@commitId)
