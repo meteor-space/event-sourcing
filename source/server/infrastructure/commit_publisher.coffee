@@ -45,13 +45,13 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
       for command in commit.changes.commands
         @log.info @_logMsg("sending #{command.typeName()}"), command
         @commandBus.send command
-      @_markAsProcessed(commit)
     catch error
       @_failCommitProcessingAttempt(commit._id)
       throw new Error "while publishing:\n
         #{JSON.stringify(commit)}\n
         error:#{error.message}\n
         stack:#{error.stack}"
+    @_markAsProcessed(commit)
 
   _setProcessingTimeout: (commit) ->
     @_inProgress[commit._id] = @meteor.setTimeout (=>
