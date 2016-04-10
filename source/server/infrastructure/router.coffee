@@ -108,6 +108,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     try
       return fn.call(this)
     catch error
+      @log.error(@_logMsg(error.message))
       if error instanceof Space.Error
         this.publish(new Space.domain.Exception({
           thrower: @eventSourceable.toString(),
