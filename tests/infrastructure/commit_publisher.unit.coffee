@@ -132,14 +132,12 @@ describe "Space.eventSourcing.CommitPublisher", ->
     @configuration.eventSourcing.commitProcessing.timeout = 1
     Commits.findAndModify({
       query: $and: [_id: @commitId, { 'receivers.appId': { $nin: [@appId] }}]
-      update: $push: { receivers: { appId: @appId, receivedAt: new Date() } }
+      update: $push: { receivers: {
+        appId: @appId,
+        receivedAt: new Date(),
+        processedAt: new Date()
+      }}
     })
-    Commits.update(
-      { _id: @commitId, 'receivers.appId': @appId },
-      {
-        $set: { 'receivers.$.processedAt': new Date() }
-      }
-    )
     @commitPublisher._failCommitProcessingAttempt(@commitId)
     commit = Commits.findOne(@commitId)
     failedAt = _.findWhere(commit.receivers, {appId: @appId}).failedAt
