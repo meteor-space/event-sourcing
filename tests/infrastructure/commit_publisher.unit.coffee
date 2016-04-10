@@ -119,12 +119,13 @@ describe "Space.eventSourcing.CommitPublisher", ->
       query: $and: [_id: @commitId, { 'receivers.appId': { $nin: [@appId] }}]
       update: $push: { receivers: { appId: @appId, receivedAt: new Date() } }
     })
-
+    @commitPublisher._markAsProcessed = ->
     @commitPublisher.publishCommit(@commitPublisher._parseCommit(lockedCommit))
     @commitPublisher._failCommitProcessingAttempt(@commitId)
 
     commit = Commits.findOne(@commitId)
     failedAt = _.findWhere(commit.receivers, {appId: @appId}).failedAt
+    Meteor.clearTimeout(@commitPublisher._inProgress[commit._id])
     expect(failedAt).to.be.instanceOf(Date)
 
   it 'ignores calls to fail successful processing attempt to protects the commit record from race conditions with timeouts', ->
