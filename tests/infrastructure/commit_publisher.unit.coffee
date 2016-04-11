@@ -120,6 +120,7 @@ describe "Space.eventSourcing.CommitPublisher", ->
       update: $push: { receivers: { appId: @appId, receivedAt: new Date() } }
     })
     @commitPublisher._markAsProcessed = ->
+    @commitPublisher._setProcessingTimeout = ->
     @commitPublisher.publishCommit(@commitPublisher._parseCommit(lockedCommit))
     @commitPublisher._failCommitProcessingAttempt(@commitId)
 
@@ -145,6 +146,7 @@ describe "Space.eventSourcing.CommitPublisher", ->
 
   it "stores each commit's publishing timeout using the id as a the key", ->
     commit = Commits.findOne(@commitId)
+    @commitPublisher._failCommitProcessingAttempt = ->
     @commitPublisher._setProcessingTimeout(commit)
     expect(@commitPublisher._inProgress).to.have.property(@commitId);
     expect(@commitPublisher._inProgress[@commitId]).to.respondTo('_onTimeout');
