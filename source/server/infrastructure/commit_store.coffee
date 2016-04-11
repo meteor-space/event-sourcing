@@ -10,7 +10,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
     log: 'log'
 
   add: (changes, sourceId, expectedVersion) ->
-    @log.info(@_logMsg("Adding commit for #{changes.aggregateType}<#{sourceId}>
+    @log.debug(@_logMsg("Adding commit for #{changes.aggregateType}<#{sourceId}>
           expected at version #{expectedVersion}"))
 
     # only continue if there actually ARE changes to be added
@@ -53,7 +53,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
       }
 
       # insert commit with next version
-      @log.info(@_logMsg("Inserting commit"), commit)
+      @log.debug(@_logMsg("Inserting commit"), commit)
       commitId = @commits.insert commit
 
       @commitPublisher.publishCommit

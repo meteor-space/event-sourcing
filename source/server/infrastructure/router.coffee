@@ -53,7 +53,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
   _setupInitializingMessage: ->
     if @initializingMessage.isSubclassOf(Space.domain.Event)
       @eventBus.subscribeTo @initializingMessage, (event) =>
-        @log.info("#{this}: Creating new #{@eventSourceable} with event
+        @log.debug("#{this}: Creating new #{@eventSourceable} with event
                   #{event.typeName()}\n", event)
         eventSourceable = @_handleDomainErrors(->
           instance = new @eventSourceable(event.sourceId)
@@ -64,7 +64,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
         @repository.save(eventSourceable) if eventSourceable?
     else if @initializingMessage.isSubclassOf(Space.domain.Command)
       @commandBus.registerHandler @initializingMessage, (cmd) =>
-        @log.info("#{this}: Creating new #{@eventSourceable} with command
+        @log.debug("#{this}: Creating new #{@eventSourceable} with command
                   #{cmd.typeName()}\n", cmd)
         eventSourceable = @_handleDomainErrors(->
           instance = new @eventSourceable(cmd.targetId)
@@ -84,7 +84,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     # Only route this event if the correlation property exists
     return unless event.meta? and event.meta[this.eventCorrelationProperty]?
     correlationId = event.meta[this.eventCorrelationProperty]
-    @log.info(@_logMsg("Handling event #{event.typeName()} for
+    @log.debug(@_logMsg("Handling event #{event.typeName()} for
                        #{@eventSourceable}<#{correlationId}>\n"), event)
     eventSourceable = @repository.find @eventSourceable, correlationId
     @injector.injectInto(eventSourceable)
@@ -94,7 +94,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
 
   _genericCommandHandler: (command) =>
     if not command? then return
-    @log.info(@_logMsg("Handling command #{command.typeName()} for
+    @log.debug(@_logMsg("Handling command #{command.typeName()} for
                        #{@eventSourceable}<#{command.targetId}>"), command)
     eventSourceable = @repository.find @eventSourceable, command.targetId
     @injector.injectInto(eventSourceable)
