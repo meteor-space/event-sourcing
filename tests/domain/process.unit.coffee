@@ -6,24 +6,39 @@ describe "Space.eventSourcing.Process", ->
 
   class TestCommand
 
-  beforeEach ->
-    @event = event = new Event sourceId: '123', version: 1
-    @handler = handler = sinon.spy()
+  class TestProcess extends Process
+    eventCorrelationProperty: 'testProcessId'
+    handlers: -> 'Space.domain.Event': handler
 
-    class TestProcess extends Process
-      handlers: -> 'Space.domain.Event': handler
+  describe 'class', ->
 
-    @processManager = new TestProcess '123'
-
-  it 'extends aggregate root', ->
-    expect(Process).to.extend Space.eventSourcing.Aggregate
+    it 'extends aggregate root', ->
+      expect(Process).to.extend Space.eventSourcing.Aggregate
 
   describe 'working with commands', ->
 
-    it 'a process generates no commands by default', ->
-      expect(@processManager.getCommands()).to.be.empty
+    beforeEach ->
+      @processId = new Guid()
+      @event = event = new Event sourceId: @processId, version: 1
+      @handler = handler = sinon.spy()
 
-    it 'allows to add commands', ->
+    it 'generates no commands by default', ->
+      @process = new TestProcess @processId
+      expect(@process.getCommands()).to.be.empty
+
+    it 'can be passed a object that returns the id string via a toString method', ->
+      @process = new TestProcess @processId
+      expect(@process.getId.toString).to.exist
+
+    it 'can be passed a string for the id', ->
+      @process = new TestProcess '123'
+      expect(@process.getId()).to.equal '123'
+
+    it 'can define commands to be triggered later, including metadata containing the instance id as a string for the purpose of correlating events published externally', ->
+      @process = new TestProcess @processId
       command = new TestCommand()
-      @processManager.trigger command
-      expect(@processManager.getCommands()).to.eql [command]
+      meta = {};
+      meta[TestProcess::eventCorrelationProperty] = @process.getId().toString();
+      decoratedCommand = _.extend({}, command, {meta})
+      @process.trigger command
+      expect(@process.getCommands()).to.eql [decoratedCommand]
