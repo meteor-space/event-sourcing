@@ -54,7 +54,13 @@ class Space.eventSourcing.CommitStore extends Space.Object
 
       # insert commit with next version
       @log.debug(@_logMsg("Inserting commit"), commit)
-      commitId = @commits.insert commit
+      try
+        commitId = @commits.insert commit
+      catch error
+        throw new Error "While inserting:\n
+          #{JSON.stringify(commit)}\n
+          error:#{error.message}\n
+          stack:#{error.stack}"
 
       @commitPublisher.publishCommit
         _id: commitId,
