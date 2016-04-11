@@ -37,8 +37,8 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
     @_publishHandle?.stop()
 
   publishCommit: (commit) =>
+    @_setProcessingTimeout(commit)
     try
-      @_setProcessingTimeout(commit)
       for event in commit.changes.events
         @log.debug @_logMsg("publishing #{event.typeName()}"), event
         @eventBus.publish event
