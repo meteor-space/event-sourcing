@@ -26,9 +26,9 @@ describe "Space.eventSourcing.Process", ->
       @process = new TestProcess @processId
       expect(@process.getCommands()).to.be.empty
 
-    it 'can be passed a object that returns the id string via a toString method', ->
+    it 'can be passed a Guid for the id', ->
       @process = new TestProcess @processId
-      expect(@process.getId.toString).to.exist
+      expect(@process.getId()).to.be.instanceOf(Guid)
 
     it 'can be passed a string for the id', ->
       @process = new TestProcess '123'
