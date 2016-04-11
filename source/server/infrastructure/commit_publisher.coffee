@@ -40,10 +40,10 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
     try
       @_setProcessingTimeout(commit)
       for event in commit.changes.events
-        @log.info @_logMsg("publishing #{event.typeName()}"), event
+        @log.debug @_logMsg("publishing #{event.typeName()}"), event
         @eventBus.publish event
       for command in commit.changes.commands
-        @log.info @_logMsg("sending #{command.typeName()}"), command
+        @log.debug @_logMsg("sending #{command.typeName()}"), command
         @commandBus.send command
     catch error
       @_failCommitProcessingAttempt(commit._id)
@@ -101,7 +101,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
       { _id: commit._id, 'receivers.appId': appId },
       { $set: { 'receivers.$.processedAt': new Date() } }
     )
-    @log.info @_logMsg("#{commit._id} processed"), commit
+    @log.debug @_logMsg("#{commit._id} processed"), commit
 
   _cleanupTimeout: (commitId) ->
     delete @_inProgress[commitId]
