@@ -46,11 +46,11 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
 
   onDependenciesReady: ->
     super
-    @_setupInitializingMessage()
-    @_routeEventToEventSourceable(eventType) for eventType in @routeEvents
-    @_routeCommandToEventSourceable(commandType) for commandType in @routeCommands
+    @_setupInitializingHandler()
+    @_setupEventSubscriptions(eventType) for eventType in @routeEvents
+    @_setupCommandHandlers(commandType) for commandType in @routeCommands
 
-  _setupInitializingMessage: ->
+  _setupInitializingHandler: ->
     if @initializingMessage.isSubclassOf(Space.domain.Event)
       messageBus = @eventBus
       handlerSubscriber = @eventBus.subscribeTo
@@ -71,32 +71,24 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
       @repository.save(eventSourceable) if eventSourceable?
     )
 
-  _routeEventToEventSourceable: (eventType) ->
-    @eventBus.subscribeTo eventType, @_genericEventHandler
+  _setupEventSubscriptions: (eventType) ->
+    @eventBus.subscribeTo eventType, @_genericHandler
 
-  _routeCommandToEventSourceable: (commandType) ->
-    @commandBus.registerHandler commandType, @_genericCommandHandler
+  _setupCommandHandlers: (commandType) ->
+    @commandBus.registerHandler commandType, @_genericHandler
 
-  _genericEventHandler: (event) =>
-    # Only route this event if the correlation property exists
-    return unless event.meta? and event.meta[this.eventCorrelationProperty]?
-    correlationId = event.meta[this.eventCorrelationProperty]
-    @log.debug(@_logMsg("Handling event #{event.typeName()} for
-                       #{@eventSourceable}<#{correlationId}>\n"), event)
-    eventSourceable = @repository.find @eventSourceable, correlationId
+  _genericHandler: (message) =>
+    if message instanceof Space.domain.Command
+      aggregateId = message.targetId
+    if message instanceof Space.domain.Event
+      # Only route this event if the correlation property exists
+      return unless aggregateId = message.meta? and message.meta[this.eventCorrelationProperty]
+    @log.debug(@_logMsg("Handling message #{message.typeName()} for
+                       #{@eventSourceable}<#{aggregateId}>\n"), message)
+    eventSourceable = @repository.find @eventSourceable, aggregateId
     @injector.injectInto(eventSourceable)
-    throw Router.ERRORS.cannotHandleMessage(event) if !eventSourceable?
-    eventSourceable = @_handleDomainErrors(-> eventSourceable.handle event)
-    @repository.save(eventSourceable) if eventSourceable?
-
-  _genericCommandHandler: (command) =>
-    if not command? then return
-    @log.debug(@_logMsg("Handling command #{command.typeName()} for
-                       #{@eventSourceable}<#{command.targetId}>"), command)
-    eventSourceable = @repository.find @eventSourceable, command.targetId
-    @injector.injectInto(eventSourceable)
-    throw Router.ERRORS.cannotHandleMessage(command) if !eventSourceable?
-    eventSourceable = @_handleDomainErrors(-> eventSourceable.handle command)
+    throw Router.ERRORS.cannotHandleMessage(message) if !eventSourceable?
+    eventSourceable = @_handleDomainErrors(-> eventSourceable.handle message)
     @repository.save(eventSourceable) if eventSourceable?
 
   _logMsg: (message) -> "#{@configuration.appId}: #{this}: #{message}"
