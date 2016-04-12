@@ -71,6 +71,7 @@ Package.onTest(function(api) {
     'tests/infrastructure/repository.unit.coffee',
     'tests/infrastructure/commit_store.unit.coffee',
     'tests/infrastructure/commit_publisher.unit.coffee',
+    'tests/infrastructure/router.unit.coffee',
     'tests/infrastructure/snapshotter.unit.coffee',
     'tests/infrastructure/snapshotting.tests.js',
     'tests/infrastructure/projection.unit.coffee',

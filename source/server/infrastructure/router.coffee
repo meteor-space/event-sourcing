@@ -72,12 +72,12 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     )
 
   _setupEventSubscriptions: (eventType) ->
-    @eventBus.subscribeTo eventType, @_genericHandler
+    @eventBus.subscribeTo eventType, @messageHandler
 
   _setupCommandHandlers: (commandType) ->
-    @commandBus.registerHandler commandType, @_genericHandler
+    @commandBus.registerHandler commandType, @messageHandler
 
-  _genericHandler: (message) =>
+  messageHandler: (message) =>
     if message instanceof Space.domain.Command
       aggregateId = message.targetId
     if message instanceof Space.domain.Event
@@ -85,11 +85,14 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
       return unless aggregateId = message.meta? and message.meta[this.eventCorrelationProperty]
     @log.debug(@_logMsg("Handling message #{message.typeName()} for
                        #{@eventSourceable}<#{aggregateId}>\n"), message)
-    eventSourceable = @repository.find @eventSourceable, aggregateId
-    @injector.injectInto(eventSourceable)
-    throw Router.ERRORS.cannotHandleMessage(message) if !eventSourceable?
-    eventSourceable = @_handleDomainErrors(-> eventSourceable.handle message)
-    @repository.save(eventSourceable) if eventSourceable?
+    try
+      eventSourceable = @repository.find @eventSourceable, aggregateId
+      @injector.injectInto(eventSourceable)
+      throw Router.ERRORS.cannotHandleMessage(message) if !eventSourceable?
+      eventSourceable = @_handleDomainErrors(-> eventSourceable.handle message)
+      @repository.save(eventSourceable) if eventSourceable?
+    catch error
+      @_handleSaveErrors(error, message, aggregateId)
 
   _logMsg: (message) -> "#{@configuration.appId}: #{this}: #{message}"
 
@@ -106,3 +109,14 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
         return null
       else
         throw error
+
+  _handleSaveErrors: (error, message, aggregateId) ->
+    if error instanceof Space.eventSourcing.CommitConcurrencyException
+      @log.warning(@_logMsg("Re-handling message due to concurrency exception with message #{message.typeName()} for
+                       #{@eventSourceable}<#{aggregateId}>\n"), message)
+      # Concurrency exceptions can often be resolved by simply re-handling the message.
+      # This should be safe from endless loops, because if the aggregate's state
+      # has since changed and the message is rejected, a domain exception is thrown
+      @messageHandler(message)
+    else
+      throw error
