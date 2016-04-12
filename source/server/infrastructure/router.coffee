@@ -52,27 +52,24 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
 
   _setupInitializingMessage: ->
     if @initializingMessage.isSubclassOf(Space.domain.Event)
-      @eventBus.subscribeTo @initializingMessage, (event) =>
-        @log.debug("#{this}: Creating new #{@eventSourceable} with event
-                  #{event.typeName()}\n", event)
-        eventSourceable = @_handleDomainErrors(->
-          instance = new @eventSourceable(event.sourceId)
-          @injector.injectInto(instance)
-          instance.handle(event)
-          return instance
-        )
-        @repository.save(eventSourceable) if eventSourceable?
+      messageBus = @eventBus
+      handlerSubscriber = @eventBus.subscribeTo
+      idProperty = 'sourceId'
     else if @initializingMessage.isSubclassOf(Space.domain.Command)
-      @commandBus.registerHandler @initializingMessage, (cmd) =>
-        @log.debug("#{this}: Creating new #{@eventSourceable} with command
-                  #{cmd.typeName()}\n", cmd)
-        eventSourceable = @_handleDomainErrors(->
-          instance = new @eventSourceable(cmd.targetId)
-          @injector.injectInto(instance)
-          instance.handle(cmd)
-          return instance
-        )
-        @repository.save(eventSourceable) if eventSourceable?
+      messageBus = @commandBus
+      handlerSubscriber = @commandBus.registerHandler
+      idProperty = 'targetId'
+    handlerSubscriber.call(messageBus, @initializingMessage, (message) =>
+      @log.debug("#{this}: Creating new #{@eventSourceable} with message
+                  #{message.typeName()}\n", message)
+      eventSourceable = @_handleDomainErrors(->
+        instance = new @eventSourceable(message[idProperty])
+        @injector.injectInto(instance)
+        instance.handle(message)
+        return instance
+      )
+      @repository.save(eventSourceable) if eventSourceable?
+    )
 
   _routeEventToEventSourceable: (eventType) ->
     @eventBus.subscribeTo eventType, @_genericEventHandler
