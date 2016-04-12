@@ -29,7 +29,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
       # first time being saved, so start at 0
       currentVersion = 0
     if currentVersion isnt expectedVersion
-      throw new Space.eventSourcing.CommitStore.ConcurrencyException(
+      throw new Space.eventSourcing.CommitConcurrencyException(
         sourceId,
         expectedVersion,
         currentVersion

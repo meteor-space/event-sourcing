@@ -88,7 +88,7 @@ describe "Space.eventSourcing.CommitStore", ->
         @commitStore.add(changes, sourceId, invalidExpectedVersion)
 
       expect(commitWithInvalidVersion).to.throw(
-        Space.eventSourcing.CommitStore.ConcurrencyException
+        Space.eventSourcing.CommitConcurrencyException
       )
 
   describe '#getEvents', ->
