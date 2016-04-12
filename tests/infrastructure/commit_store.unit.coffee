@@ -79,7 +79,6 @@ describe "Space.eventSourcing.CommitStore", ->
       sourceId = new Guid()
       testEvent = new TestEvent sourceId: sourceId
       changes = { aggregateType: 'TestAggregateType', events: [testEvent], commands: []}
-      debugger;
       @commitStore.add changes, sourceId, 0
       @commitStore.add changes, sourceId, 1
       @commitStore.add changes, sourceId, 2
