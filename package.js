@@ -28,6 +28,7 @@ Package.onUse(function(api) {
   api.addFiles([
     'source/server/module-automation.js',
     'source/server/module.coffee',
+    'source/server/errors.js',
     // INFRASTRUCTURE
     'source/server/infrastructure/repository.coffee',
     'source/server/infrastructure/snapshot.js',
