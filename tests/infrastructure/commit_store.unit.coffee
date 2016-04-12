@@ -75,6 +75,22 @@ describe "Space.eventSourcing.CommitStore", ->
         commands: [testCommand]
       }
 
+    it 'throws a concurrency exception if the version in the store does not equal the expected version', ->
+      sourceId = new Guid()
+      testEvent = new TestEvent sourceId: sourceId
+      changes = { aggregateType: 'TestAggregateType', events: [testEvent], commands: []}
+      debugger;
+      @commitStore.add changes, sourceId, 0
+      @commitStore.add changes, sourceId, 1
+      @commitStore.add changes, sourceId, 2
+      commitWithInvalidVersion = =>
+        invalidExpectedVersion = 1
+        @commitStore.add(changes, sourceId, invalidExpectedVersion)
+
+      expect(commitWithInvalidVersion).to.throw(
+        Space.eventSourcing.CommitStore.ConcurrencyException
+      )
+
   describe '#getEvents', ->
 
     it 'returns all events versioned by batch for given aggregate', ->

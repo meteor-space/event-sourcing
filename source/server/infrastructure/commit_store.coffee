@@ -26,19 +26,22 @@ class Space.eventSourcing.CommitStore extends Space.Object
       # take version of last existing commit
       currentVersion = lastCommit.version
     else
-      # the entity didnt exist before
+      # first time being saved, so start at 0
       currentVersion = 0
-
-    if currentVersion is expectedVersion
-
+    if currentVersion isnt expectedVersion
+      throw new Space.eventSourcing.CommitStore.ConcurrencyException(
+        sourceId,
+        expectedVersion,
+        currentVersion
+      )
+    else
       newVersion = currentVersion + 1
-
       @_setEventVersion(event, newVersion) for event in changes.events
+
       # serialize events and commands
       serializedChanges = events: [], commands: []
       for event in changes.events
         serializedChanges.events.push type: event.typeName(), data: event.toData()
-
       for command in changes.commands
         serializedChanges.commands.push type: command.typeName(), data: command.toData()
 
@@ -68,12 +71,6 @@ class Space.eventSourcing.CommitStore extends Space.Object
           events: changes.events
           commands: changes.commands
         }
-
-    else
-
-      # concurrency exception
-      throw new Error "Expected entity <#{sourceId}> to be at version
-                      #{expectedVersion} but was on #{currentVersion}"
 
   getEvents: (sourceId, versionOffset=1) ->
     events = []
