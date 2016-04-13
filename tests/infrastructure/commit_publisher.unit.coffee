@@ -160,7 +160,7 @@ describe "Space.eventSourcing.CommitPublisher", ->
 
   it "cleans up after the commit is processed, by deleting the object key", ->
     mockPublisher = sinon.mock(@commitPublisher)
-    mockPublisher.expects("_clearTimeout").once().withExactArgs(@commitId)
+    mockPublisher.expects("_cleanupTimeout").once().withExactArgs(@commitId)
     @commitPublisher.startPublishing()
     expect(@commitPublisher._inProgress[@commitId]).to.equal.undefined
     mockPublisher.verify()
