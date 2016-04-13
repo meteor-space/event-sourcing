@@ -51,7 +51,15 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
         #{JSON.stringify(commit)}\n
         error:#{error.message}\n
         stack:#{error.stack}"
-    @_markAsProcessed(commit)
+      @log.error @_logMsg("#{commit._id} failed"), commit
+    try
+      @_markAsProcessed(commit)
+    catch error
+      # Log errors for now, but should probably move this up to publishCommit call
+      # and deal with the exceptions there, hopefully where we retry concurrency issues
+      @log.error @_logMsg("Couldn't mark commit #{commit._id} as processed"), commit
+    @log.debug @_logMsg("#{commit._id} processed"), commit
+
 
   _setProcessingTimeout: (commit) ->
     @_inProgress[commit._id] = @meteor.setTimeout (=>
@@ -89,21 +97,22 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
       { _id: commitId, 'receivers.appId': appId },
       { $set: { 'receivers.$.failedAt': new Date() } }
     )
-    @log.error @_logMsg("#{commitId} failed"), commit
     @_cleanupTimeout(commitId)
 
 
   _markAsProcessed: (commit) ->
     appId = @configuration.appId
-    @meteor.clearTimeout(@_inProgress[commit._id])
-    @_cleanupTimeout(commit._id)
+    @_clearTimeout(commit._id)
     @commits.update(
       { _id: commit._id, 'receivers.appId': appId },
       { $set: { 'receivers.$.processedAt': new Date() } }
     )
-    @log.debug @_logMsg("#{commit._id} processed"), commit
 
-  _cleanupTimeout: (commitId) ->
+  _clearTimeout: (commitId) ->
+    timeout = @_inProgress[commit._id]
+    if(!timeout)
+      throw new Error "No timeout for #{commit._id} found"
+    @meteor.clearTimeout(timeout)
     delete @_inProgress[commitId]
 
   _logMsg: (message) ->
