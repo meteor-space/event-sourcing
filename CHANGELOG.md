@@ -12,8 +12,6 @@ Concurrency exceptions can occur in a race condition where two messages are
    This should be safe from endless loops, because if the aggregate's state
    has since changed rendering the message now invalid, a domain exception 
    will be thrown, which is handled elsewhere being an application concern.
-- **Commit publishing concurrency exception logging**
-Implements logging for new errors thrown during marking commits as received, and failed. 
 - **Logging** has been made more production-friendly, pushing some of the noisy `info`
 entries from the commit call down to `debug`. In effect, you could log `debug` to
 a local file and rotate as needed, and `info` to an external system that gives you
