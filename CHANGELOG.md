@@ -1,6 +1,33 @@
 Changelog
 =========
 
+## vNext
+
+### New Features
+- **Commit save concurrency exception handling**
+Concurrency exceptions can occur in a race condition where two messages are
+ attempting to change the state of an aggregate instance. This can often be
+  resolved by simply re-handling the message, which is what the Router now
+   does if this exception bubbles up during the save operation.
+   This should be safe from endless loops, because if the aggregate's state
+   has since changed rendering the message now invalid, a domain exception 
+   will be thrown, which is handled elsewhere being an application concern.
+- **Commit publishing concurrency exception logging**
+Implements logging for new errors thrown during marking commits as received, and failed. 
+- **Logging** has been made more production-friendly, pushing some of the noisy `info`
+entries from the commit call down to `debug`. In effect, you could log `debug` to
+a local file and rotate as needed, and `info` to an external system that gives you
+the system-level updates rather than every action being taken.
+- **New index** `{ "_id": 1, "receivers.appId": 1 }` on commits collection to optimise commit publishing.
+- `eventCorrelationProperty` of processes are now converted to a string if a Guid.
+ 
+### Bug Fixes
+- Commit **processing timeout** had a bug that caused the publisher to fail commits that most
+likely had already been fully processed, due to the timeout reference being lost, so was not being . Failing a commit that has already been processed
+had to effect, but it was causing the commit records to be left in an invalid state. This
+fix also places a guard to protect against race conditions in the event of a genuine timeout,
+or redelivery via the infrastructure.
+
 ## 3.0.1
 ### Changes to projection rebuilder
 - `Space.eventSourcing.ProjectionRebuilder ` is no longer throwing an error if there is no data to insert into collection after rebuilding is done. Info message is now logged instead. 
