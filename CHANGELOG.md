@@ -25,6 +25,8 @@ likely had already been fully processed, due to the timeout reference being lost
 had to effect, but it was causing the commit records to be left in an invalid state. This
 fix also places a guard to protect against race conditions in the event of a genuine timeout,
 or redelivery via the infrastructure.
+- Now the repository only calls `aggregate.replayHistory` if there have been 
+events since the last snapshot.
 
 ## 3.0.1
 ### Changes to projection rebuilder
