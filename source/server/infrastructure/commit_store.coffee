@@ -18,27 +18,27 @@ class Space.eventSourcing.CommitStore extends Space.Object
     if !changes.commands? then changes.commands = []
 
     # fetch last inserted batch to get the current version
-    lastCommit = @commits.findOne(
-      { sourceId: sourceId.toString() }, # selector
-      { sort: [['version', 'desc']], fields: { version: 1 } } # options
-    )
+    lastCommit = @_getLastCommit(sourceId)
     if lastCommit?
       # take version of last existing commit
       currentVersion = lastCommit.version
     else
-      # the entity didnt exist before
+      # first time being saved, so start at 0
       currentVersion = 0
-
-    if currentVersion is expectedVersion
-
+    if currentVersion isnt expectedVersion
+      throw new Space.eventSourcing.CommitConcurrencyException(
+        sourceId,
+        expectedVersion,
+        currentVersion
+      )
+    else
       newVersion = currentVersion + 1
-
       @_setEventVersion(event, newVersion) for event in changes.events
+
       # serialize events and commands
       serializedChanges = events: [], commands: []
       for event in changes.events
         serializedChanges.events.push type: event.typeName(), data: event.toData()
-
       for command in changes.commands
         serializedChanges.commands.push type: command.typeName(), data: command.toData()
 
@@ -57,10 +57,17 @@ class Space.eventSourcing.CommitStore extends Space.Object
       try
         commitId = @commits.insert commit
       catch error
-        throw new Error "While inserting:\n
-          #{JSON.stringify(commit)}\n
-          error:#{error.message}\n
-          stack:#{error.stack}"
+        if (error.code == 11000)
+          # A commit for this aggregate version already exists
+          # Re-query for the changed state
+          lastCommit = @_getLastCommit(sourceId)
+          throw new Space.eventSourcing.CommitConcurrencyException(
+            sourceId,
+            expectedVersion,
+            lastCommit.version
+          )
+        else
+          throw error
 
       @commitPublisher.publishCommit
         _id: commitId,
@@ -68,12 +75,6 @@ class Space.eventSourcing.CommitStore extends Space.Object
           events: changes.events
           commands: changes.commands
         }
-
-    else
-
-      # concurrency exception
-      throw new Error "Expected entity <#{sourceId}> to be at version
-                      #{expectedVersion} but was on #{currentVersion}"
 
   getEvents: (sourceId, versionOffset=1) ->
     events = []
@@ -101,6 +102,12 @@ class Space.eventSourcing.CommitStore extends Space.Object
   _setEventVersion: (event, version) -> event.version = version
 
   _getEventTypes: (events) -> events.map (event) -> event.typeName()
+
+  _getLastCommit: (sourceId) ->
+    @commits.findOne(
+      { sourceId: sourceId.toString() }, # selector
+      { sort: [['version', 'desc']], fields: { version: 1 } } # options
+    )
 
   _logMsg: (message) ->
     "#{@configuration.appId}: #{this}: #{message}"

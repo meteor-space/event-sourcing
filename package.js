@@ -28,6 +28,7 @@ Package.onUse(function(api) {
   api.addFiles([
     'source/server/module-automation.js',
     'source/server/module.coffee',
+    'source/server/errors.js',
     // INFRASTRUCTURE
     'source/server/infrastructure/repository.coffee',
     'source/server/infrastructure/snapshot.js',
@@ -70,6 +71,7 @@ Package.onTest(function(api) {
     'tests/infrastructure/repository.unit.coffee',
     'tests/infrastructure/commit_store.unit.coffee',
     'tests/infrastructure/commit_publisher.unit.coffee',
+    'tests/infrastructure/router.unit.coffee',
     'tests/infrastructure/snapshotter.unit.coffee',
     'tests/infrastructure/snapshotting.tests.js',
     'tests/infrastructure/projection.unit.coffee',
