@@ -69,12 +69,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
         else
           throw error
 
-      @commitPublisher.publishCommit
-        _id: commitId,
-        changes: {
-          events: changes.events
-          commands: changes.commands
-        }
+      @commitPublisher.publishChanges(changes, commitId)
 
   getEvents: (sourceId, versionOffset=1) ->
     events = []

@@ -18,7 +18,6 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
   startPublishing: ->
     appId = @configuration.appId
     if not appId? then throw new Error "#{this}: You have to specify an appId"
-    @log.info @_logMsg("started")
     notReceivedYet = { 'receivers.appId': { $nin: [appId] }}
     # Save the observe handle for stopping
     @_publishHandle = @commits.find(notReceivedYet).observe {
@@ -29,37 +28,65 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
           update: $push: { receivers: { appId: appId, receivedAt: new Date() } }
         })
         # Only publish the event if this process was the one that locked it
-        @publishCommit(@_parseCommit(lockedCommit)) if lockedCommit?
+        @publishChanges(@parseChanges(lockedCommit), commit._id) if lockedCommit?
     }
+    @log.info @_logMsg("observing for commits via the collection")
 
   stopPublishing: ->
-    @log.info @_logMsg("stopped")
     @_publishHandle?.stop()
+    @log.info @_logMsg("collection observer stopped")
 
-  publishCommit: (commit) =>
-    @_setProcessingTimeout(commit)
+  publishChanges: (changes, commitId) =>
+    @_setTimeout(changes, commitId)
     try
-      for event in commit.changes.events
+      for event in changes.events
         @log.debug @_logMsg("publishing #{event.typeName()}"), event
         @eventBus.publish event
-      for command in commit.changes.commands
+      for command in changes.commands
         @log.debug @_logMsg("sending #{command.typeName()}"), command
         @commandBus.send command
     catch error
-      @_failCommitProcessingAttempt(commit._id)
-      throw new Error "while publishing:\n
-        #{JSON.stringify(commit)}\n
-        error:#{error.message}\n
-        stack:#{error.stack}"
-    @_markAsProcessed(commit)
+      @commits.update(
+        { _id: commitId, 'receivers.appId': @configuration.appId },
+        { $set: { 'receivers.$.failedAt': new Date() } }
+      )
+      throw error
+    finally
+      @_clearTimeout(commitId)
 
-  _setProcessingTimeout: (commit) ->
-    @_inProgress[commit._id] = @meteor.setTimeout (=>
-      @log.error(@_logMsg("#{commit._id} timed out"), commit)
-      @_failCommitProcessingAttempt(commit._id)
+    @commits.update(
+      { _id: commitId, 'receivers.appId': @configuration.appId },
+      { $set: { 'receivers.$.processedAt': new Date() } }
+    )
+    @log.debug @_logMsg("#{commitId} PROCESSED"), changes
+
+  _setTimeout: (changes, commitId) ->
+    @_inProgress[commitId] = @meteor.setTimeout (=>
+      @_onTimeout(changes, commitId)
     ), @configuration.eventSourcing.commitProcessing.timeout
 
-  _parseCommit: (commit) ->
+  _onTimeout: (changes, commitId) ->
+    commit = @commits.findOne(commitId)
+    appId = @configuration.appId
+    # Protect against race condition
+    if(_.findWhere(commit.receivers, {appId: appId}).processedAt)
+      return @log.warning @_logMsg("#{commitId} is already fully processed.
+      Potential race condition, no action required."), changes
+    @commits.update(
+      { _id: commitId, 'receivers.appId': appId },
+      { $set: { 'receivers.$.failedAt': new Date() } }
+    )
+    @log.error(@_logMsg("#{commitId} TIMED OUT"), changes)
+    @_cleanupTimeout(commitId)
+
+  _clearTimeout: (commitId) ->
+    @meteor.clearTimeout(@_inProgress[commitId])
+    @_cleanupTimeout(commitId)
+
+  _cleanupTimeout: (commitId) ->
+    delete @_inProgress[commitId]
+
+  parseChanges: (commit) ->
     events = []
     commands = []
     # Only parse events that can be handled by this app
@@ -72,39 +99,12 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
       if @_supportsEjsonType(command.type) and @commandBus.hasHandlerFor(command.type)
         CommandType = Space.resolvePath(command.type)
         commands.push CommandType.fromData(command.data)
-
-    commit.changes.events = events
-    commit.changes.commands = commands
-    return commit
+    return { events, commands }
 
   _supportsEjsonType: (type) -> @ejson._getTypes()[type]?
 
-  _failCommitProcessingAttempt: (commitId) ->
-    appId = @configuration.appId
-    commit = @commits.findOne(commitId)
-    # Protect against race condition
-    if(_.findWhere(commit.receivers, {appId: appId}).processedAt)
-      return @log.warning @_logMsg("#{commitId} has already been failed. Potential race condition met, no action required."), commit
-    @commits.update(
-      { _id: commitId, 'receivers.appId': appId },
-      { $set: { 'receivers.$.failedAt': new Date() } }
-    )
-    @log.error @_logMsg("#{commitId} failed"), commit
-    @_cleanupTimeout(commitId)
-
-
-  _markAsProcessed: (commit) ->
-    appId = @configuration.appId
-    @meteor.clearTimeout(@_inProgress[commit._id])
-    @_cleanupTimeout(commit._id)
-    @commits.update(
-      { _id: commit._id, 'receivers.appId': appId },
-      { $set: { 'receivers.$.processedAt': new Date() } }
-    )
-    @log.debug @_logMsg("#{commit._id} processed"), commit
-
-  _cleanupTimeout: (commitId) ->
-    delete @_inProgress[commitId]
-
   _logMsg: (message) ->
     "#{@configuration.appId}: #{this}: #{message}"
+
+  # Backwards compatability
+  publishCommit: (commit) => @publishChanges(commit.changes, commit._id)

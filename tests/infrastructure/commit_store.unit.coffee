@@ -31,7 +31,7 @@ describe "Space.eventSourcing.CommitStore", ->
     @appId = 'TestApp'
     @commitStore = new CommitStore {
       commits: new Mongo.Collection(null)
-      commitPublisher: publishCommit: sinon.spy()
+      commitPublisher: publishChanges: sinon.spy()
       configuration: { appId: @appId }
       log: Space.log
     }
@@ -69,11 +69,8 @@ describe "Space.eventSourcing.CommitStore", ->
       }
 
       expect(insertedCommits).toMatch [serializedCommit]
-      expect(@commitStore.commitPublisher.publishCommit)
-      .to.have.been.calledWithMatch changes: {
-        events: [testEvent]
-        commands: [testCommand]
-      }
+      expect(@commitStore.commitPublisher.publishChanges)
+      .to.have.been.calledWithMatch(changes, insertedCommits[0]._id)
 
     it 'throws a concurrency exception if the version in the store does not equal the expected version', ->
       sourceId = new Guid()

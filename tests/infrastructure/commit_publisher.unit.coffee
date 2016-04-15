@@ -75,16 +75,24 @@ describe "Space.eventSourcing.CommitPublisher", ->
     @commitProps = {
       sourceId: sourceId
       version: newVersion
-      changes:
-        events: [EJSON.stringify(testEvent)]
-        commands: [EJSON.stringify(testCommand)]
+      changes: {
+        events: [{
+          type: testEvent.typeName(),
+          data: testEvent.toData()
+        }],
+        commands: [{
+          type: testCommand.typeName(),
+          data: testCommand.toData()
+        }]
+      }
       insertedAt: new Date()
       sentBy: 'someOtherApp'
       receivers: [@externalReceiveEntry]
-      eventTypes: [CPTestEvent.toString()]
+      eventTypes: [testEvent.typeName()]
     }
 
     @commitId = Commits.insert @commitProps
+    @changes = (commit) -> @commitPublisher.parseChanges(commit)
 
   afterEach ->
     @clock.restore()
@@ -92,46 +100,48 @@ describe "Space.eventSourcing.CommitPublisher", ->
     @commitPublisher.stopPublishing()
 
   it 'publishes externally added commits once in the current app, even with multiple app instances running', ->
-    @commitPublisher.publishCommit = sinon.spy()
+    @commitPublisher.publishChanges = sinon.spy()
     @commitPublisher.startPublishing()
     insertedCommit = Commits.findOne(@commitId)
-    expect(@commitPublisher.publishCommit).to.have.been.called
+    expect(@commitPublisher.publishChanges).to.have.been.calledWithExactly(
+      @changes(insertedCommit), @commitId
+    )
     expect(insertedCommit.receivers).to.deep.equal([@externalReceiveEntry, {
       appId: @appId
       receivedAt: new Date()
     }])
 
   it 'fails the processing attempt if configurable timeout duration is reached', (test, waitFor) ->
-    fail = @commitPublisher._failCommitProcessingAttempt = sinon.spy()
+    onTimeout = @commitPublisher._onTimeout = sinon.spy()
     @configuration.eventSourcing.commitProcessing.timeout = 1
     commit = Commits.findOne(@commitId)
-    @commitPublisher._setProcessingTimeout(commit)
+    @commitPublisher._setTimeout(@changes(commit), @commitId)
     timeout = =>
       try
-        commit = Commits.findOne(@commitId)
-        expect(fail).to.be.calledWith(@commitId)
+        expect(onTimeout).to.be.calledWithExactly(@changes(commit), @commitId)
       catch err
         test.exception err
     Meteor.setTimeout(waitFor(timeout), 2);
 
-  it 'updates the commit record with the date when the processing is failed', ->
+  it 'handles errors by setting a failedAt field in the receivers array, and clearing the timeout', ->
     lockedCommit = Commits.findAndModify({
       query: $and: [_id: @commitId, { 'receivers.appId': { $nin: [@appId] }}]
       update: $push: { receivers: { appId: @appId, receivedAt: new Date() } }
     })
-    @commitPublisher._markAsProcessed = ->
-    @commitPublisher._setProcessingTimeout = ->
-    @commitPublisher.publishCommit(@commitPublisher._parseCommit(lockedCommit))
-    @commitPublisher._failCommitProcessingAttempt(@commitId)
-
+    @commitPublisher.eventBus.publish = (event) -> throw new Error 'TestError'
+    @commitPublisher._setTimeout = ->
+    @commitPublisher._clearTimeout = ->
+    try
+      @commitPublisher.publishChanges(@changes(lockedCommit), @commitId)
+    catch error
+      expect(error).to.deep.equal(new Error 'TestError')
     commit = Commits.findOne(@commitId)
     failedAt = _.findWhere(commit.receivers, {appId: @appId}).failedAt
-    Meteor.clearTimeout(@commitPublisher._inProgress[commit._id])
     expect(failedAt).to.be.instanceOf(Date)
 
-  it 'ignores calls to fail successful processing attempt to protects the commit record from race conditions with timeouts', ->
+  it 'ignores potential race condition between the timeout and processing being marked as completed', ->
     @configuration.eventSourcing.commitProcessing.timeout = 1
-    Commits.findAndModify({
+    commit = Commits.findAndModify({
       query: $and: [_id: @commitId, { 'receivers.appId': { $nin: [@appId] }}]
       update: $push: { receivers: {
         appId: @appId,
@@ -139,23 +149,23 @@ describe "Space.eventSourcing.CommitPublisher", ->
         processedAt: new Date()
       }}
     })
-    @commitPublisher._failCommitProcessingAttempt(@commitId)
+    @commitPublisher._onTimeout(@changes(commit), @commitId)
     commit = Commits.findOne(@commitId)
     failedAt = _.findWhere(commit.receivers, {appId: @appId}).failedAt
     expect(failedAt).to.equal.undefined
 
   it "stores each commit's publishing timeout using the id as a the key", ->
     commit = Commits.findOne(@commitId)
-    @commitPublisher._failCommitProcessingAttempt = ->
-    @commitPublisher._setProcessingTimeout(commit)
+    @commitPublisher._onTimeout = ->
+    @commitPublisher._setTimeout(@changes(commit), @commitId)
     expect(@commitPublisher._inProgress).to.have.property(@commitId);
     expect(@commitPublisher._inProgress[@commitId]).to.respondTo('_onTimeout');
 
   it "tracks each commit's publishing timeout when publishing", ->
     mockPublisher = sinon.mock(@commitPublisher)
     commit = Commits.findOne(@commitId)
-    mockPublisher.expects("_setProcessingTimeout").once().withExactArgs(commit)
-    @commitPublisher.publishCommit(@commitPublisher._parseCommit(commit))
+    mockPublisher.expects("_setTimeout").once().withExactArgs(@changes(commit), @commitId)
+    @commitPublisher.publishChanges(@changes(commit), @commitId)
     mockPublisher.verify()
 
   it "cleans up after the commit is processed, by deleting the object key", ->
@@ -163,4 +173,13 @@ describe "Space.eventSourcing.CommitPublisher", ->
     mockPublisher.expects("_cleanupTimeout").once().withExactArgs(@commitId)
     @commitPublisher.startPublishing()
     expect(@commitPublisher._inProgress[@commitId]).to.equal.undefined
+    mockPublisher.verify()
+
+  it "is backwards compatible with publishCommit", ->
+    mockPublisher = sinon.mock(@commitPublisher)
+    mockPublisher.expects("publishChanges").once().withExactArgs(
+      @commitProps.changes, @commitId
+    )
+    commit = Commits.findOne(@commitId)
+    @commitPublisher.publishCommit(commit)
     mockPublisher.verify()
