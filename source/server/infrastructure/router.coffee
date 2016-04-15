@@ -87,8 +87,8 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
                        #{@eventSourceable}<#{aggregateId}>\n"), message)
     try
       eventSourceable = @repository.find @eventSourceable, aggregateId
-      @injector.injectInto(eventSourceable)
       throw Router.ERRORS.cannotHandleMessage(message) if !eventSourceable?
+      @injector.injectInto(eventSourceable)
       eventSourceable = @_handleDomainErrors(-> eventSourceable.handle message)
       @repository.save(eventSourceable) if eventSourceable?
     catch error
