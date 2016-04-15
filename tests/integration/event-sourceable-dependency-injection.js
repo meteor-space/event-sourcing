@@ -12,10 +12,8 @@ describe("Space.eventSourcing.Aggregate - dependency injection", function() {
       targetId: new Guid(),
       name: 'MyStrangeCustomerName'
     });
-
     this.app.start();
     this.app.commandBus.send(command);
-
     expect(Test.myAggregateDependency).to.have.been.calledOnce;
   });
 
