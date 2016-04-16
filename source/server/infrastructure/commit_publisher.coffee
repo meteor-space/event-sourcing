@@ -110,4 +110,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
     "#{@configuration.appId}: #{this}: #{message}"
 
   # Backwards compatability
-  publishCommit: (commit) => @publishChanges(commit.changes, commit._id)
+  publishCommit: (commit) ->
+    @log.warning(@_logMsg('CommitPublisher publishCommit(commit) is
+      depreciated. Use publishChanges(changes, commitId)'))
+    @publishChanges(commit.changes, commit._id)
