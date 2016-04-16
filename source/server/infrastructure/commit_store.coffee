@@ -31,45 +31,45 @@ class Space.eventSourcing.CommitStore extends Space.Object
         expectedVersion,
         currentVersion
       )
-    else
-      newVersion = currentVersion + 1
-      @_setEventVersion(event, newVersion) for event in changes.events
 
-      # serialize events and commands
-      serializedChanges = events: [], commands: []
-      for event in changes.events
-        serializedChanges.events.push type: event.typeName(), data: event.toData()
-      for command in changes.commands
-        serializedChanges.commands.push type: command.typeName(), data: command.toData()
+    newVersion = currentVersion + 1
+    @_setEventVersion(event, newVersion) for event in changes.events
 
-      commit = {
-        sourceId: sourceId.toString()
-        version: newVersion
-        changes: serializedChanges
-        insertedAt: new Date()
-        eventTypes: @_getEventTypes(changes.events)
-        sentBy: @configuration.appId
-        receivers: [{ appId: @configuration.appId, receivedAt: new Date }]
-      }
+    # serialize events and commands
+    serializedChanges = events: [], commands: []
+    for event in changes.events
+      serializedChanges.events.push type: event.typeName(), data: event.toData()
+    for command in changes.commands
+      serializedChanges.commands.push type: command.typeName(), data: command.toData()
 
-      # insert commit with next version
-      @log.debug(@_logMsg("Inserting commit"), commit)
-      try
-        commitId = @commits.insert commit
-      catch error
-        if (error.code == 11000)
-          # A commit for this aggregate version already exists
-          # Re-query for the changed state
-          lastCommit = @_getLastCommit(sourceId)
-          throw new Space.eventSourcing.CommitConcurrencyException(
-            sourceId,
-            expectedVersion,
-            lastCommit.version
-          )
-        else
-          throw error
+    commit = {
+      sourceId: sourceId.toString()
+      version: newVersion
+      changes: serializedChanges
+      insertedAt: new Date()
+      eventTypes: @_getEventTypes(changes.events)
+      sentBy: @configuration.appId
+      receivers: [{ appId: @configuration.appId, receivedAt: new Date }]
+    }
 
-      @commitPublisher.publishChanges(changes, commitId)
+    # insert commit with next version
+    @log.debug(@_logMsg("Inserting commit"), commit)
+    try
+      commitId = @commits.insert commit
+    catch error
+      if (error.code == 11000)
+        # A commit for this aggregate version already exists
+        # Re-query for the changed state
+        lastCommit = @_getLastCommit(sourceId)
+        throw new Space.eventSourcing.CommitConcurrencyException(
+          sourceId,
+          expectedVersion,
+          lastCommit.version
+        )
+      else
+        throw error
+        
+    @commitPublisher.publishChanges(changes, commitId)
 
   getEvents: (sourceId, versionOffset=1) ->
     events = []
