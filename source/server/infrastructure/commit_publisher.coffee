@@ -66,18 +66,21 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
     ), @configuration.eventSourcing.commitProcessing.timeout
 
   _onTimeout: (changes, commitId) ->
-    commit = @commits.findOne(commitId)
-    appId = @configuration.appId
-    # Protect against race condition
-    if(_.findWhere(commit.receivers, {appId: appId}).processedAt)
-      return @log.warning @_logMsg("#{commitId} is already fully processed.
-      Potential race condition, no action required."), changes
-    @commits.update(
-      { _id: commitId, 'receivers.appId': appId },
-      { $set: { 'receivers.$.failedAt': new Date() } }
-    )
-    @log.error(@_logMsg("#{commitId} TIMED OUT"), changes)
-    @_cleanupTimeout(commitId)
+    failedCommit = @commits.findAndModify({
+      query: { $and: [
+        { _id: commitId },
+        { 'receivers': {
+          $elemMatch: {
+            appId: @configuration.appId,
+            'processedAt': { $exists: false }
+          }
+        }}
+      ]}
+      update: $set: { 'receivers.$.failedAt': new Date() }
+    })
+    if(failedCommit)
+      @log.error(@_logMsg("#{commitId} TIMED OUT"), changes)
+      @_cleanupTimeout(commitId)
 
   _clearTimeout: (commitId) ->
     @meteor.clearTimeout(@_inProgress[commitId])

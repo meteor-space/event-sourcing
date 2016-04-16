@@ -32,6 +32,7 @@ describe "Space.eventSourcing.CommitPublisher", ->
   Commits = new Mongo.Collection('TestCommits')
 
   beforeEach ->
+    Commits.remove {}
     @clock = sinon.useFakeTimers(Date.now(), 'Date')
     @appId = 'MyApp'
     @configuration = {
@@ -42,7 +43,6 @@ describe "Space.eventSourcing.CommitPublisher", ->
         }
       }
     }
-    Commits.remove {}
     @commitPublisher = new CommitPublisher {
       commits: Commits
       configuration: @configuration
@@ -96,8 +96,8 @@ describe "Space.eventSourcing.CommitPublisher", ->
 
   afterEach ->
     @clock.restore()
-    Commits.remove {}
     @commitPublisher.stopPublishing()
+    Commits.remove {}
 
   it 'publishes externally added commits once in the current app, even with multiple app instances running', ->
     @commitPublisher.publishChanges = sinon.spy()
@@ -111,17 +111,20 @@ describe "Space.eventSourcing.CommitPublisher", ->
       receivedAt: new Date()
     }])
 
-  it 'fails the processing attempt if configurable timeout duration is reached', (test, waitFor) ->
-    onTimeout = @commitPublisher._onTimeout = sinon.spy()
-    @configuration.eventSourcing.commitProcessing.timeout = 1
-    commit = Commits.findOne(@commitId)
-    @commitPublisher._setTimeout(@changes(commit), @commitId)
+  it 'fails the processing attempt if timeout is reached', (test, waitFor) ->
+    lockedCommit = Commits.findAndModify({
+      query: $and: [_id: @commitId, { 'receivers.appId': { $nin: [@appId] }}]
+      update: $push: { receivers: { appId: @appId, receivedAt: new Date() } }
+    })
+    @commitPublisher._setTimeout(@changes(lockedCommit), @commitId)
     timeout = =>
       try
-        expect(onTimeout).to.be.calledWithExactly(@changes(commit), @commitId)
+        commit = Commits.findOne(@commitId)
+        failedAt = _.findWhere(commit.receivers, {appId: @appId}).failedAt
+        expect(failedAt).to.be.instanceOf(Date)
       catch err
         test.exception err
-    Meteor.setTimeout(waitFor(timeout), 2);
+    Meteor.setTimeout(waitFor(timeout), 20);
 
   it 'handles errors by setting a failedAt field in the receivers array, and clearing the timeout', ->
     lockedCommit = Commits.findAndModify({
@@ -139,15 +142,18 @@ describe "Space.eventSourcing.CommitPublisher", ->
     failedAt = _.findWhere(commit.receivers, {appId: @appId}).failedAt
     expect(failedAt).to.be.instanceOf(Date)
 
-  it 'ignores potential race condition between the timeout and processing being marked as completed', ->
+  it 'avoids potential race condition between the timeout and processing being marked as completed', ->
     @configuration.eventSourcing.commitProcessing.timeout = 1
     commit = Commits.findAndModify({
-      query: $and: [_id: @commitId, { 'receivers.appId': { $nin: [@appId] }}]
-      update: $push: { receivers: {
+      query: { $and: [
+        { _id: @commitId },
+        { 'receivers.appId': { $nin: [@appId] }}
+      ]}
+      update: { $push: { receivers: {
         appId: @appId,
         receivedAt: new Date(),
         processedAt: new Date()
-      }}
+      }}}
     })
     @commitPublisher._onTimeout(@changes(commit), @commitId)
     commit = Commits.findOne(@commitId)
