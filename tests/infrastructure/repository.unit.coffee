@@ -46,7 +46,7 @@ describe "Space.eventSourcing.Repository", ->
     })
     @commitStore = new CommitStore {
       commits: new Mongo.Collection(null)
-      commitPublisher: { publishCommit: -> }
+      commitPublisher: { publishChanges: -> }
       configuration: { appId: @appId }
       log: Space.log
     }

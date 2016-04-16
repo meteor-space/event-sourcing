@@ -87,8 +87,8 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
                        #{@eventSourceable}<#{aggregateId}>\n"), message)
     try
       eventSourceable = @repository.find @eventSourceable, aggregateId
-      @injector.injectInto(eventSourceable)
       throw Router.ERRORS.cannotHandleMessage(message) if !eventSourceable?
+      @injector.injectInto(eventSourceable)
       eventSourceable = @_handleDomainErrors(-> eventSourceable.handle message)
       @repository.save(eventSourceable) if eventSourceable?
     catch error
@@ -112,11 +112,13 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
 
   _handleSaveErrors: (error, message, aggregateId) ->
     if error instanceof Space.eventSourcing.CommitConcurrencyException
-      @log.warning(@_logMsg("Re-handling message due to concurrency exception with message #{message.typeName()} for
-                       #{@eventSourceable}<#{aggregateId}>\n"), message)
-      # Concurrency exceptions can often be resolved by simply re-handling the message.
-      # This should be safe from endless loops, because if the aggregate's state
-      # has since changed and the message is rejected, a domain exception is thrown
+      @log.warning(@_logMsg("Re-handling message due to concurrency exception
+      with message #{message.typeName()} for #{@eventSourceable}
+      <#{aggregateId}>"), message)
+      # Concurrency exceptions can often be resolved by simply re-handling the
+      # message. This should be safe from endless loops, because if the
+      # aggregate's state has since changed and the message is rejected,
+      # a domain exception will be thrown, which is an application concern.
       @messageHandler(message)
     else
       throw error
