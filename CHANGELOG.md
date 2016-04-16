@@ -12,13 +12,23 @@ Concurrency exceptions can occur in a race condition where two messages are
    This should be safe from endless loops, because if the aggregate's state
    has since changed rendering the message now invalid, a domain exception 
    will be thrown, which is handled elsewhere being an application concern.
+- **New index** `{ "_id": 1, "receivers.appId": 1 }` on commits collection to optimise commit publishing.
+
+
+### Changes
+
 - **Logging** has been made more production-friendly, pushing some of the noisy `info`
 entries from the commit call down to `debug`. In effect, you could log `debug` to
 a local file and rotate as needed, and `info` to an external system that gives you
 the system-level updates rather than every action being taken.
-- **New index** `{ "_id": 1, "receivers.appId": 1 }` on commits collection to optimise commit publishing.
 - `eventCorrelationProperty` of processes are now converted to a string if a Guid.
- 
+
+#### Future breaking, now depreciated
+
+- `commitPublisher.publishCommit(commit)`
+now use `commitPublisher.publishChanges(changes, commitId)`
+
+
 ### Bug Fixes
 - Commit **processing timeout** had a bug that caused the publisher to fail commits that most
 likely had already been fully processed, due to the timeout reference being lost, so was not being . Failing a commit that has already been processed
