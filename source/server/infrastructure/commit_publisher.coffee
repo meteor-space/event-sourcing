@@ -80,7 +80,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
     })
     if(failedCommit)
       @log.error(@_logMsg("#{commitId} TIMED OUT"), changes)
-      @_cleanupTimeout(commitId)
+    @_cleanupTimeout(commitId)
 
   _clearTimeout: (commitId) ->
     @meteor.clearTimeout(@_inProgress[commitId])
