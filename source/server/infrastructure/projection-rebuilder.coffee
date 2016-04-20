@@ -31,25 +31,26 @@ class Space.eventSourcing.ProjectionRebuilder extends Space.Object
       projection.enterRebuildMode()
       queue.push projection
 
-    # Loop through all events and hand them individually to all projections
-    for event in @commitStore.getAllEvents()
-      projection.on(event, true) for projection in queue
+    try
+      # Loop through all events and hand them individually to all projections
+      for event in @commitStore.getAllEvents()
+        projection.on(event, true) for projection in queue
 
-    # Update the real collection data with the in-memory versions
-    # for the specified projections only.
-    for collectionId, realCollection of realCollectionsBackups
-      inMemoryCollection = @injector.get(collectionId)
-      inMemoryData = inMemoryCollection.find().fetch()
-      realCollection.remove {}
-      if inMemoryData.length
-        realCollection.batchInsert inMemoryData
-      else
-        @log.info(@_logMsg("No data to insert after replaying events for #{collectionId}"))
-      # Restore original collections
-      @injector.override(collectionId).to realCollection
-
-    for projection in queue
-      projection.exitRebuildMode()
+      # Update the real collection data with the in-memory versions
+      # for the specified projections only.
+      for collectionId, realCollection of realCollectionsBackups
+        inMemoryCollection = @injector.get(collectionId)
+        inMemoryData = inMemoryCollection.find().fetch()
+        realCollection.remove {}
+        if inMemoryData.length
+          realCollection.batchInsert inMemoryData
+        else
+          @log.info(@_logMsg("No data to insert after replaying events for #{collectionId}"))
+        # Restore original collections
+        @injector.override(collectionId).to realCollection
+    finally
+      for projection in queue
+        projection.exitRebuildMode()
 
   _getCollectionIdsOfProjection: (projection) ->
     collectionIds = []
