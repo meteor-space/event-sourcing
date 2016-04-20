@@ -37,6 +37,7 @@ fix also places a guard to protect against race conditions in the event of a gen
 or redelivery via the infrastructure.
 - Now the repository only calls `aggregate.replayHistory` if there have been 
 events since the last snapshot.
+- Fixes a non-critical bug with the Snapshotter where every new aggregate instance would have the snapshot generated after the commit is added rather than waiting for the version specified in configuration. This is a performance improvement, particularly for batch importing.
 
 ## 3.0.1
 ### Changes to projection rebuilder
