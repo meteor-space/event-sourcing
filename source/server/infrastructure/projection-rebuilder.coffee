@@ -74,4 +74,5 @@ class Space.eventSourcing.ProjectionRebuilder extends Space.Object
     return collectionIds
 
   _logMsg: (message) ->
-    "#{@configuration.appId}: #{this}: #{message}"
+    prefix = "#{@configuration.appId}: " if @configuration?.appId
+    "#{prefix}#{this}: #{message}"

@@ -41,4 +41,5 @@ class Space.eventSourcing.Projection extends Space.Object
     true if expectedState is @_state
 
   _logMsg: (message) ->
-    "#{@configuration.appId}: #{this}: #{message}"
+    prefix = "#{@configuration.appId}: " if @configuration?.appId
+    "#{prefix}#{this}: #{message}"
