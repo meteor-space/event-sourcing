@@ -63,9 +63,9 @@ class Space.eventSourcing.ProjectionRebuilder extends Space.Object
       for projection in queue
         projection.exitRebuildMode()
     duration = Math.round(process.hrtime(startHrTime)[1]/1000000)
-    responseMessage = "Finished rebuilding #{projections} in #{duration}ms"
-    @log.info(@_logMsg(responseMessage))
-    return responseMessage
+    response = { message: "Finished rebuilding #{projections} in #{duration}ms", duration: duration }
+    @log.info(@_logMsg(response.message))
+    return response
 
   _getCollectionIdsOfProjection: (projection) ->
     collectionIds = []
