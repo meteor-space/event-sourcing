@@ -46,11 +46,10 @@ class Space.eventSourcing.ProjectionRebuilder extends Space.Object
       queue.push projection
 
     try
-      # Loop through all events and hand them individually to all projections
-      @log.debug(@_logMsg("Starting to pass events to #{projectionId} from Commit Store"))
+      @log.debug(@_logMsg("Starting to pass all Commit Store events to the projections"))
       for event in @commitStore.getAllEvents()
         projection.on(event, true) for projection in queue
-      @log.debug(@_logMsg("Finished passing events to #{projectionId}"))
+      @log.debug(@_logMsg("Finished passing events"))
       # Update the real collection data with the in-memory versions
       for collectionId, realCollection of realCollectionsBackups
         inMemoryCollection = @injector.get(collectionId)
