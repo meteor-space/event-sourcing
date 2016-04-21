@@ -55,15 +55,16 @@ class Space.eventSourcing.ProjectionRebuilder extends Space.Object
           @log.debug(@_logMsg("Rebuilt staged collection batch inserted into #{collectionId}"))
         else
           @log.info(@_logMsg("No data to insert after replaying events for #{collectionId}"))
-        # Restore original collections
+        # Restore original collection and cleanup backup
         @injector.override(collectionId).to realCollection
-        @log.debug(@_logMsg("Restored collection injector mappings for #{projectionId}"))
+        delete realCollectionsBackups[collectionId]
+      @log.debug(@_logMsg("Restored collection injector mappings for #{projectionId}"))
     finally
       for projection in queue
         projection.exitRebuildMode()
-      duration = Math.round(process.hrtime(startHrTime)[1]/1000000)
-      responseMessage = "Finished rebuilding #{projections} in #{duration}ms"
-      @log.info(@_logMsg(responseMessage))
+    duration = Math.round(process.hrtime(startHrTime)[1]/1000000)
+    responseMessage = "Finished rebuilding #{projections} in #{duration}ms"
+    @log.info(@_logMsg(responseMessage))
     return responseMessage
 
   _getCollectionIdsOfProjection: (projection) ->
