@@ -68,7 +68,6 @@ class Space.eventSourcing.ProjectionRebuilder extends Space.Object
       for collectionId in @_getCollectionIdsOfProjection(projection)
         @injector.override(collectionId).to realCollectionsBackups[collectionId]
         @log.warning(@_logMsg("Rolled back to previous version of #{collectionId} due to error"))
-      console.log(error)
       projection.exitRebuildMode()
       throw error
 
