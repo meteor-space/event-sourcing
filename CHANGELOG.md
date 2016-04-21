@@ -12,8 +12,12 @@ Concurrency exceptions can occur in a race condition where two messages are
    This should be safe from endless loops, because if the aggregate's state
    has since changed rendering the message now invalid, a domain exception 
    will be thrown, which is handled elsewhere being an application concern.
-- **New index** `{ "_id": 1, "receivers.appId": 1 }` on commits collection to optimise commit publishing.
-
+- **New index** `{ "_id": 1, "receivers.appId": 1 }` on commits collection to
+  optimise commit publishing.
+- `projectionRebuilder.rebuild` now returns a response object containing a
+  messageand duration property
+-  `ProjectionRebuilder` now logs detailed debug information, and two info
+  updates to provide feedback at the desired level.
 
 ### Changes
 
