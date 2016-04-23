@@ -63,6 +63,7 @@ class Space.eventSourcing extends Space.Module
       commitsName = Space.getenv('SPACE_ES_COMMITS_COLLECTION_NAME', 'space_eventSourcing_commits')
       CommitsCollection = new @mongo.Collection commitsName, @_mongoConnection()
       CommitsCollection._ensureIndex { "sourceId": 1, "version": 1 }, unique: true
+      CommitsCollection._ensureIndex { "receivers.appId": 1 }
       CommitsCollection._ensureIndex { "_id": 1, "receivers.appId": 1 }
       Space.eventSourcing.commitsCollection = CommitsCollection
     @injector.map('Space.eventSourcing.Commits').to CommitsCollection

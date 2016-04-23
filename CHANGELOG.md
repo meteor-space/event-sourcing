@@ -12,8 +12,13 @@ Concurrency exceptions can occur in a race condition where two messages are
    This should be safe from endless loops, because if the aggregate's state
    has since changed rendering the message now invalid, a domain exception 
    will be thrown, which is handled elsewhere being an application concern.
-- **New index** `{ "_id": 1, "receivers.appId": 1 }` on commits collection to optimise commit publishing.
-
+- **New index** `{ "_id": 1, "receivers.appId": 1 }` on commits collection to
+  optimise commit publishing.
+- `projectionRebuilder.rebuild` now returns a response object containing an
+  error and result, which the former will be null if no non-fatal errors were
+  thrown. The result contains a message and duration property.
+-  `ProjectionRebuilder` now logs detailed debug information, and two info
+  updates to provide feedback at the desired level.
 
 ### Changes
 
@@ -22,6 +27,8 @@ entries from the commit call down to `debug`. In effect, you could log `debug` t
 a local file and rotate as needed, and `info` to an external system that gives you
 the system-level updates rather than every action being taken.
 - `eventCorrelationProperty` of processes are now converted to a string if a Guid.
+- `ProjectionRebuilder` gracefully handles errors, reapplying the backup and resetting
+  telling the projection to `exitRebuildMode` before re-throwing the error.
 
 #### Future breaking, now depreciated
 

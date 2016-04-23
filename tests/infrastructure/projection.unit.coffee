@@ -12,6 +12,12 @@ describe 'Space.eventSourcing.Projection', ->
       eventBus: new Space.messaging.EventBus()
       meteor: Meteor
       underscore: _
+      log: {
+        debug: ->
+        warning: ->
+        info: ->
+        error: ->
+      }
     })
     @projection.onDependenciesReady()
     @projection.subscribe TestEvent, @handler
