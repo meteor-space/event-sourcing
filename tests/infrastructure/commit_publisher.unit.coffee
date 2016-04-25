@@ -89,6 +89,7 @@ describe "Space.eventSourcing.CommitPublisher", ->
       sentBy: 'someOtherApp'
       receivers: [@externalReceiveEntry]
       eventTypes: [testEvent.typeName()]
+      commandTypes: [testCommand.typeName()]
     }
 
     @commitId = Commits.insert @commitProps
@@ -99,7 +100,8 @@ describe "Space.eventSourcing.CommitPublisher", ->
     @commitPublisher.stopPublishing()
     Commits.remove {}
 
-  it 'publishes externally added commits once in the current app, even with multiple app instances running', ->
+  it 'publishes externally added commits in the current app, even with
+    multiple app instances running', ->
     @commitPublisher.publishChanges = sinon.spy()
     @commitPublisher.startPublishing()
     insertedCommit = Commits.findOne(@commitId)
@@ -126,7 +128,8 @@ describe "Space.eventSourcing.CommitPublisher", ->
         test.exception err
     Meteor.setTimeout(waitFor(timeout), 20);
 
-  it 'handles errors by setting a failedAt field in the receivers array, and clearing the timeout', ->
+  it 'handles errors by setting a failedAt field in the receivers array,
+    and clearing the timeout', ->
     lockedCommit = Commits.findAndModify({
       query: $and: [_id: @commitId, { 'receivers.appId': { $nin: [@appId] }}]
       update: $push: { receivers: { appId: @appId, receivedAt: new Date() } }
@@ -142,7 +145,8 @@ describe "Space.eventSourcing.CommitPublisher", ->
     failedAt = _.findWhere(commit.receivers, {appId: @appId}).failedAt
     expect(failedAt).to.be.instanceOf(Date)
 
-  it 'avoids potential race condition between the timeout and processing being marked as completed', ->
+  it 'avoids potential race condition between the timeout and processing being
+    marked as completed', ->
     @configuration.eventSourcing.commitProcessing.timeout = 1
     commit = Commits.findAndModify({
       query: { $and: [

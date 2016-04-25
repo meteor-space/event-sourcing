@@ -66,6 +66,7 @@ describe "Space.eventSourcing.CommitStore", ->
         sentBy: @appId
         receivers: [{ appId: @appId, receivedAt: new Date() }]
         eventTypes: [TestEvent.toString()]
+        commandTypes: [TestCommand.toString()]
       }
 
       expect(insertedCommits).toMatch [serializedCommit]
