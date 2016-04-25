@@ -73,7 +73,6 @@ class Space.eventSourcing.CommitStore extends Space.Object
     @commitPublisher.publishChanges(changes, commitId)
 
   getEvents: (sourceId, versionOffset=1) ->
-    events = []
     withVersionOffset = {
       sourceId: sourceId.toString()
       version: $gte: versionOffset
