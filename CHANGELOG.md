@@ -24,10 +24,12 @@ Concurrency exceptions can occur in a race condition where two messages are
 - Commits made in other apps will now only be processed if they contain
    messages with registered handlers in the current app. Prior to every
    commit would be returned by the observer, and then it was decided to
-   publish/send, or ignore. The **one caveat** is that in the future if
-   an app subscribes to a legacy message, it will process all from the past,
-   which may or may not be desired. We may look at introducing rules around
-   processing legacy commits if a natural control surfaces.
+   publish/send, or ignore. This changes the outcome of adding handlers 
+   in to existing messages, as it will process all from the start of the store,
+   which may or may not be desired. It's up to the application to control this
+   but is now more flexible and the system can be brought up to a consistent
+   state as if the handlers were in place the whole time. **Consider this
+   carefully!**
 
 - **Logging** has been made more production-friendly, pushing some of the noisy `info`
 entries from the commit call down to `debug`. In effect, you could log `debug` to
