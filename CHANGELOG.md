@@ -21,6 +21,13 @@ Concurrency exceptions can occur in a race condition where two messages are
   updates to provide feedback at the desired level.
 
 ### Changes
+- Commits made in other apps will now only be processed if they contain
+   messages with registered handlers in the current app. Prior to every
+   commit would be returned by the observer, and then it was decided to
+   publish/send, or ignore. The **one caveat** is that in the future if
+   an app subscribes to a legacy message, it will process all from the past,
+   which may or may not be desired. We may look at introducing rules around
+   processing legacy commits if a natural control surfaces.
 
 - **Logging** has been made more production-friendly, pushing some of the noisy `info`
 entries from the commit call down to `debug`. In effect, you could log `debug` to
