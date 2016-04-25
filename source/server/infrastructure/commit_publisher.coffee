@@ -18,13 +18,18 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
   startPublishing: ->
     appId = @configuration.appId
     if not appId? then throw new Error "#{this}: You have to specify an appId"
-    notReceivedYet = { 'receivers.appId': { $nin: [appId] }}
+    registered = { $or: [
+      { 'eventTypes': { $in: @eventBus.getHandledEventTypes() }},
+      { 'commandTypes': { $in: @commandBus.getHandledCommandTypes() }},
+    ]}
+    notReceivedYet = { 'receivers.appId': { $nin: [appId] }};
     # Save the observe handle for stopping
-    @_publishHandle = @commits.find(notReceivedYet).observe {
+    registeredAndNotReceivedYet = { $and: [ registered, notReceivedYet] }
+    @_publishHandle = @commits.find(registeredAndNotReceivedYet).observe {
       added: (commit) =>
         # Find and lock the event, so only one app instance publishes it
         lockedCommit = @commits.findAndModify({
-          query: $and: [_id: commit._id, notReceivedYet]
+          query: $and: [_id: commit._id, registeredAndNotReceivedYet]
           update: $push: { receivers: { appId: appId, receivedAt: new Date() } }
         })
         # Only publish the event if this process was the one that locked it
@@ -109,7 +114,7 @@ class Space.eventSourcing.CommitPublisher extends Space.Object
   _logMsg: (message) ->
     "#{@configuration.appId}: #{this}: #{message}"
 
-  # Backwards compatability
+  # Backwards compatibility
   publishCommit: (commit) ->
     @log.warning(@_logMsg('CommitPublisher publishCommit(commit) is
       depreciated. Use publishChanges(changes, commitId)'))

@@ -1,1 +1,6 @@
-{}
+{
+  "space:messaging": {
+    "git":"https://github.com/meteor-space/messaging.git",
+    "version": "c91630a60ed25f5e89b9c309075b91d9fc5c55a9"
+  }
+}
