@@ -21,6 +21,15 @@ Concurrency exceptions can occur in a race condition where two messages are
   updates to provide feedback at the desired level.
 
 ### Changes
+- Commits made in other apps will now only be processed if they contain
+   messages with registered handlers in the current app. Prior to every
+   commit would be returned by the observer, and then it was decided to
+   publish/send, or ignore. This changes the outcome of adding handlers 
+   in to existing messages, as it will process all from the start of the store,
+   which may or may not be desired. It's up to the application to control this
+   but is now more flexible and the system can be brought up to a consistent
+   state as if the handlers were in place the whole time. **Consider this
+   carefully!**
 
 - **Logging** has been made more production-friendly, pushing some of the noisy `info`
 entries from the commit call down to `debug`. In effect, you could log `debug` to
@@ -37,14 +46,19 @@ now use `commitPublisher.publishChanges(changes, commitId)`
 
 
 ### Bug Fixes
-- Commit **processing timeout** had a bug that caused the publisher to fail commits that most
-likely had already been fully processed, due to the timeout reference being lost, so was not being . Failing a commit that has already been processed
-had to effect, but it was causing the commit records to be left in an invalid state. This
-fix also places a guard to protect against race conditions in the event of a genuine timeout,
-or redelivery via the infrastructure.
+- Commit **processing timeout** had a bug that caused the publisher to fail
+ commits that most likely had already been fully processed, due to the timeout
+ reference being lost, so was not being . Failing a commit that has already
+  been processed had to effect, but it was causing the commit records to be
+  left in an invalid state. This fix also places a guard to protect against
+  race conditions in the event of a genuine timeout, or redelivery via the
+  infrastructure.
 - Now the repository only calls `aggregate.replayHistory` if there have been 
-events since the last snapshot.
-- Fixes a non-critical bug with the Snapshotter where every new aggregate instance would have the snapshot generated after the commit is added rather than waiting for the version specified in configuration. This is a performance improvement, particularly for batch importing.
+  events since the last snapshot.
+- Fixes a non-critical bug with the Snapshotter where every new aggregate
+  instance would have the snapshot generated after the commit is added rather
+  than waiting for the version specified in configuration. This is a
+  performance improvement, particularly for batch importing.
 
 ## 3.0.1
 ### Changes to projection rebuilder

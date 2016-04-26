@@ -25,6 +25,9 @@ class CPTotalChangedEvent extends Event
   @type 'tests.CommitPublisher.TotalChangedEvent'
   @fields: total: Number
 
+class CPUnSubscribedEvent extends Event
+  @type 'tests.CommitPublisher.UnSubscribedEvent'
+
 # =========== SPECS ============= #
 
 describe "Space.eventSourcing.CommitPublisher", ->
@@ -52,8 +55,8 @@ describe "Space.eventSourcing.CommitPublisher", ->
       ejson: EJSON
       log: Space.log
     }
-#    Un-comment this to log test cases
-#    @commitPublisher.log.start()
+    #  Un-comment this to log test cases
+    #  @commitPublisher.log.start()
     @commitStore = new CommitStore {
       commits: Commits
       commitPublisher: @commitPublisher
@@ -64,6 +67,11 @@ describe "Space.eventSourcing.CommitPublisher", ->
     @commitPublisher.commandBus.registerHandler(
       'Space.eventSourcing.CommitPublisher.TestCommand',
       @commandHandler
+    )
+    @eventSubscriber= sinon.spy()
+    @commitPublisher.eventBus.subscribeTo(
+      'Space.eventSourcing.CommitPublisher.TestEvent',
+      @eventSubscriber
     )
 
     @externalReceiveEntry = { appId: 'someOtherApp', receivedAt: new Date() }
@@ -89,6 +97,7 @@ describe "Space.eventSourcing.CommitPublisher", ->
       sentBy: 'someOtherApp'
       receivers: [@externalReceiveEntry]
       eventTypes: [testEvent.typeName()]
+      commandTypes: [testCommand.typeName()]
     }
 
     @commitId = Commits.insert @commitProps
@@ -99,7 +108,8 @@ describe "Space.eventSourcing.CommitPublisher", ->
     @commitPublisher.stopPublishing()
     Commits.remove {}
 
-  it 'publishes externally added commits once in the current app, even with multiple app instances running', ->
+  it 'publishes externally added commits in the current app if there is a
+    registered handler, even with multiple app instances running', ->
     @commitPublisher.publishChanges = sinon.spy()
     @commitPublisher.startPublishing()
     insertedCommit = Commits.findOne(@commitId)
@@ -110,6 +120,25 @@ describe "Space.eventSourcing.CommitPublisher", ->
       appId: @appId
       receivedAt: new Date()
     }])
+
+  it 'does not publish externally added commits without a registered handler in
+    the current app', ->
+    ignoreEvent = new CPUnSubscribedEvent({sourceId: '456'})
+    Commits.remove({})
+    commitToIgnoreProps = {
+      sourceId: '456'
+      version: 1
+      changes: {
+        events: [{
+          type: ignoreEvent.typeName(),
+          data: ignoreEvent.toData()
+        }]
+      }
+    }
+    Commits.insert(commitToIgnoreProps)
+    @commitPublisher.publishChanges = sinon.spy()
+    @commitPublisher.startPublishing()
+    expect(@commitPublisher.publishChanges).to.not.have.been.called
 
   it 'fails the processing attempt if timeout is reached', (test, waitFor) ->
     lockedCommit = Commits.findAndModify({
@@ -126,7 +155,8 @@ describe "Space.eventSourcing.CommitPublisher", ->
         test.exception err
     Meteor.setTimeout(waitFor(timeout), 20);
 
-  it 'handles errors by setting a failedAt field in the receivers array, and clearing the timeout', ->
+  it 'handles errors by setting a failedAt field in the receivers array,
+    and clearing the timeout', ->
     lockedCommit = Commits.findAndModify({
       query: $and: [_id: @commitId, { 'receivers.appId': { $nin: [@appId] }}]
       update: $push: { receivers: { appId: @appId, receivedAt: new Date() } }
@@ -142,7 +172,8 @@ describe "Space.eventSourcing.CommitPublisher", ->
     failedAt = _.findWhere(commit.receivers, {appId: @appId}).failedAt
     expect(failedAt).to.be.instanceOf(Date)
 
-  it 'avoids potential race condition between the timeout and processing being marked as completed', ->
+  it 'avoids potential race condition between the timeout and processing being
+    marked as completed', ->
     @configuration.eventSourcing.commitProcessing.timeout = 1
     commit = Commits.findAndModify({
       query: { $and: [

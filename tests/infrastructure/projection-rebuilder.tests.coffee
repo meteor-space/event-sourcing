@@ -78,6 +78,7 @@ describe 'Space.eventSourcing.ProjectionRebuilder', ->
       }
       insertedAt: new Date()
       eventTypes: [TestEvent]
+      commandTypes: []
       sentBy: @app.configuration.appId
       receivers: [ appId: @app.configuration.appId, receivedAt: new Date()]
     }

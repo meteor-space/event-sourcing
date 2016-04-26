@@ -47,7 +47,8 @@ class Space.eventSourcing.CommitStore extends Space.Object
       version: newVersion
       changes: serializedChanges
       insertedAt: new Date()
-      eventTypes: @_getEventTypes(changes.events)
+      eventTypes: @_getMessageTypes(changes.events)
+      commandTypes: @_getMessageTypes(changes.commands)
       sentBy: @configuration.appId
       receivers: [{ appId: @configuration.appId, receivedAt: new Date }]
     }
@@ -68,11 +69,10 @@ class Space.eventSourcing.CommitStore extends Space.Object
         )
       else
         throw error
-        
+
     @commitPublisher.publishChanges(changes, commitId)
 
   getEvents: (sourceId, versionOffset=1) ->
-    events = []
     withVersionOffset = {
       sourceId: sourceId.toString()
       version: $gte: versionOffset
@@ -96,7 +96,7 @@ class Space.eventSourcing.CommitStore extends Space.Object
 
   _setEventVersion: (event, version) -> event.version = version
 
-  _getEventTypes: (events) -> events.map (event) -> event.typeName()
+  _getMessageTypes: (messages) -> messages.map (message) -> message.typeName()
 
   _getLastCommit: (sourceId) ->
     @commits.findOne(
