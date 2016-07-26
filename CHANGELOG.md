@@ -47,10 +47,10 @@ now use `commitPublisher.publishChanges(changes, commitId)`
 
 ### Bug Fixes
 - Commit **processing timeout** had a bug that caused the publisher to fail
- commits that most likely had already been fully processed, due to the timeout
- reference being lost, so was not being . Failing a commit that has already
-  been processed had to effect, but it was causing the commit records to be
-  left in an invalid state. This fix also places a guard to protect against
+commits that most likely had already been fully processed, due to the timeout
+reference being lost. Failing a commit that has already
+  been processed was causing the commit records to be left in an invalid state.
+  This fix also places a guard to protect against
   race conditions in the event of a genuine timeout, or redelivery via the
   infrastructure.
 - Now the repository only calls `aggregate.replayHistory` if there have been 
