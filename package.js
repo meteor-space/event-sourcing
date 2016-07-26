@@ -16,10 +16,10 @@ Package.onUse(function(api) {
     'check',
     'mongo',
     'ecmascript',
-    'mikowals:batch-insert@1.1.9',
+    'mikowals:batch-insert@1.1.13',
     'fongandrew:find-and-modify@0.2.1',
-    'space:base@4.1.1',
-    'space:messaging@3.1.1',
+    'space:base@4.1.3',
+    'space:messaging@3.3.0',
     'space:domain@0.2.1'
   ]);
 
@@ -55,9 +55,9 @@ Package.onTest(function(api) {
     'underscore',
     'ecmascript',
     'space:event-sourcing',
-    'space:testing@3.0.1',
-    'space:testing-messaging@3.0.0',
-    'space:testing-event-sourcing@3.0.0',
+    'space:testing@3.0.2',
+    'space:testing-messaging@3.0.1',
+    'space:testing-event-sourcing@3.1.0',
     'practicalmeteor:munit@2.1.5'
   ], 'server');
 
