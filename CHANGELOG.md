@@ -1,7 +1,7 @@
 Changelog
 =========
 
-## vNext
+## 3.1.0
 
 ### New Features
 - **Commit save concurrency exception handling**
