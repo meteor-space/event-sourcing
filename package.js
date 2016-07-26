@@ -1,7 +1,7 @@
 Package.describe({
   summary: 'Event Sourcing Infrastructure for Meteor.',
   name: 'space:event-sourcing',
-  version: '3.0.1',
+  version: '3.1.0',
   git: 'https://github.com/meteor-space/event-sourcing.git'
 });
 
