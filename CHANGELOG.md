@@ -1,6 +1,65 @@
 Changelog
 =========
 
+## 3.1.0
+
+### New Features
+- **Commit save concurrency exception handling**
+Concurrency exceptions can occur in a race condition where two messages are
+ attempting to change the state of an aggregate instance. This can often be
+  resolved by simply re-handling the message, which is what the Router now
+   does if this exception bubbles up during the save operation.
+   This should be safe from endless loops, because if the aggregate's state
+   has since changed rendering the message now invalid, a domain exception 
+   will be thrown, which is handled elsewhere being an application concern.
+- **New index** `{ "_id": 1, "receivers.appId": 1 }` on commits collection to
+  optimise commit publishing.
+- `projectionRebuilder.rebuild` now returns a response object containing an
+  error and result, which the former will be null if no non-fatal errors were
+  thrown. The result contains a message and duration property.
+-  `ProjectionRebuilder` now logs detailed debug information, and two info
+  updates to provide feedback at the desired level.
+
+### Changes
+- Commits made in other apps will now only be processed if they contain
+   messages with registered handlers in the current app. Prior to every
+   commit would be returned by the observer, and then it was decided to
+   publish/send, or ignore. This changes the outcome of adding handlers 
+   in to existing messages, as it will process all from the start of the store,
+   which may or may not be desired. It's up to the application to control this
+   but is now more flexible and the system can be brought up to a consistent
+   state as if the handlers were in place the whole time. **Consider this
+   carefully!**
+
+- **Logging** has been made more production-friendly, pushing some of the noisy `info`
+entries from the commit call down to `debug`. In effect, you could log `debug` to
+a local file and rotate as needed, and `info` to an external system that gives you
+the system-level updates rather than every action being taken.
+- `eventCorrelationProperty` of processes are now converted to a string if a Guid.
+- `ProjectionRebuilder` gracefully handles errors, reapplying the backup and resetting
+  telling the projection to `exitRebuildMode` before re-throwing the error.
+
+#### Future breaking, now depreciated
+
+- `commitPublisher.publishCommit(commit)`
+now use `commitPublisher.publishChanges(changes, commitId)`
+
+
+### Bug Fixes
+- Commit **processing timeout** had a bug that caused the publisher to fail
+commits that most likely had already been fully processed, due to the timeout
+reference being lost. Failing a commit that has already
+  been processed was causing the commit records to be left in an invalid state.
+  This fix also places a guard to protect against
+  race conditions in the event of a genuine timeout, or redelivery via the
+  infrastructure.
+- Now the repository only calls `aggregate.replayHistory` if there have been 
+  events since the last snapshot.
+- Fixes a non-critical bug with the Snapshotter where every new aggregate
+  instance would have the snapshot generated after the commit is added rather
+  than waiting for the version specified in configuration. This is a
+  performance improvement, particularly for batch importing.
+
 ## 3.0.1
 ### Changes to projection rebuilder
 - `Space.eventSourcing.ProjectionRebuilder ` is no longer throwing an error if there is no data to insert into collection after rebuilding is done. Info message is now logged instead. 

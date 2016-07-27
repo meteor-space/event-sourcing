@@ -46,7 +46,7 @@ describe "Space.eventSourcing.Repository", ->
     })
     @commitStore = new CommitStore {
       commits: new Mongo.Collection(null)
-      commitPublisher: { publishCommit: -> }
+      commitPublisher: { publishChanges: -> }
       configuration: { appId: @appId }
       log: Space.log
     }
@@ -80,6 +80,7 @@ describe "Space.eventSourcing.Repository", ->
         sentBy: @appId
         receivers: [{ appId: @appId, receivedAt: new Date() }]
         eventTypes: [@myCreatedEvent.toString()]
+        commandTypes: []
       }
 
       expect(insertedCommits).toMatch [expectedCommit]
@@ -105,6 +106,7 @@ describe "Space.eventSourcing.Repository", ->
         sentBy: @appId
         receivers: [{ appId: @appId, receivedAt: new Date() }]
         eventTypes: [@myCreatedEvent.toString()]
+        commandTypes: [@myTriggeredCommand.toString()]
       }
 
       expect(insertedCommits).toMatch [expectedCommit]

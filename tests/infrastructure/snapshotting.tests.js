@@ -4,6 +4,7 @@ describe("Space.eventSourcing - snapshotting", function() {
     this.registrationId = 'registration123';
     this.customerId = 'customer543';
     this.customerName = 'TestName';
+    this.customerNewName = 'NewTestName';
     this.app = new Test.App();
     this.app.reset();
   });
@@ -15,21 +16,35 @@ describe("Space.eventSourcing - snapshotting", function() {
       customerId: this.customerId,
       customerName: this.customerName
     }));
-    const snapshots = this.app.injector.get('Space.eventSourcing.Snapshots').find().fetch();
-    const customerRegSnapshot = EJSON.parse(snapshots[0].snapshot);
-    const customerSnapshot = EJSON.parse(snapshots[1].snapshot);
-    expect(customerRegSnapshot).toMatch({ id: 'registration123',
+    const expectedCustomerRegSnapshot = {
+      id: 'registration123',
       version: 3,
       state: 'completed',
-      customerId: 'customer543',
-      customerName: 'TestName'
-    });
-    expect(customerSnapshot).toMatch({
-      id: 'customer543',
-      version: 1,
+      customerId: this.customerId,
+      customerName: this.customerName
+    };
+    const expectedCustomerSnapshot = {
+      id: this.customerId,
+      version: 2,
       state: null,
-      name: 'TestName'
-    });
+      name: this.customerNewName
+    };
+    let snapshots = this.app.injector.get('Space.eventSourcing.Snapshots').find().fetch();
+    expect(snapshots.length).to.equal(1);
+    let firstSnapshot = EJSON.parse(snapshots[0].snapshot);
+    expect(firstSnapshot).toMatch(expectedCustomerRegSnapshot);
+
+    // Now another command to move the Customer Aggregate to v2
+    this.app.send(new Test.ChangeCustomerName({
+      targetId: this.customerId,
+      name: this.customerNewName
+    }));
+    snapshots = this.app.injector.get('Space.eventSourcing.Snapshots').find().fetch();
+    expect(snapshots.length).to.equal(2);
+    firstSnapshot = EJSON.parse(snapshots[0].snapshot);
+    let secondSnapshot = EJSON.parse(snapshots[1].snapshot);
+    expect(firstSnapshot).toMatch(expectedCustomerRegSnapshot);
+    expect(secondSnapshot).toMatch(expectedCustomerSnapshot);
   });
 
 });

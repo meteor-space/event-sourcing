@@ -6,6 +6,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     configuration: 'configuration'
     repository: 'Space.eventSourcing.Repository'
     commitStore: 'Space.eventSourcing.CommitStore'
+    injector: 'Injector'
     log: 'log'
   }
 
@@ -45,49 +46,53 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
 
   onDependenciesReady: ->
     super
-    @_setupInitializingMessage()
-    @_routeEventToEventSourceable(eventType) for eventType in @routeEvents
-    @_routeCommandToEventSourceable(commandType) for commandType in @routeCommands
+    @_setupInitializingHandler()
+    @_setupEventSubscriptions(eventType) for eventType in @routeEvents
+    @_setupCommandHandlers(commandType) for commandType in @routeCommands
 
-  _setupInitializingMessage: ->
+  _setupInitializingHandler: ->
     if @initializingMessage.isSubclassOf(Space.domain.Event)
-      @eventBus.subscribeTo @initializingMessage, (event) =>
-        @log.info("#{this}: Creating new #{@eventSourceable} with event
-                  #{event.typeName()}\n", event)
-        eventSourceable = @_handleDomainErrors(-> new @eventSourceable event)
-        @repository.save(eventSourceable) if eventSourceable?
+      messageBus = @eventBus
+      handlerSubscriber = @eventBus.subscribeTo
+      idProperty = 'sourceId'
     else if @initializingMessage.isSubclassOf(Space.domain.Command)
-      @commandBus.registerHandler @initializingMessage, (cmd) =>
-        @log.info("#{this}: Creating new #{@eventSourceable} with command
-                  #{cmd.typeName()}\n", cmd)
-        eventSourceable = @_handleDomainErrors(-> new @eventSourceable cmd)
-        @repository.save(eventSourceable) if eventSourceable?
+      messageBus = @commandBus
+      handlerSubscriber = @commandBus.registerHandler
+      idProperty = 'targetId'
+    handlerSubscriber.call(messageBus, @initializingMessage, (message) =>
+      @log.debug("#{this}: Creating new #{@eventSourceable} with message
+                  #{message.typeName()}\n", message)
+      eventSourceable = @_handleDomainErrors(->
+        instance = new @eventSourceable(message[idProperty])
+        @injector.injectInto(instance)
+        instance.handle(message)
+        return instance
+      )
+      @repository.save(eventSourceable) if eventSourceable?
+    )
 
-  _routeEventToEventSourceable: (eventType) ->
-    @eventBus.subscribeTo eventType, @_genericEventHandler
+  _setupEventSubscriptions: (eventType) ->
+    @eventBus.subscribeTo eventType, @messageHandler
 
-  _routeCommandToEventSourceable: (commandType) ->
-    @commandBus.registerHandler commandType, @_genericCommandHandler
+  _setupCommandHandlers: (commandType) ->
+    @commandBus.registerHandler commandType, @messageHandler
 
-  _genericEventHandler: (event) =>
-    # Only route this event if the correlation property exists
-    return unless event.meta? and event.meta[this.eventCorrelationProperty]?
-    correlationId = event.meta[this.eventCorrelationProperty]
-    @log.info(@_logMsg("Handling event #{event.typeName()} for
-                       #{@eventSourceable}<#{correlationId}>\n"), event)
-    eventSourceable = @repository.find @eventSourceable, correlationId
-    throw Router.ERRORS.cannotHandleMessage(event) if !eventSourceable?
-    eventSourceable = @_handleDomainErrors(-> eventSourceable.handle event)
-    @repository.save(eventSourceable) if eventSourceable?
-
-  _genericCommandHandler: (command) =>
-    if not command? then return
-    @log.info(@_logMsg("Handling command #{command.typeName()} for
-                       #{@eventSourceable}<#{command.targetId}>"), command)
-    eventSourceable = @repository.find @eventSourceable, command.targetId
-    throw Router.ERRORS.cannotHandleMessage(command) if !eventSourceable?
-    eventSourceable = @_handleDomainErrors(-> eventSourceable.handle command)
-    @repository.save(eventSourceable) if eventSourceable?
+  messageHandler: (message) =>
+    if message instanceof Space.domain.Command
+      aggregateId = message.targetId
+    if message instanceof Space.domain.Event
+      # Only route this event if the correlation property exists
+      return unless aggregateId = message.meta? and message.meta[this.eventCorrelationProperty]
+    @log.debug(@_logMsg("Handling message #{message.typeName()} for
+                       #{@eventSourceable}<#{aggregateId}>\n"), message)
+    try
+      eventSourceable = @repository.find @eventSourceable, aggregateId
+      throw Router.ERRORS.cannotHandleMessage(message) if !eventSourceable?
+      @injector.injectInto(eventSourceable)
+      eventSourceable = @_handleDomainErrors(-> eventSourceable.handle message)
+      @repository.save(eventSourceable) if eventSourceable?
+    catch error
+      @_handleSaveErrors(error, message, aggregateId)
 
   _logMsg: (message) -> "#{@configuration.appId}: #{this}: #{message}"
 
@@ -95,6 +100,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     try
       return fn.call(this)
     catch error
+      @log.error(@_logMsg(error.message))
       if error instanceof Space.Error
         this.publish(new Space.domain.Exception({
           thrower: @eventSourceable.toString(),
@@ -103,3 +109,16 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
         return null
       else
         throw error
+
+  _handleSaveErrors: (error, message, aggregateId) ->
+    if error instanceof Space.eventSourcing.CommitConcurrencyException
+      @log.warning(@_logMsg("Re-handling message due to concurrency exception
+      with message #{message.typeName()} for #{@eventSourceable}
+      <#{aggregateId}>"), message)
+      # Concurrency exceptions can often be resolved by simply re-handling the
+      # message. This should be safe from endless loops, because if the
+      # aggregate's state has since changed and the message is rejected,
+      # a domain exception will be thrown, which is an application concern.
+      @messageHandler(message)
+    else
+      throw error

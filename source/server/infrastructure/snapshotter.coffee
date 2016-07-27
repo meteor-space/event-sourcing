@@ -31,6 +31,8 @@ class Space.eventSourcing.Snapshotter extends Space.Object
   makeSnapshotOf: (aggregate) ->
     id = aggregate.getId().toString()
     currentVersion = aggregate.getVersion()
+    # Return early before the first snapshot point is reached
+    if(currentVersion) < @versionFrequency then return
     data = @collection.findOne _id: id
     data?.snapshot = @ejson.parse(data.snapshot)
     snapshot = aggregate.getSnapshot()

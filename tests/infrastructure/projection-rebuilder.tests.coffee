@@ -78,6 +78,7 @@ describe 'Space.eventSourcing.ProjectionRebuilder', ->
       }
       insertedAt: new Date()
       eventTypes: [TestEvent]
+      commandTypes: []
       sentBy: @app.configuration.appId
       receivers: [ appId: @app.configuration.appId, receivedAt: new Date()]
     }
@@ -103,3 +104,29 @@ describe 'Space.eventSourcing.ProjectionRebuilder', ->
       _id: @event.sourceId
       value: @event.value
     ]
+
+  it 'rejects attempts to rebuild projections that are already being rebuilt', ->
+
+    rebuilder = @app.injector.get 'Space.eventSourcing.ProjectionRebuilder'
+    projection = @app.injector.get 'FirstProjection'
+    projection.enterRebuildMode()
+    try
+      rebuilder.rebuild ['FirstProjection']
+    catch error
+      expect(error).to.be.instanceOf(Space.eventSourcing.ProjectionAlreadyRebuilding)
+
+  it 'restores the real collection and returns the projection to the correct
+    state if an exception occurs in the event replay', ->
+
+    rebuilder = @app.injector.get 'Space.eventSourcing.ProjectionRebuilder'
+    projection = @app.injector.get 'FirstProjection'
+    collection = @app.injector.get 'FirstCollection'
+    projection.on = -> throw new Error('Simulated error in replay')
+
+    try
+      rebuilder.rebuild ['FirstProjection']
+    catch error
+      expect(error).to.deep.equal(new Error 'Simulated error in replay')
+    # Only persistent collections have a connection
+    expect(collection._connection).to.not.equal(null);
+    expect(projection._state).to.equal('projecting')

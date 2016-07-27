@@ -11,7 +11,8 @@ class Space.eventSourcing.Repository extends Space.Object
     aggregate = @_snapshotter?.getSnapshotOf(Type, id)
     if aggregate?
       remainingEvents = @commitStore.getEvents id, aggregate.getVersion() + 1
-      aggregate.replayHistory remainingEvents
+      if remainingEvents.length > 0
+        aggregate.replayHistory remainingEvents
     else
       eventHistory = @commitStore.getEvents(id)
       if eventHistory.length > 0

@@ -27,7 +27,7 @@ class Space.eventSourcing.Process extends Space.eventSourcing.Aggregate
 
   trigger: (command) ->
     command.meta ?= {}
-    command.meta[this.eventCorrelationProperty] = this.getId()
+    command.meta[this.eventCorrelationProperty] = this.getId().toString()
     @_commands.push command
 
   getCommands: -> @_commands
