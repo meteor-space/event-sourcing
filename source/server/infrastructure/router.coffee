@@ -59,15 +59,15 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
       messageBus = @commandBus
       handlerSubscriber = @commandBus.registerHandler
       idProperty = 'targetId'
-    handlerSubscriber.call(messageBus, @initializingMessage, (message) =>
+    handlerSubscriber.call(messageBus, @initializingMessage, (message, callback) =>
       @log.debug("#{this}: Creating new #{@eventSourceable} with message
                   #{message.typeName()}\n", message)
-      eventSourceable = @_handleDomainErrors(->
+      eventSourceable = @_handleDomainErrors((->
         instance = new @eventSourceable(message[idProperty])
         @injector.injectInto(instance)
         instance.handle(message)
         return instance
-      )
+      ), callback)
       @repository.save(eventSourceable) if eventSourceable?
     )
 
@@ -77,7 +77,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
   _setupCommandHandlers: (commandType) ->
     @commandBus.registerHandler commandType, @messageHandler
 
-  messageHandler: (message) =>
+  messageHandler: (message, callback) =>
     if message instanceof Space.domain.Command
       aggregateId = message.targetId
     if message instanceof Space.domain.Event
@@ -89,16 +89,17 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
       eventSourceable = @repository.find @eventSourceable, aggregateId
       throw Router.ERRORS.cannotHandleMessage(message) if !eventSourceable?
       @injector.injectInto(eventSourceable)
-      eventSourceable = @_handleDomainErrors(-> eventSourceable.handle message)
+      eventSourceable = @_handleDomainErrors((-> eventSourceable.handle(message)), callback)
       @repository.save(eventSourceable) if eventSourceable?
     catch error
       @_handleSaveErrors(error, message, aggregateId)
 
   _logMsg: (message) -> "#{@configuration.appId}: #{this}: #{message}"
 
-  _handleDomainErrors: (fn) ->
+  _handleDomainErrors: (fn, callback) ->
     try
-      return fn.call(this)
+      fn.call(this)
+      callback?()
     catch error
       @log.error(@_logMsg(error.message))
       if error instanceof Space.Error
@@ -106,7 +107,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
           thrower: @eventSourceable.toString(),
           error: error
         }))
-        return null
+        callback?(error)
       else
         throw error
 

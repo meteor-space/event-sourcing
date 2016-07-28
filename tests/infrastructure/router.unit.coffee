@@ -1,6 +1,8 @@
 Router = Space.eventSourcing.Router
 Aggregate = Space.eventSourcing.Aggregate
 Command = Space.domain.Command
+Error = Space.Error
+DomainException = Space.domain.Exception
 
 # =========== TEST DATA ========== #
 
@@ -15,6 +17,10 @@ class MyCommandInitializingRouter extends Router
   eventSourceable: Space.eventSourcing.Router.MyAggregate
   initializingMessage:  Space.eventSourcing.Router.MyInitializingCommand
 
+class InvalidState extends Error
+  constructor:(commandName, currentState) ->
+    Error.call(this, "Cannot #{commandName} when in #{currentState} state");
+
 # ============== SPEC =============== #
 
 describe "Space.eventSourcing.Router", ->
@@ -25,8 +31,26 @@ describe "Space.eventSourcing.Router", ->
     @router = new MyCommandInitializingRouter()
     @router.repository = { save: -> }
     @router.configuration = { appId: 'Space.eventSourcing.Router.Test' }
-    @router.log = { warning: -> }
+    @router.log = {
+      warning: ->
+      error: ->
+    }
     @messageHandlerSpy = @router.messageHandler = sinon.spy()
+
+  describe "handling domain exceptions", ->
+
+    it "interprets Space.Errors as domain exceptions, publishing an event on the server-side eventBus and invoking the callback with the error as the first param", ->
+      callback = sinon.spy()
+      error = new InvalidState('PerformMyCommand', 'TheCurrentState')
+      invalidStateChangeAttempt = -> throw error
+      domainExceptionEvent = new DomainException({
+        thrower: @router.eventSourceable.toString()
+        error: error
+      })
+      publishSpy = @router.publish = sinon.spy()
+      @router._handleDomainErrors(invalidStateChangeAttempt, callback)
+      expect(publishSpy).to.have.been.calledWith(domainExceptionEvent)
+      expect(callback).to.have.been.calledWith(error)
 
   describe "handling concurrency exceptions", ->
     it "passes the message back to the handler if there's a concurrency exception when saving to the repository", ->
