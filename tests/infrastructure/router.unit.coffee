@@ -37,9 +37,17 @@ describe "Space.eventSourcing.Router", ->
     }
     @messageHandlerSpy = @router.messageHandler = sinon.spy()
 
-  describe "handling domain exceptions", ->
+  describe "Acknowledging success of message into the domain", ->
 
-    it "interprets Space.Errors as domain exceptions, publishing an event on the server-side eventBus and invoking the callback with the error as the first param", ->
+    it "invokes the callback with no arguments to acknowledge success of message", ->
+      callback = sinon.spy()
+      validStateChange = ->
+      @router._nextStateOfEventSourceable(validStateChange, callback)
+      expect(callback).to.have.been.calledWith()
+
+  describe "Handling domain exceptions", ->
+
+    it "interprets Space.Errors as domain exceptions, publishing an event on the server-side eventBus and invoking the callback with the error as the only argument", ->
       callback = sinon.spy()
       error = new InvalidState('PerformMyCommand', 'TheCurrentState')
       invalidStateChangeAttempt = -> throw error
@@ -52,7 +60,7 @@ describe "Space.eventSourcing.Router", ->
       expect(publishSpy).to.have.been.calledWith(domainExceptionEvent)
       expect(callback).to.have.been.calledWith(error)
 
-  describe "handling concurrency exceptions", ->
+  describe "Handling concurrency exceptions", ->
     it "passes the message back to the handler if there's a concurrency exception when saving to the repository", ->
       error = new Space.eventSourcing.CommitConcurrencyException(@message.targetId, 1, 2)
       @router._handleSaveErrors(error, @message, @id)
