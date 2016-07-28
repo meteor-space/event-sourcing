@@ -68,7 +68,10 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
         instance.handle(message)
         return instance
       ), callback)
-      @repository.save(eventSourceable) if eventSourceable?
+      try
+        @repository.save(eventSourceable) if eventSourceable?
+      catch error
+        @_handleSaveErrors(error, message, message[idProperty])
     )
 
   _setupEventSubscriptions: (eventType) ->
