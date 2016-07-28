@@ -62,7 +62,7 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
     handlerSubscriber.call(messageBus, @initializingMessage, (message, callback) =>
       @log.debug("#{this}: Creating new #{@eventSourceable} with message
                   #{message.typeName()}\n", message)
-      eventSourceable = @_handleDomainErrors((->
+      eventSourceable = @_nextStateOfEventSourceable((->
         instance = new @eventSourceable(message[idProperty])
         @injector.injectInto(instance)
         instance.handle(message)
@@ -92,14 +92,14 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
       eventSourceable = @repository.find @eventSourceable, aggregateId
       throw Router.ERRORS.cannotHandleMessage(message) if !eventSourceable?
       @injector.injectInto(eventSourceable)
-      eventSourceable = @_handleDomainErrors((-> eventSourceable.handle(message)), callback)
+      eventSourceable = @_nextStateOfEventSourceable((-> eventSourceable.handle(message)), callback)
       @repository.save(eventSourceable) if eventSourceable?
     catch error
       @_handleSaveErrors(error, message, aggregateId)
 
   _logMsg: (message) -> "#{@configuration.appId}: #{this}: #{message}"
 
-  _handleDomainErrors: (fn, callback) ->
+  _nextStateOfEventSourceable: (fn, callback) ->
     try
       return fn.call(this)
     catch error

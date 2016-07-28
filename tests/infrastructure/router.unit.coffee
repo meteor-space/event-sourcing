@@ -48,7 +48,7 @@ describe "Space.eventSourcing.Router", ->
         error: error
       })
       publishSpy = @router.publish = sinon.spy()
-      @router._handleDomainErrors(invalidStateChangeAttempt, callback)
+      @router._nextStateOfEventSourceable(invalidStateChangeAttempt, callback)
       expect(publishSpy).to.have.been.calledWith(domainExceptionEvent)
       expect(callback).to.have.been.calledWith(error)
 
