@@ -45,6 +45,12 @@ describe "Space.eventSourcing.Router", ->
       @router._nextStateOfEventSourceable(validStateChange, callback)
       expect(callback).to.have.been.calledWith()
 
+    it "will skip the callback invocation if none supplied", ->
+      newState = { 'prop1': 1 }
+      validStateChange = -> newState
+      nextState = @router._nextStateOfEventSourceable(validStateChange)
+      expect(nextState).to.equal(newState)
+
   describe "Handling domain exceptions", ->
 
     it "interprets Space.Errors as domain exceptions, publishing an event on the server-side eventBus and invoking the callback with the error as the only argument", ->

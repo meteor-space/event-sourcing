@@ -104,7 +104,8 @@ class Space.eventSourcing.Router extends Space.messaging.Controller
   _nextStateOfEventSourceable: (fn, callback) ->
     try
       nextState = fn.call(this)
-      callback()
+      console.log(nextState)
+      callback?()
       return nextState
     catch error
       @log.error(@_logMsg(error.message))
