@@ -43,7 +43,7 @@ describe "Space.eventSourcing.Router", ->
       callback = sinon.spy()
       validStateChange = ->
       @router._nextStateOfEventSourceable(validStateChange, callback)
-      expect(callback).to.have.been.calledWith()
+      expect(callback).to.have.been.calledWithExactly()
 
     it "will skip the callback invocation if none supplied", ->
       newState = { 'prop1': 1 }
@@ -63,14 +63,14 @@ describe "Space.eventSourcing.Router", ->
       })
       publishSpy = @router.publish = sinon.spy()
       @router._nextStateOfEventSourceable(invalidStateChangeAttempt, callback)
-      expect(publishSpy).to.have.been.calledWith(domainExceptionEvent)
-      expect(callback).to.have.been.calledWith(error)
+      expect(publishSpy).to.have.been.calledWithExactly(domainExceptionEvent)
+      expect(callback).to.have.been.calledWithExactly(error)
 
   describe "Handling concurrency exceptions", ->
     it "passes the message back to the handler if there's a concurrency exception when saving to the repository", ->
       error = new Space.eventSourcing.CommitConcurrencyException(@message.targetId, 1, 2)
       @router._handleSaveErrors(error, @message, @id)
-      expect(@messageHandlerSpy).to.have.been.calledWith(@message)
+      expect(@messageHandlerSpy).to.have.been.calledWithExactly(@message)
 
     it "non-concurrency exception are re-thrown", ->
       error = new Error 'Some other exception'
