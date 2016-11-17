@@ -1,25 +1,19 @@
-Router = Space.eventSourcing.Router
-Aggregate = Space.eventSourcing.Aggregate
-Command = Space.domain.Command
-Error = Space.Error
-DomainException = Space.domain.Exception
-
 # =========== TEST DATA ========== #
 
-class MyInitializingCommand extends Command
+class MyInitializingCommand extends Space.domain.Command
   @type 'Space.eventSourcing.Router.MyInitializingCommand'
 
-class MyAggregate extends Aggregate
+class MyAggregate extends Space.eventSourcing.Aggregate
   @type 'Space.eventSourcing.Router.MyAggregate'
 
-class MyCommandInitializingRouter extends Router
+class MyCommandInitializingRouter extends Space.eventSourcing.Router
   @type 'Space.eventSourcing.Router.MyRouter'
   eventSourceable: Space.eventSourcing.Router.MyAggregate
   initializingMessage:  Space.eventSourcing.Router.MyInitializingCommand
 
-class InvalidState extends Error
+class InvalidState extends Space.Error
   constructor:(commandName, currentState) ->
-    Error.call(this, "Cannot #{commandName} when in #{currentState} state");
+    Space.Error.call(this, "Cannot #{commandName} when in #{currentState} state");
 
 # ============== SPEC =============== #
 
@@ -57,7 +51,7 @@ describe "Space.eventSourcing.Router", ->
       callback = sinon.spy()
       error = new InvalidState('PerformMyCommand', 'TheCurrentState')
       invalidStateChangeAttempt = -> throw error
-      domainExceptionEvent = new DomainException({
+      domainExceptionEvent = new Space.domain.Exception({
         thrower: @router.eventSourceable.toString()
         error: error
       })
@@ -73,7 +67,7 @@ describe "Space.eventSourcing.Router", ->
       expect(@messageHandlerSpy).to.have.been.calledWithExactly(@message)
 
     it "non-concurrency exception are re-thrown", ->
-      error = new Error 'Some other exception'
+      error = new Space.Error 'Some other exception'
       nonConcurrencyError = =>
         @router._handleSaveErrors(error, @message, @id)
 
