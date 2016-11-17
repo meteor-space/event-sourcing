@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export PACKAGE_DIRS='packages'
+export METEOR_PACKAGE_DIRS='packages'
 
 if [ "$PORT" ]; then
   meteor test-packages ./ --port $PORT
