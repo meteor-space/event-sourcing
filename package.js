@@ -17,7 +17,7 @@ Package.onUse(function(api) {
     'mongo',
     'ecmascript',
     'mikowals:batch-insert@1.1.13',
-    'fongandrew:find-and-modify@0.2.1',
+    'fongandrew:find-and-modify@1.0.0',
     'space:base@4.1.3',
     'space:messaging@3.3.0',
     'space:domain@0.2.1'
