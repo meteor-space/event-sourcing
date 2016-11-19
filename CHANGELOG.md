@@ -1,8 +1,15 @@
 Changelog
 =========
+## 3.2.0
+**This version now requires Meteor 1.4**
+### New Features
+- Domain exceptions are now returned by `Space.eventSourcing.Router` as the first argument if a callback is supplied in the `Space.messaging.CommandBus.send()` call.
 
+### Updated dependencies
+- space:messaging@3.3.1
+- fongandrew:find-and-modify@1.0.0
+- mikowals:batch-insert@1.1.14
 ## 3.1.0
-
 ### New Features
 - **Commit save concurrency exception handling**
 Concurrency exceptions can occur in a race condition where two messages are
