@@ -1,6 +1,6 @@
 machine:
   node:
-    version: 4.6.1
+    version: 4.6.2
   environment:
     METEOR_PACKAGE_DIRS: packages
   pre:
@@ -13,4 +13,4 @@ dependencies:
     - mgp
 test:
   override:
-    - spacejam test-packages ./ --release 1.4.2.1
+    - spacejam test-packages ./ --release 1.4.2.3
