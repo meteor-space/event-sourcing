@@ -26,7 +26,7 @@ describe("Space.eventSourcing.Aggregate - dependency injection", function() {
     });
     let changeCommand = new Test.ChangeCustomerName({
       targetId: customerId,
-      name: 'MyEvenStrangerCustomerName'
+      name: 'SomeValidCustomerName'
     });
 
     this.app.start();
