@@ -10,7 +10,7 @@ describe("Space.eventSourcing.Aggregate - dependency injection", function() {
   it("injects dependency into new aggregate", function() {
     let command = new Test.CreateCustomer({
       targetId: new Guid(),
-      name: 'MyStrangeCustomerName'
+      name: 'MyInvalidCustomerName'
     });
     this.app.start();
     this.app.commandBus.send(command);
@@ -18,11 +18,11 @@ describe("Space.eventSourcing.Aggregate - dependency injection", function() {
   });
 
   it("injects dependency into existing aggregate", function() {
-    customerId = new Guid()
+    customerId = new Guid();
 
     let createCommand = new Test.CreateCustomer({
       targetId: customerId,
-      name: 'MyStrangeCustomerName'
+      name: 'MyInvalidCustomerName'
     });
     let changeCommand = new Test.ChangeCustomerName({
       targetId: customerId,

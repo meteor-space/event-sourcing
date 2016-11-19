@@ -197,7 +197,7 @@ Space.eventSourcing.Process.extend('Test.CustomerRegistration', {
   _registerCustomer(command) {
     this.myProcessDependency();
 
-    if (command.customerName === 'MyStrangeCustomerName') {
+    if (command.customerName === 'MyInvalidCustomerName') {
       throw new Test.InvalidCustomerName(command.customerName);
     }
 

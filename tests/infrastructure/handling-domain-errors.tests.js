@@ -7,13 +7,13 @@ describe("Space.eventSourcing - Handling domain errors", function() {
       new Test.RegisterCustomer({
         targetId: registrationId,
         customerId: 'cust123',
-        customerName: 'MyStrangeCustomerName'
+        customerName: 'MyInvalidCustomerName'
       })
     )
     .expect([
       new Space.domain.Exception({
         thrower: 'Test.CustomerRegistration',
-        error: new Test.InvalidCustomerName('MyStrangeCustomerName')
+        error: new Test.InvalidCustomerName('MyInvalidCustomerName')
       })
     ]);
   });
