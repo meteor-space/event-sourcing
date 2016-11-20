@@ -13,6 +13,4 @@ dependencies:
     - mgp
 test:
   override:
-    - spacejam test-packages ./ --release 1.4.0.1
-    - spacejam test-packages ./ --release 1.4.1.3
     - spacejam test-packages ./ --release 1.4.2.3
