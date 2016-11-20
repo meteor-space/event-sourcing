@@ -2,5 +2,9 @@
   "space:base": {
     "git":"https://github.com/meteor-space/base.git",
     "version": "18099657c719f16f6d18b167f792a09932b655cd"
+  },
+  "space:messaging": {
+    "git":"https://github.com/meteor-space/messaging.git",
+    "version": "cbf9e7c59901d0cbf7ee2d7cb1e4d45e1d7feba3"
   }
 }
